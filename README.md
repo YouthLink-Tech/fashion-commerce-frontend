@@ -121,8 +121,8 @@ This repository is **private and proprietary**. Contributions are managed intern
 
 ## 📜 License
 
-This project is **proprietary software**. All rights reserved by **PoshaX**. Unauthorized use, distribution, or modification of this code is strictly prohibited.
+This project is **proprietary software**. All rights reserved by **YouthLink Tech.**. Unauthorized use, distribution, or modification of this code is strictly prohibited.
 
 ---
 
-**Developed with ❤️ by YouthLink Tech. team for PoshaX.**
+**Developed by YouthLink Tech. team for PoshaX.**
