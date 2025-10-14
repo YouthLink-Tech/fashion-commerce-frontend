@@ -7,7 +7,7 @@ import TopFooterNewsletter from "./TopFooterNewsletter";
 
 export default async function TopFooter({ userEmail }) {
   const promises = [
-    rawFetch("/allMarketingBanners"),
+    rawFetch("/api/marketing-banner/all"),
     userEmail
       ? tokenizedFetch(`/api/newsletter/single/${userEmail}`)
       : Promise.resolve(null),
