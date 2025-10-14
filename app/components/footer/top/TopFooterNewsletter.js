@@ -19,7 +19,7 @@ export default function TopFooterNewsletter({ userEmail, isUserSubscribed }) {
     setIsPageLoading(true);
 
     try {
-      const result = await rawFetch("/addNewsletter", {
+      const result = await rawFetch("/api/newsletter/add", {
         method: "POST",
         body: JSON.stringify({
           email: data.newsletterEmail,

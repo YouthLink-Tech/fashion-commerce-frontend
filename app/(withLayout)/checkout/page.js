@@ -16,7 +16,7 @@ export default async function Checkout() {
     rawFetch("/allOffers"),
     rawFetch("/api/shipping-zone/all"),
     rawFetch("/api/location/primary"),
-    rawFetch("/get-all-policy-pdfs"),
+    rawFetch("/api/policy-pdf/all"),
   ];
 
   const [

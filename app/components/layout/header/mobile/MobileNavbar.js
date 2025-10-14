@@ -26,7 +26,7 @@ export default async function MobileNavbar({
     rawFetch("/allProducts"),
     rawFetch("/allOffers"),
     rawFetch("/api/location/primary"),
-    rawFetch("/get-all-policy-pdfs"),
+    rawFetch("/api/policy-pdf/all"),
   ];
 
   const [userDataRes, productsRes, offersRes, primaryLocationRes, legalPdfRes] =

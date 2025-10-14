@@ -29,7 +29,7 @@ export default async function Orders({ searchParams }) {
   }
 
   try {
-    const result = await rawFetch("/get-all-policy-pdfs");
+    const result = await rawFetch("/api/policy-pdf/all");
     [legalPolicyPdfLinks] = result.data || [];
   } catch (error) {
     console.error("FetchError (orderHistory/legalPdfLinks):", error.message);

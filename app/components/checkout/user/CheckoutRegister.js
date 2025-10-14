@@ -61,7 +61,7 @@ export default function CheckoutRegister({
 
     try {
       // Register user to backend
-      const result = await rawFetch("/customer-signup", {
+      const result = await rawFetch("/api/newsletter/customer-signup", {
         method: "POST",
         body: JSON.stringify({
           name: data.registerFullName,

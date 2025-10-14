@@ -19,7 +19,7 @@ export default async function SideLinks() {
     rawFetch("/allProducts"),
     rawFetch("/allOffers"),
     rawFetch("/api/location/primary"),
-    rawFetch("/get-all-policy-pdfs"),
+    rawFetch("/api/policy-pdf/all"),
   ];
 
   const [

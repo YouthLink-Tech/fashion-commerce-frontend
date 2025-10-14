@@ -9,7 +9,7 @@ export default async function TopFooter({ userEmail }) {
   const promises = [
     rawFetch("/allMarketingBanners"),
     userEmail
-      ? tokenizedFetch(`/getSingleNewsletter/${userEmail}`)
+      ? tokenizedFetch(`/api/newsletter/single/${userEmail}`)
       : Promise.resolve(null),
   ];
 

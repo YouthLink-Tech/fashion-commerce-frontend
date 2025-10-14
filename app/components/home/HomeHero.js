@@ -5,7 +5,7 @@ export default async function HomeHero() {
   let sliderData;
 
   try {
-    const result = await rawFetch("/allHeroBannerImageUrls");
+    const result = await rawFetch("/api/hero-banner/all");
     sliderData = result.data || [];
   } catch (error) {
     console.error("FetchError (home/sliderData):", error.message);
