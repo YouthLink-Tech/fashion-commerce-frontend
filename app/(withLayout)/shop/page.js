@@ -16,7 +16,7 @@ export default async function Shop() {
       : Promise.resolve(null),
     rawFetch("/allProducts"),
     rawFetch("/allOffers"),
-    rawFetch("/primary-location"),
+    rawFetch("/api/location/primary"),
     rawFetch("/get-all-availability-notifications"),
   ];
 

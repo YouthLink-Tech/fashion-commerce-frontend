@@ -18,8 +18,8 @@ export default async function RootLayout({ children }) {
   const session = await getServerSession(authOptions);
 
   const promises = [
-    rawFetch("/get-all-header-collection"),
-    rawFetch("/get-all-logo"),
+    rawFetch("/api/top-header/all"),
+    rawFetch("/api/logo/all"),
   ];
 
   const [topHeaderRes, logoRes] = await Promise.allSettled(promises);

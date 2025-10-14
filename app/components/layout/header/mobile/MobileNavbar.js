@@ -25,7 +25,7 @@ export default async function MobileNavbar({
       : Promise.resolve(null),
     rawFetch("/allProducts"),
     rawFetch("/allOffers"),
-    rawFetch("/primary-location"),
+    rawFetch("/api/location/primary"),
     rawFetch("/get-all-policy-pdfs"),
   ];
 

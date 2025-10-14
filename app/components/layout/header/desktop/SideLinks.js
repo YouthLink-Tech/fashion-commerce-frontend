@@ -18,7 +18,7 @@ export default async function SideLinks() {
       : Promise.resolve(null),
     rawFetch("/allProducts"),
     rawFetch("/allOffers"),
-    rawFetch("/primary-location"),
+    rawFetch("/api/location/primary"),
     rawFetch("/get-all-policy-pdfs"),
   ];
 
@@ -37,17 +37,17 @@ export default async function SideLinks() {
     primaryLocation,
     [legalPolicyPdfLinks],
   ] = [
-    extractData(userDataRes, null, "desktopNav/userData"),
-    extractData(productsRes, [], "desktopNav/productList"),
-    extractData(offersRes, [], "desktopNav/specialOffers"),
-    extractData(
-      primaryLocationRes,
-      null,
-      "desktopNav/primaryLocation",
-      "primaryLocation",
-    ),
-    extractData(legalPolicyPdfLinksRes, null, "desktopNav/legalPdfLinks"),
-  ];
+      extractData(userDataRes, null, "desktopNav/userData"),
+      extractData(productsRes, [], "desktopNav/productList"),
+      extractData(offersRes, [], "desktopNav/specialOffers"),
+      extractData(
+        primaryLocationRes,
+        null,
+        "desktopNav/primaryLocation",
+        "primaryLocation",
+      ),
+      extractData(legalPolicyPdfLinksRes, null, "desktopNav/legalPdfLinks"),
+    ];
 
   return (
     <div className="text-neutral-600">

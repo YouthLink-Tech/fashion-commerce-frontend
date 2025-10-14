@@ -10,7 +10,7 @@ export default async function HelpCenter() {
   let pageTitle, faqDescription, faqs;
 
   try {
-    const result = await rawFetch("/all-faqs");
+    const result = await rawFetch("/api/faq/all");
     const [faqData] = result.data || [];
 
     pageTitle = faqData?.pageTitle;

@@ -5,7 +5,7 @@ export default async function OurStory() {
   let departments;
 
   try {
-    const result = await rawFetch("/get-all-story-collection-frontend");
+    const result = await rawFetch("/api/story/all-frontend");
 
     departments = result.data || [];
   } catch (error) {

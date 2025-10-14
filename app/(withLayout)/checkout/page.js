@@ -14,8 +14,8 @@ export default async function Checkout() {
       : Promise.resolve(null),
     rawFetch("/allProducts"),
     rawFetch("/allOffers"),
-    rawFetch("/allShippingZones"),
-    rawFetch("/primary-location"),
+    rawFetch("/api/shipping-zone/all"),
+    rawFetch("/api/location/primary"),
     rawFetch("/get-all-policy-pdfs"),
   ];
 
@@ -36,18 +36,18 @@ export default async function Checkout() {
     primaryLocation,
     legalPolicyPdfLinks,
   ] = [
-    extractData(userDataRes, null, "checkout/userData"),
-    extractData(productsRes, [], "checkout/products"),
-    extractData(offersRes, [], "checkout/specialOffers"),
-    extractData(shippingZonesRes, [], "checkout/shippingZones"),
-    extractData(
-      primaryLocationRes,
-      null,
-      "checkout/primaryLocation",
-      "primaryLocation",
-    ),
-    extractData(legalPolicyPdfLinksRes, null, "checkout/legalPdfLinks"),
-  ];
+      extractData(userDataRes, null, "checkout/userData"),
+      extractData(productsRes, [], "checkout/products"),
+      extractData(offersRes, [], "checkout/specialOffers"),
+      extractData(shippingZonesRes, [], "checkout/shippingZones"),
+      extractData(
+        primaryLocationRes,
+        null,
+        "checkout/primaryLocation",
+        "primaryLocation",
+      ),
+      extractData(legalPolicyPdfLinksRes, null, "checkout/legalPdfLinks"),
+    ];
 
   return (
     <CheckoutContents
