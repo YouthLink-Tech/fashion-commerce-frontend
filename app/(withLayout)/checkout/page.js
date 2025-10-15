@@ -13,7 +13,7 @@ export default async function Checkout() {
       ? tokenizedFetch(`/customerDetailsViaEmail/${session?.user?.email}`)
       : Promise.resolve(null),
     rawFetch("/allProducts"),
-    rawFetch("/allOffers"),
+    rawFetch("/api/special-offer/all"),
     rawFetch("/api/shipping-zone/all"),
     rawFetch("/api/location/primary"),
     rawFetch("/api/policy-pdf/all"),

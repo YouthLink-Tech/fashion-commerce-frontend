@@ -9,7 +9,7 @@ export default async function HomeCategories() {
   let categories;
 
   try {
-    const result = await rawFetch("/allCategories");
+    const result = await rawFetch("/api/category/all");
     categories = result.data || [];
   } catch (error) {
     console.error("FetchError (home/categories):", error.message);

@@ -15,7 +15,7 @@ export default async function Shop() {
       ? tokenizedFetch(`/customerDetailsViaEmail/${session?.user?.email}`)
       : Promise.resolve(null),
     rawFetch("/allProducts"),
-    rawFetch("/allOffers"),
+    rawFetch("/api/special-offer/all"),
     rawFetch("/api/location/primary"),
     rawFetch("/get-all-availability-notifications"),
   ];

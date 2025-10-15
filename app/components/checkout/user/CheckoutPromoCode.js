@@ -42,7 +42,7 @@ export default function CheckoutPromoCode({
     let correspondingPromo;
 
     try {
-      const result = await rawFetch(`/promo-by-code/${enteredPromoCode}`);
+      const result = await rawFetch(`/api/promo-code/single-by-code/${enteredPromoCode}`);
 
       correspondingPromo = result.data;
     } catch (error) {

@@ -30,7 +30,7 @@ export default async function Product({ params: { slug } }) {
     session?.user?.email
       ? tokenizedFetch(`/customerDetailsViaEmail/${session?.user?.email}`)
       : Promise.resolve(null),
-    rawFetch("/allOffers"),
+    rawFetch("/api/special-offer/all"),
     rawFetch("/api/location/primary"),
     rawFetch("/get-all-availability-notifications"),
   ];
