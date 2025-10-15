@@ -5,7 +5,7 @@ import { rawFetch } from "../lib/fetcher/rawFetch";
 
 const refreshAccessToken = async (token) => {
   try {
-    const result = await rawFetch("/refresh-token", {
+    const result = await rawFetch("/api/user-access/refresh-token-frontend", {
       method: "POST",
       headers: { Cookie: cookies().toString() },
     });
