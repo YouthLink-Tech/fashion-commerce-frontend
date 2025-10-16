@@ -32,7 +32,7 @@ export default async function Product({ params: { slug } }) {
       : Promise.resolve(null),
     rawFetch("/api/special-offer/all"),
     rawFetch("/api/location/primary"),
-    rawFetch("/get-all-availability-notifications"),
+    rawFetch("/api/notifications/all"),
   ];
 
   const [userDataRes, offersRes, primaryLocationRes, notifyVariantsRes] =

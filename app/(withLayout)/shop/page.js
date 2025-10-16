@@ -17,7 +17,7 @@ export default async function Shop() {
     rawFetch("/allProducts"),
     rawFetch("/api/special-offer/all"),
     rawFetch("/api/location/primary"),
-    rawFetch("/get-all-availability-notifications"),
+    rawFetch("/api/notifications/all"),
   ];
 
   const [

@@ -38,7 +38,7 @@ export default function NotifyMeModal({
     setIsPageLoading(true);
 
     try {
-      const result = await rawFetch("/add-availability-notifications", {
+      const result = await rawFetch("/api/notifications/add-notify-me", {
         method: "POST",
         body: JSON.stringify({
           ...data,
