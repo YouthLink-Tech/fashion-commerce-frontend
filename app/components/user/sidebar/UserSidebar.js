@@ -15,7 +15,7 @@ export default async function UserSidebar() {
   if (session?.user?.email) {
     try {
       const result = await tokenizedFetch(
-        `/customerDetailsViaEmail/${session?.user?.email}`,
+        `/api/customer/single/${session?.user?.email}`,
       );
 
       userData = result.data || {};

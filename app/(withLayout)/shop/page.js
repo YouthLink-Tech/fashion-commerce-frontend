@@ -12,9 +12,9 @@ export default async function Shop() {
 
   const promises = [
     session?.user?.email
-      ? tokenizedFetch(`/customerDetailsViaEmail/${session?.user?.email}`)
+      ? tokenizedFetch(`/api/customer/single/${session?.user?.email}`)
       : Promise.resolve(null),
-    rawFetch("/allProducts"),
+    rawFetch("/api/products/all"),
     rawFetch("/api/special-offer/all"),
     rawFetch("/api/location/primary"),
     rawFetch("/api/notifications/all"),

@@ -16,8 +16,8 @@ export default async function ContactUs({ searchParams }) {
 
   if (session?.user?.email) {
     const promises = [
-      tokenizedFetch(`/customerDetailsViaEmail/${session?.user?.email}`),
-      tokenizedFetch(`/customer-orders?email=${session?.user?.email}`),
+      tokenizedFetch(`/api/customer/single/${session?.user?.email}`),
+      tokenizedFetch(`/api/order/customer?email=${session?.user?.email}`),
     ];
 
     const [userDataRes, userOrdersRes] = await Promise.allSettled(promises);

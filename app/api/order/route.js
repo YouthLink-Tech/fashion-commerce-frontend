@@ -5,7 +5,7 @@ export async function POST(req) {
   try {
     const body = await req.json();
 
-    const result = await tokenizedFetch("/addOrder", {
+    const result = await tokenizedFetch("/api/order/add", {
       method: "POST",
       body: JSON.stringify(body),
     });

@@ -12,7 +12,7 @@ import ProductRelatedContents from "@/app/components/product/ProductRelatedConte
 export default async function Product({ params: { slug } }) {
   let products = [];
   try {
-    const result = await rawFetch("/allProducts");
+    const result = await rawFetch("/api/products/all");
     products = result.data || [];
   } catch (error) {
     console.error("FetchError (productDetails/products):", error.message);
@@ -28,7 +28,7 @@ export default async function Product({ params: { slug } }) {
 
   const promises = [
     session?.user?.email
-      ? tokenizedFetch(`/customerDetailsViaEmail/${session?.user?.email}`)
+      ? tokenizedFetch(`/api/customer/single/${session?.user?.email}`)
       : Promise.resolve(null),
     rawFetch("/api/special-offer/all"),
     rawFetch("/api/location/primary"),

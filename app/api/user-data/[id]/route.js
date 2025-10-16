@@ -6,7 +6,7 @@ export async function PUT(req, { params }) {
     const { id } = await params;
     const body = await req.json();
 
-    const result = await tokenizedFetch(`/updateUserInformation/${id}`, {
+    const result = await tokenizedFetch(`/api/customer/edit/${id}`, {
       method: "PUT",
       body: JSON.stringify(body),
     });

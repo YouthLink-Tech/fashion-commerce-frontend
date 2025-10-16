@@ -20,7 +20,7 @@ export default async function OrderDetails({ params }) {
   if (session?.user?.email) {
     try {
       const result = await tokenizedFetch(
-        `/customer-orders/${params.id}?email=${session?.user?.email}`,
+        `/api/order/single/${params.id}?email=${session?.user?.email}`,
       );
 
       order = result.data;

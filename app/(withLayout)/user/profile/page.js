@@ -13,7 +13,7 @@ export default async function Profile() {
   if (userEmail) {
     try {
       const result = await tokenizedFetch(
-        `/customerDetailsViaEmail/${userEmail}`,
+        `/api/customer/single/${userEmail}`,
       );
 
       userData = result.data || {};
