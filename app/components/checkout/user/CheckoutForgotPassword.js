@@ -32,7 +32,7 @@ export default function CheckoutForgotPassword({ setIsPageLoading }) {
     setIsPageLoading(true);
 
     try {
-      const result = await rawFetch("/request-password-reset", {
+      const result = await rawFetch("/api/customer/request-password-reset", {
         method: "PUT",
         body: JSON.stringify(data),
       });

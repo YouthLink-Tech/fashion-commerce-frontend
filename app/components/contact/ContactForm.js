@@ -52,7 +52,7 @@ export default function ContactForm({ userData, orderId, isOrderNumberLegit }) {
     setIsPageLoading(true);
 
     try {
-      const result = await rawFetch("/contact", {
+      const result = await rawFetch("/api/customer-support/contact", {
         method: "POST",
         body: JSON.stringify(data),
       });

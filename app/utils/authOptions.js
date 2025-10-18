@@ -43,7 +43,7 @@ export const authOptions = {
       },
       async authorize(credentials) {
         try {
-          const result = await rawFetch("/verify-credentials-login", {
+          const result = await rawFetch("/api/customer/verify-credentials-login", {
             method: "POST",
             body: JSON.stringify(credentials),
           });
@@ -70,7 +70,7 @@ export const authOptions = {
       allowDangerousEmailAccountLinking: true,
       async profile(profile) {
         try {
-          const result = await rawFetch("/verify-google-login", {
+          const result = await rawFetch("/api/customer/verify-google-login", {
             method: "POST",
             body: JSON.stringify({
               email: profile.email,
@@ -103,7 +103,7 @@ export const authOptions = {
       // Initial sign in
       if (user && account) {
         try {
-          const result = await rawFetch("/generate-customer-tokens", {
+          const result = await rawFetch("/api/customer/generate-customer-tokens", {
             method: "POST",
             body: JSON.stringify({ email: user.email }),
           });

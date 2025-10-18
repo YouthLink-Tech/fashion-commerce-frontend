@@ -38,7 +38,7 @@ export default function ResetPasswordForm({ token, email }) {
     setIsPageLoading(true);
 
     try {
-      const result = await rawFetch("/reset-password", {
+      const result = await rawFetch("/api/customer/reset-password", {
         method: "PUT",
         body: JSON.stringify({
           token,

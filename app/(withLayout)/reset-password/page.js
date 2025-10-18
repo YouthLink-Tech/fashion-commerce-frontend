@@ -8,7 +8,7 @@ export default async function ResetPassword({ searchParams }) {
   let isTokenValid, email, validationMessage;
 
   try {
-    const result = await rawFetch("/validate-reset-token", {
+    const result = await rawFetch("/api/customer/validate-reset-token", {
       method: "PUT",
       body: JSON.stringify({ token }),
     });

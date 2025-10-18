@@ -5,7 +5,7 @@ export async function POST(req) {
   try {
     const body = await req.json();
 
-    const result = await tokenizedFetch("/user-set-password", {
+    const result = await tokenizedFetch("/api/customer/set-password", {
       method: "PUT",
       body: JSON.stringify(body),
     });
@@ -21,7 +21,7 @@ export async function PUT(req) {
   try {
     const body = await req.json();
 
-    const result = await tokenizedFetch("/user-update-password", {
+    const result = await tokenizedFetch("/api/customer/update-password", {
       method: "PUT",
       body: JSON.stringify(body),
     });
