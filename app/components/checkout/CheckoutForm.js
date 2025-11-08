@@ -136,27 +136,27 @@ export default function CheckoutForm({
 
         const updatedDeliveryAddresses = !existingAddressId
           ? [
-              ...userData.userInfo.deliveryAddresses,
-              {
-                id: `${userData?.email}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-                nickname: undefined,
+            ...userData.userInfo.deliveryAddresses,
+            {
+              id: `${userData?.email}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+              nickname: undefined,
+              address1: data.addressLineOne,
+              address2: data.addressLineTwo,
+              city: data.city,
+              postalCode: data.postalCode,
+            },
+          ]
+          : userData?.userInfo?.deliveryAddresses?.map((availableAddress) =>
+            availableAddress.id == existingAddressId
+              ? {
+                ...availableAddress,
                 address1: data.addressLineOne,
                 address2: data.addressLineTwo,
                 city: data.city,
                 postalCode: data.postalCode,
-              },
-            ]
-          : userData?.userInfo?.deliveryAddresses?.map((availableAddress) =>
-              availableAddress.id == existingAddressId
-                ? {
-                    ...availableAddress,
-                    address1: data.addressLineOne,
-                    address2: data.addressLineTwo,
-                    city: data.city,
-                    postalCode: data.postalCode,
-                  }
-                : availableAddress,
-            );
+              }
+              : availableAddress,
+          );
 
         const currentWishlist = JSON.parse(
           localStorage.getItem("wishlistItems"),
@@ -166,11 +166,11 @@ export default function CheckoutForm({
         const updatedWishlist = !currentWishlist?.length
           ? []
           : currentWishlist.filter(
-              (wishlistItem) =>
-                !currentCart.some(
-                  (cartItem) => wishlistItem._id === cartItem._id,
-                ),
-            );
+            (wishlistItem) =>
+              !currentCart.some(
+                (cartItem) => wishlistItem._id === cartItem._id,
+              ),
+          );
 
         const updatedUserData = {
           ...userData,
@@ -391,17 +391,17 @@ export default function CheckoutForm({
                 specialOffers,
               ),
           ) && (
-            <CheckoutPromoCode
-              userPromoCode={userPromoCode}
-              setUserPromoCode={setUserPromoCode}
-              cartItems={cartItems}
-              cartSubtotal={calculateSubtotal(
-                productList,
-                cartItems,
-                specialOffers,
-              )}
-            />
-          )}
+              <CheckoutPromoCode
+                userPromoCode={userPromoCode}
+                setUserPromoCode={setUserPromoCode}
+                cartItems={cartItems}
+                cartSubtotal={calculateSubtotal(
+                  productList,
+                  cartItems,
+                  specialOffers,
+                )}
+              />
+            )}
           <CheckoutPaymentMethod register={register} errors={errors} />
         </form>
       </div>

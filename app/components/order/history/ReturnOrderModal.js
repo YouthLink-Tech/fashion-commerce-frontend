@@ -17,6 +17,7 @@ import customCurrentDateTimeFormat from "@/app/utils/customCurrentDateTimeFormat
 import ReturnItemsField from "./ReturnItemsField";
 import ReturnBriefDescriptionField from "./ReturnBriefDescriptionField";
 import ReturnImagesField from "./ReturnImagesField";
+import { errorMessage } from "@/app/utils/errorMessage";
 
 export default function ReturnOrderModal({
   isReturnModalOpen,
@@ -65,7 +66,7 @@ export default function ReturnOrderModal({
       finalPrice =
         Number(productVariant?.regularPrice) -
         Number(productVariant?.offerInfo?.appliedOfferDiscount) /
-          Number(productVariant?.sku);
+        Number(productVariant?.sku);
     } else finalPrice = Number(productVariant?.regularPrice);
 
     return Math.round(Math.round(finalPrice * 10) / 10); // Round off, if it has decimal points
@@ -84,10 +85,10 @@ export default function ReturnOrderModal({
         !returnItem?.isRequested
           ? accumulator
           : accumulator +
-            calculateFinalPrice(
-              activeReturnOrder?.productInformation[returnItemIndex],
-            ) *
-              returnItem?.quantity,
+          calculateFinalPrice(
+            activeReturnOrder?.productInformation[returnItemIndex],
+          ) *
+          returnItem?.quantity,
       0,
     );
   };
@@ -107,12 +108,12 @@ export default function ReturnOrderModal({
           !data.items[index].isRequested
             ? null
             : {
-                ...product,
-                sku: data.items[index].quantity,
-                issues: data.items[index].issues,
-                status: "Pending",
-                finalUnitPrice: calculateFinalPrice(product),
-              },
+              ...product,
+              sku: data.items[index].quantity,
+              issues: data.items[index].issues,
+              status: "Pending",
+              finalUnitPrice: calculateFinalPrice(product),
+            },
         )
         ?.filter((value) => !!value),
       imgUrls: returnImgUrls,
@@ -142,15 +143,14 @@ export default function ReturnOrderModal({
         router.refresh();
         setIsReturnModalOpen(false);
       } else {
-        console.error(
-          "UpdateError (returnOrderModal):",
-          result.message || "Failed to submit return request.",
-        );
-        toast.error(result.message);
+        const friendlyMsg = errorMessage(result);
+        toast.error(friendlyMsg);
+        console.error("UpdateError (returnOrderModal):", result);
       }
-    } catch (error) {
-      console.error("UpdateError (returnOrderModal):", error.message || error);
-      toast.error("Failed to submit return request.");
+    } catch (err) {
+      const friendlyMsg = getFriendlyErrorMessage(err);
+      toast.error(friendlyMsg);
+      console.error("UpdateError (returnOrderModal):", err);
     }
 
     setIsPageLoading(false);
