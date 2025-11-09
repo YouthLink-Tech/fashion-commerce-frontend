@@ -95,18 +95,59 @@ export default function CheckoutRegister({
       } else {
         resetForRegister(
           {
-            registerPassword: "",
-            registerConfirmPassword: "",
+            password: "",
+            confirmPassword: "",
           },
           { keepValues: true },
         );
+
+        let messageToShow = "Failed to register. Please try again.";
+        let backendMessage = result?.message?.message || result.message;
+
+        try {
+          // 1️⃣ If backend message is JSON string, try parsing it
+          if (typeof backendMessage === "string") {
+            const parsed = JSON.parse(backendMessage);
+
+            // 2️⃣ If it's an array (Zod-style errors)
+            if (Array.isArray(parsed)) {
+              parsed.forEach((err) => {
+                toast.error(err.message || "Invalid input.");
+              });
+              setIsPageLoading(false);
+              return;
+            }
+
+            // 3️⃣ If it's an object with a clear message
+            if (parsed?.message) {
+              messageToShow = parsed.message;
+            } else {
+              messageToShow = backendMessage;
+            }
+          }
+          // 4️⃣ If backend sent array directly (not as string)
+          else if (Array.isArray(backendMessage)) {
+            backendMessage.forEach((err) => {
+              toast.error(err.message || "Invalid input.");
+            });
+            setIsPageLoading(false);
+            return;
+          }
+          // 5️⃣ Otherwise, just show the plain message if it exists
+          else if (backendMessage) {
+            messageToShow = backendMessage;
+          }
+        } catch (err) {
+          console.error("Error parsing backend message:", err);
+          messageToShow = backendMessage || messageToShow;
+        }
+
         console.error(
-          "RegisterError (checkoutRegister/signUpResult):",
-          result.message || "Failed to register. Please try again.",
+          "RegisterError (header/registerForm/signUpResult):",
+          backendMessage,
         );
-        return toast.error(
-          result.message || "Failed to register. Please try again.",
-        );
+
+        toast.error(messageToShow);
       }
 
       resetForRegister(); // reset register form
