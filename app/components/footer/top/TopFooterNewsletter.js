@@ -33,9 +33,9 @@ export default function TopFooterNewsletter({ userEmail, isUserSubscribed }) {
       } else {
         console.error(
           "SubmissionError (footer/newsletter):",
-          result.message || "Failed to subscribe to newsletter.",
+          result.message.message || "Failed to subscribe to newsletter.",
         );
-        toast.error("Failed to subscribe to newsletter.");
+        toast.error(result.message.message || "Failed to subscribe to newsletter.");
       }
     } catch (error) {
       console.error(
