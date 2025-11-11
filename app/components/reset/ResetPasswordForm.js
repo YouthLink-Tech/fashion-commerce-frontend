@@ -52,14 +52,14 @@ export default function ResetPasswordForm({ token, email }) {
       } else {
         console.error(
           "SubmissionError (resetPasswordForm):",
-          result.message || "Failed to reset password.",
+          result.message.message || "Failed to reset password.",
         );
-        toast.error(result.message);
+        toast.error(result.message.message);
       }
     } catch (error) {
       console.error(
         "SubmissionError (resetPasswordForm):",
-        error.message || error,
+        error.message.message || error,
       );
       toast.error("Failed to reset password.");
     } finally {

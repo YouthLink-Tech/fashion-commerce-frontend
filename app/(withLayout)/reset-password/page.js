@@ -15,13 +15,13 @@ export default async function ResetPassword({ searchParams }) {
 
     isTokenValid = result.ok;
     email = result.data.email;
-    validationMessage = result.message;
+    validationMessage = result.message.message;
   } catch (error) {
-    console.error("ValidationError:", error.message || error);
+    console.error("ValidationError:", error.message.message || error);
 
     isTokenValid = false;
     email = null;
-    validationMessage = error.message || "Unable to validate token.";
+    validationMessage = error.message.message || "Unable to validate token.";
   }
 
   return (

@@ -50,7 +50,7 @@ export const authOptions = {
 
           if (!result.ok)
             throw new Error(
-              result.message || "Invalid credentials. Please try again.",
+              result.message.message || "Invalid credentials. Please try again.",
             );
 
           return {

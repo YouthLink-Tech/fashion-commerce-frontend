@@ -65,19 +65,34 @@ export default function SecurityForm({
       } else {
         console.error(
           `PasswordError (security/${isLinkedWithCredentials ? "update" : "set"}):`,
-          result.message ||
-            `Failed to ${isLinkedWithCredentials ? "update" : "set"} password.`,
+          result.message.message ||
+          `Failed to ${isLinkedWithCredentials ? "update" : "set"} password.`,
         );
-        toast.error(result.message);
+        toast.error(result.message.message);
       }
     } catch (error) {
-      console.error(
-        `PasswordError (security/${isLinkedWithCredentials ? "update" : "set"}):`,
-        error.message || error,
-      );
-      toast.error(
-        `Failed to ${isLinkedWithCredentials ? "update" : "set"} password.`,
-      );
+      console.error("Password update error:", error);
+
+      // Default fallback message
+      let errorMessage = `Failed to ${isLinkedWithCredentials ? "update" : "set"} password.`;
+
+      // Case 1: Axios-style error with response
+      if (error.response?.data) {
+        const data = error.response.data;
+
+        // Prefer detailed validation messages if available
+        if (Array.isArray(data.details) && data.details.length > 0) {
+          errorMessage = data.details[0]; // show first validation error
+        } else if (data.message) {
+          errorMessage = data.message;
+        }
+      }
+      // Case 2: ZodError came as raw string
+      else if (error.message?.includes("ZodError")) {
+        errorMessage = "Invalid input. Please check your password fields.";
+      }
+
+      toast.error(errorMessage);
     } finally {
       setIsPageLoading(false);
       reset();
