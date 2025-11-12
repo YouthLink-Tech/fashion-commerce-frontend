@@ -100,11 +100,10 @@ export default function CheckoutItemsInfo({
           </h5>
           <span className="text-red-600">
             - ৳{" "}
-            {`${Number(promoDiscount).toLocaleString()}${
-              userPromoCode?.promoDiscountType === "Percentage"
-                ? ` (${Number(userPromoCode?.promoDiscountValue)?.toLocaleString()}%)`
-                : ""
-            }`}
+            {`${Number(promoDiscount).toLocaleString()}${userPromoCode?.promoDiscountType === "Percentage"
+              ? ` (${Number(userPromoCode?.promoDiscountValue)?.toLocaleString()}%)`
+              : ""
+              }`}
           </span>
         </div>
       )}
@@ -114,7 +113,7 @@ export default function CheckoutItemsInfo({
             <h5 className="text-neutral-500">Shipping Charge</h5>
             <span>
               {selectedCity === "Dhaka" &&
-              selectedDeliveryType === "STANDARD" ? (
+                selectedDeliveryType === "STANDARD" ? (
                 <>
                   <span className="relative h-fit before:absolute before:-left-0.5 before:top-1/2 before:h-0.5 before:w-[calc(100%+4px)] before:bg-neutral-400 before:content-['']">{`৳ ${shippingCharge?.toLocaleString()}`}</span>
                   <span className="ml-1.5">FREE</span>

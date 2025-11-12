@@ -15,7 +15,7 @@ export const checkIfAnyDiscountIsAvailable = (product, specialOffers) => {
   );
 
   return (
-    !!Number(product?.discountValue) ||
+    !!(parseFloat(product?.discountValue) || 0) > 0 ||
     specialOffers?.some((offer) => {
       const expiryDate = new Date(`${offer?.expiryDate}T23:59:59+06:00`);
 
@@ -34,7 +34,7 @@ export const checkIfOnlyRegularDiscountIsAvailable = (
   specialOffers,
 ) => {
   return (
-    !!Number(product?.discountValue) &&
+    !!(parseFloat(product?.discountValue) || 0) > 0 &&
     !checkIfSpecialOfferIsAvailable(product, specialOffers)
   );
 };
@@ -82,29 +82,29 @@ export const getProductSpecialOffer = (
       second: "2-digit",
     }).format(new Date()),
   );
-
+  const normalizedSubtotal = parseFloat(cartSubtotal) || 0;
   return specialOffers?.find((offer) => {
     const expiryDate = new Date(`${offer?.expiryDate}T23:59:59+06:00`);
-
+    const minAmount = parseFloat(offer?.minAmount) || 0;
     return (
       offer.offerStatus === true &&
       (offer.selectedProductIds?.includes(product?.productId) ||
         offer.selectedCategories?.includes(product?.category)) &&
       now <= expiryDate &&
-      (cartSubtotal === "NA" || cartSubtotal >= parseFloat(offer.minAmount))
+      normalizedSubtotal >= minAmount
     );
   });
 };
 
 export const calculateFinalPrice = (product, specialOffers) => {
-  const regularPrice = parseFloat(product?.regularPrice);
+  const regularPrice = parseFloat(product?.regularPrice) || 0;
   const isSpecialOfferAvailable = checkIfSpecialOfferIsAvailable(
     product,
     specialOffers,
   );
-  const discountValue = parseFloat(product?.discountValue);
+  const discountValue = parseFloat(product?.discountValue) || 0;
 
-  if (isSpecialOfferAvailable || isNaN(discountValue) || discountValue === 0) {
+  if (isSpecialOfferAvailable || discountValue === 0) {
     return regularPrice;
   }
 
@@ -124,12 +124,8 @@ export const calculateSubtotal = (productList, cartItems, specialOffers) => {
     const product = productList?.find(
       (product) => product._id === cartItem?._id,
     );
-
-    return (
-      calculateFinalPrice(product, specialOffers) *
-        Number(cartItem?.selectedQuantity) +
-      accumulator
-    );
+    const quantity = parseFloat(cartItem?.selectedQuantity) || 0;
+    return calculateFinalPrice(product, specialOffers) * quantity + accumulator;
   }, 0);
 };
 
@@ -149,16 +145,15 @@ export const calculatePromoDiscount = (
     return 0;
 
   let promoDiscount;
-
+  const promoDiscountValue = parseFloat(userPromoCode?.promoDiscountValue) || 0;
   if (userPromoCode?.promoDiscountType === "Amount") {
-    promoDiscount = userPromoCode?.promoDiscountValue;
+    promoDiscount = promoDiscountValue;
   } else {
     promoDiscount =
-      (userPromoCode?.promoDiscountValue / 100) *
-      calculateSubtotal(productList, cartItems);
+      (promoDiscountValue / 100) * calculateSubtotal(productList, cartItems);
   }
 
-  const promoMaxAmount = Number(userPromoCode.maxAmount);
+  const promoMaxAmount = parseFloat(userPromoCode?.maxAmount) || 0;
 
   if (promoMaxAmount > 0 && promoDiscount > promoMaxAmount) {
     promoDiscount = promoMaxAmount;
@@ -172,9 +167,10 @@ export const calculateProductSpecialOfferDiscount = (
   cartItem,
   specialOffer,
 ) => {
-  const totalProductPrice =
-    Number(product?.regularPrice) * Number(cartItem?.selectedQuantity);
-  const offerDiscountValue = parseFloat(specialOffer?.offerDiscountValue);
+  const regularPrice = parseFloat(product?.regularPrice) || 0;
+  const quantity = parseFloat(cartItem?.selectedQuantity) || 0;
+  const totalProductPrice = regularPrice * quantity;
+  const offerDiscountValue = parseFloat(specialOffer?.offerDiscountValue) || 0;
 
   if (!offerDiscountValue) return 0;
 
@@ -186,13 +182,13 @@ export const calculateProductSpecialOfferDiscount = (
     specialDiscount = offerDiscountValue;
   }
 
-  const offerMaxAmount = Number(specialOffer.maxAmount);
+  const offerMaxAmount = parseFloat(specialOffer?.maxAmount) || 0;
 
   if (offerMaxAmount > 0 && specialDiscount > offerMaxAmount) {
     specialDiscount = offerMaxAmount;
   }
 
-  return Number(specialDiscount);
+  return specialDiscount;
 };
 
 export const calculateTotalSpecialOfferDiscount = (
@@ -231,7 +227,7 @@ export const calculateShippingCharge = (
       shippingZone?.selectedCity.includes(selectedCity),
     );
 
-    return Number(
+    return parseFloat(
       shippingZone?.shippingCharges[selectedDeliveryType || "STANDARD"] || 0,
     );
   }
@@ -241,7 +237,7 @@ export const getTotalItemCount = (cartItems) => {
   if (!cartItems?.length) return 0;
 
   return cartItems.reduce(
-    (accumulator, item) => Number(item.selectedQuantity) + accumulator,
+    (accumulator, item) => (parseFloat(item.selectedQuantity) || 0) + accumulator,
     0,
   );
 };
