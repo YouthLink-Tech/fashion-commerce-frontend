@@ -82,7 +82,6 @@ export const getProductSpecialOffer = (
       second: "2-digit",
     }).format(new Date()),
   );
-  const normalizedSubtotal = parseFloat(cartSubtotal) || 0;
   return specialOffers?.find((offer) => {
     const expiryDate = new Date(`${offer?.expiryDate}T23:59:59+06:00`);
     const minAmount = parseFloat(offer?.minAmount) || 0;
@@ -91,7 +90,7 @@ export const getProductSpecialOffer = (
       (offer.selectedProductIds?.includes(product?.productId) ||
         offer.selectedCategories?.includes(product?.category)) &&
       now <= expiryDate &&
-      normalizedSubtotal >= minAmount
+      (cartSubtotal === "NA" || cartSubtotal >= minAmount)
     );
   });
 };
