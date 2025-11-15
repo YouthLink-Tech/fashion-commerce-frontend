@@ -1,5 +1,7 @@
 import checkIfPromoCodeIsValid from "./isPromoCodeValid";
 
+const roundToTwo = (num) => Math.round(num * 100) / 100;
+
 export const checkIfAnyDiscountIsAvailable = (product, specialOffers) => {
   const now = new Date(
     new Intl.DateTimeFormat("en-US", {
@@ -15,7 +17,7 @@ export const checkIfAnyDiscountIsAvailable = (product, specialOffers) => {
   );
 
   return (
-    !!(parseFloat(product?.discountValue) || 0) > 0 ||
+    (product?.discountValue || 0) > 0 ||
     specialOffers?.some((offer) => {
       const expiryDate = new Date(`${offer?.expiryDate}T23:59:59+06:00`);
 
@@ -34,7 +36,7 @@ export const checkIfOnlyRegularDiscountIsAvailable = (
   specialOffers,
 ) => {
   return (
-    !!(parseFloat(product?.discountValue) || 0) > 0 &&
+    (product?.discountValue || 0) > 0 &&
     !checkIfSpecialOfferIsAvailable(product, specialOffers)
   );
 };
@@ -84,7 +86,7 @@ export const getProductSpecialOffer = (
   );
   return specialOffers?.find((offer) => {
     const expiryDate = new Date(`${offer?.expiryDate}T23:59:59+06:00`);
-    const minAmount = parseFloat(offer?.minAmount) || 0;
+    const minAmount = offer?.minAmount || 0;
     return (
       offer.offerStatus === true &&
       (offer.selectedProductIds?.includes(product?.productId) ||
@@ -96,36 +98,38 @@ export const getProductSpecialOffer = (
 };
 
 export const calculateFinalPrice = (product, specialOffers) => {
-  const regularPrice = parseFloat(product?.regularPrice) || 0;
   const isSpecialOfferAvailable = checkIfSpecialOfferIsAvailable(
     product,
     specialOffers,
   );
-  const discountValue = parseFloat(product?.discountValue) || 0;
+  const regularPrice = product?.regularPrice || 0;
+  const discountValue = product?.discountValue || 0;
 
   if (isSpecialOfferAvailable || discountValue === 0) {
-    return regularPrice;
+    return roundToTwo(regularPrice);
   }
 
+  let finalPrice = regularPrice;
   if (product?.discountType === "Percentage") {
-    return regularPrice - (regularPrice * discountValue) / 100;
+    finalPrice = regularPrice - (regularPrice * discountValue) / 100;
   } else if (product?.discountType === "Flat") {
-    return regularPrice - discountValue;
-  } else {
-    return regularPrice;
+    finalPrice = regularPrice - discountValue;
   }
+  return roundToTwo(finalPrice);
 };
 
 export const calculateSubtotal = (productList, cartItems, specialOffers) => {
   if (!cartItems?.length) return 0;
 
-  return cartItems.reduce((accumulator, cartItem) => {
+  const subtotal = cartItems.reduce((accumulator, cartItem) => {
     const product = productList?.find(
       (product) => product._id === cartItem?._id,
     );
-    const quantity = parseFloat(cartItem?.selectedQuantity) || 0;
+    const quantity = cartItem?.selectedQuantity || 0;
     return calculateFinalPrice(product, specialOffers) * quantity + accumulator;
   }, 0);
+
+  return roundToTwo(subtotal);
 };
 
 export const calculatePromoDiscount = (
@@ -143,8 +147,8 @@ export const calculatePromoDiscount = (
   )
     return 0;
 
-  let promoDiscount;
-  const promoDiscountValue = parseFloat(userPromoCode?.promoDiscountValue) || 0;
+  let promoDiscount = 0;
+  const promoDiscountValue = userPromoCode?.promoDiscountValue || 0;
   if (userPromoCode?.promoDiscountType === "Amount") {
     promoDiscount = promoDiscountValue;
   } else {
@@ -152,13 +156,13 @@ export const calculatePromoDiscount = (
       (promoDiscountValue / 100) * calculateSubtotal(productList, cartItems);
   }
 
-  const promoMaxAmount = parseFloat(userPromoCode?.maxAmount) || 0;
+  const promoMaxAmount = userPromoCode?.maxAmount || 0;
 
   if (promoMaxAmount > 0 && promoDiscount > promoMaxAmount) {
     promoDiscount = promoMaxAmount;
   }
 
-  return promoDiscount;
+  return roundToTwo(promoDiscount);
 };
 
 export const calculateProductSpecialOfferDiscount = (
@@ -166,10 +170,10 @@ export const calculateProductSpecialOfferDiscount = (
   cartItem,
   specialOffer,
 ) => {
-  const regularPrice = parseFloat(product?.regularPrice) || 0;
-  const quantity = parseFloat(cartItem?.selectedQuantity) || 0;
+  const regularPrice = product?.regularPrice || 0;
+  const quantity = cartItem?.selectedQuantity || 0;
   const totalProductPrice = regularPrice * quantity;
-  const offerDiscountValue = parseFloat(specialOffer?.offerDiscountValue) || 0;
+  const offerDiscountValue = specialOffer?.offerDiscountValue || 0;
 
   if (!offerDiscountValue) return 0;
 
@@ -181,13 +185,13 @@ export const calculateProductSpecialOfferDiscount = (
     specialDiscount = offerDiscountValue;
   }
 
-  const offerMaxAmount = parseFloat(specialOffer?.maxAmount) || 0;
+  const offerMaxAmount = specialOffer?.maxAmount || 0;
 
   if (offerMaxAmount > 0 && specialDiscount > offerMaxAmount) {
     specialDiscount = offerMaxAmount;
   }
 
-  return specialDiscount;
+  return roundToTwo(specialDiscount);
 };
 
 export const calculateTotalSpecialOfferDiscount = (
@@ -197,7 +201,7 @@ export const calculateTotalSpecialOfferDiscount = (
 ) => {
   if (!cartItems?.length) return 0;
 
-  return cartItems.reduce((accumulator, cartItem) => {
+  const totalDiscount = cartItems.reduce((accumulator, cartItem) => {
     const product = productList?.find(
       (product) => product._id === cartItem?._id,
     );
@@ -212,6 +216,8 @@ export const calculateTotalSpecialOfferDiscount = (
 
     return discount + accumulator;
   }, 0);
+
+  return roundToTwo(totalDiscount);
 };
 
 export const calculateShippingCharge = (
@@ -221,22 +227,24 @@ export const calculateShippingCharge = (
 ) => {
   if (!selectedCity || (selectedCity === "Dhaka" && !selectedDeliveryType)) {
     return 0;
-  } else {
-    const shippingZone = shippingZones?.find((shippingZone) =>
-      shippingZone?.selectedCity.includes(selectedCity),
-    );
-
-    return parseFloat(
-      shippingZone?.shippingCharges[selectedDeliveryType || "STANDARD"] || 0,
-    );
   }
+
+  const shippingZone = shippingZones?.find((shippingZone) =>
+    shippingZone?.selectedCity.includes(selectedCity),
+  );
+
+  const charge = Number(
+    shippingZone?.shippingCharges[selectedDeliveryType || "STANDARD"] || 0,
+  );
+
+  return roundToTwo(charge);
 };
 
 export const getTotalItemCount = (cartItems) => {
   if (!cartItems?.length) return 0;
 
   return cartItems.reduce(
-    (accumulator, item) => (parseFloat(item.selectedQuantity) || 0) + accumulator,
+    (accumulator, item) => (item.selectedQuantity || 0) + accumulator,
     0,
   );
 };

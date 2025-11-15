@@ -13,7 +13,7 @@ export default function checkIfPromoCodeIsValid(userPromoCode, cartSubtotal) {
   );
 
   const expiryDate = new Date(`${userPromoCode?.expiryDate}T23:59:59+06:00`);
-  const minAmount = parseFloat(userPromoCode?.minAmount) || 0;
+  const minAmount = userPromoCode?.minAmount || 0;
   return (
     userPromoCode?.promoStatus == true &&
     now <= expiryDate &&
