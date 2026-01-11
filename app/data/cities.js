@@ -66,7 +66,7 @@ export const cities = [
 ];
 
 export const thanaByCity = {
-  "Dhaka Metro": ["Dhanmondi", "Gulshan", "Mirpur", "Uttara", "Mohammadpur", "Tejgaon", "Banani", "Badda", "Kalabagan"],
+  "Dhaka Metro": ["Adabor", "Airport", "Ati Bazar (Keraniganj)", "Azompur", "Badda", "Banani", "Bongshal", "Bashundhara R/A", "Bhasantek", "Cantonment", "Chalkbazar", "Dakshin Khan", "Darus salam", "Demra", "Dhanmondi", "Gendaria", "Gulistan", "Gulshan", "Hatirjheel", "Hazaribag", "Jattrabari", "Kadamtali", "Kafrul", "Kalabagan", "Kamrangirchar", "Khilgaon", "Khilkhet", "Kotwali", "Lalbagh", "Mirpur", "Mohammadpur", "Motijheel", "Mugda", "New Market", "Pallabi", "Paltan", "Panthapath", "Purbachal", "Ramna", "Rampura", "Rupnagar", "Sabujbag", "Shah Ali", "Shah Ali Market", "Shahbag", "Shahjahanpur", "Sher-e-Bangla Nagar", "Shyampur", "Sutrapur", "Tejgaon", "Tejgaon Industrial Area", "Turag", "Uttara", "Uttarkhan", "Vasantek", "Vatara", "Wari"],
   "Dhaka Suburb": ["Dhamrai", "Keraniganj", "Savar",],
   "Chittagong": ["Pahartali", "Kotwali", "Panchlaish", "Double Mooring", "Chandgaon"],
   "Sylhet": ["Sylhet Sadar", "Beanibazar", "Balaganj", "Fenchuganj"],
