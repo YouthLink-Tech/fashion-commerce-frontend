@@ -2,10 +2,10 @@ import { formatIsoDateTime } from "@/app/utils/formatIsoDateTime";
 
 export default function OrderDeliveryDetails({ delivery }) {
   const fullAddress = [
-    orderDetails?.address1?.trim(),
-    orderDetails?.thana?.trim(),
-    orderDetails?.city?.trim(),
-    orderDetails?.postalCode?.trim()
+    delivery?.address1?.trim(),
+    delivery?.thana?.trim(),
+    delivery?.city?.trim(),
+    delivery?.postalCode?.trim()
   ].filter(Boolean).join(", ");
 
   const capitalizeFirstLetter = (text) => {
