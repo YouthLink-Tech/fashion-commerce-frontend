@@ -66,6 +66,9 @@ export const cities = [
 ];
 
 export const thanaByCity = {
-  "Dhaka Metro": ["Dhanmondi", "Gulshan", "Mirpur", "Uttara"],
+  "Dhaka Metro": ["Dhanmondi", "Gulshan", "Mirpur", "Uttara", "Mohammadpur", "Tejgaon", "Banani", "Badda", "Kalabagan"],
   "Dhaka Suburb": ["Dhamrai", "Keraniganj", "Savar",],
+  "Chittagong": ["Pahartali", "Kotwali", "Panchlaish", "Double Mooring", "Chandgaon"],
+  "Sylhet": ["Sylhet Sadar", "Beanibazar", "Balaganj", "Fenchuganj"],
+  "Khulna": ["Khulna Sadar", "Koyra", "Dumuria", "Terokhada"],
 };
