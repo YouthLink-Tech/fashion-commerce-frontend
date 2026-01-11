@@ -19,8 +19,7 @@ export default function CompanyInfo({ logoWithTextSrc }) {
         />
       </TransitionLink>
       <p className="mb-7 mt-2 text-[13px]/[1.35] sm:max-w-64 lg:mb-9 lg:max-w-60 lg:text-sm xl:max-w-72">
-        Lorem ipsum dolor sit amet consectetur adipisicing elit. Aut minus
-        quibusdam saepe incidunt ullam sunt fugit ad deleniti!
+        <strong>PoshaX</strong> is a Bangladesh-based e-commerce platform committed to quality products, secure checkout, and dependable delivery with customer-first support.
       </p>
       <div>
         <ul className="social-links flex items-center gap-x-2">
