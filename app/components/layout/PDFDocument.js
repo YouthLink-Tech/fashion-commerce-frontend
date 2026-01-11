@@ -260,7 +260,7 @@ const PDFDocument = ({ order }) => {
     const productTotal = (
       product?.discountInfo
         ? product?.discountInfo?.finalPriceAfterDiscount *
-          product?.sku.toFixed(2)
+        product?.sku.toFixed(2)
         : product?.regularPrice * product?.sku
     ).toFixed(2); // Original price without discount
 
@@ -273,10 +273,10 @@ const PDFDocument = ({ order }) => {
       `${productTotal}`, // Total (without discount)
       product.offerTitle
         ? {
-            offerTitle: product.offerTitle,
-            offerDiscount: 0,
-            productTitle: product.productTitle,
-          }
+          offerTitle: product.offerTitle,
+          offerDiscount: 0,
+          productTitle: product.productTitle,
+        }
         : null, // Store offer details without applying discount yet
     ];
   });
@@ -339,7 +339,7 @@ const PDFDocument = ({ order }) => {
                   marginBottom: 5,
                 }}
               >
-                {`${order?.deliveryInfo?.address1}${order?.deliveryInfo?.address2 ? " " + order?.deliveryInfo?.address2 : " "} ${order?.deliveryInfo?.city} ${order?.deliveryInfo?.postalCode}`}
+                {`${order?.deliveryInfo?.address1} ${order?.deliveryInfo?.thana} ${order?.deliveryInfo?.city} ${order?.deliveryInfo?.postalCode}`}
               </Text>
             </View>
             <View style={styles.orderInfo3}>

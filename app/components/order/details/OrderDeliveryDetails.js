@@ -1,22 +1,12 @@
 import { formatIsoDateTime } from "@/app/utils/formatIsoDateTime";
 
 export default function OrderDeliveryDetails({ delivery }) {
-  const fullAddressLine =
-    delivery?.address1.trimEnd() +
-    (!delivery?.address2
-      ? ""
-      : (delivery?.address1.trimEnd().slice(-1) !== "," // If address line 1 doesn't have trailing comma
-          ? ", " // Add a space with comma
-          : " ") + // Add a space without comma
-        delivery?.address2);
-  const fullAddress =
-    fullAddressLine.trimEnd() +
-    (fullAddressLine.trimEnd().slice(-1) !== "," // If address line 1 doesn't have trailing comma
-      ? ", " // Add a space with comma
-      : " ") +
-    delivery?.postalCode +
-    " " +
-    delivery?.city;
+  const fullAddress = [
+    orderDetails?.address1?.trim(),
+    orderDetails?.thana?.trim(),
+    orderDetails?.city?.trim(),
+    orderDetails?.postalCode?.trim()
+  ].filter(Boolean).join(", ");
 
   const capitalizeFirstLetter = (text) => {
     return text?.charAt(0)?.toUpperCase() + text?.slice(1)?.toLowerCase();

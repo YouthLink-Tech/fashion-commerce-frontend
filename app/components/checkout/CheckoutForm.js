@@ -16,6 +16,7 @@ import CheckoutDeliveryAddress from "@/app/components/checkout/user/CheckoutDeli
 import CheckoutPromoCode from "@/app/components/checkout/user/CheckoutPromoCode";
 import CheckoutPaymentMethod from "@/app/components/checkout/user/CheckoutPaymentMethod";
 import CheckoutCart from "@/app/components/checkout/cart/CheckoutCart";
+import { thanaByCity } from "@/app/data/cities";
 
 export default function CheckoutForm({
   userData,
@@ -55,8 +56,8 @@ export default function CheckoutForm({
       phoneNumber: userData?.userInfo?.personalInfo?.phoneNumber || "",
       altPhoneNumber: userData?.userInfo?.personalInfo?.phoneNumber2 || "",
       addressLineOne: userData?.userInfo?.savedDeliveryAddress?.address1 || "",
-      addressLineTwo: userData?.userInfo?.savedDeliveryAddress?.address2 || "",
       city: userData?.userInfo?.savedDeliveryAddress?.city || "",
+      thana: userData?.userInfo?.savedDeliveryAddress?.thana || "",
       postalCode: userData?.userInfo?.savedDeliveryAddress?.postalCode || "",
       note: "",
       deliveryType: "",
@@ -109,8 +110,8 @@ export default function CheckoutForm({
           phoneNumber: data.phoneNumber,
           totalAmount,
           address1: data.addressLineOne,
-          address2: data.addressLineTwo,
           city: data.city,
+          thana: data.thana,
           postalCode: data.postalCode,
         });
         setIsPaymentStepDone(true);
@@ -129,8 +130,8 @@ export default function CheckoutForm({
         const existingAddressId = userData?.userInfo?.deliveryAddresses?.find(
           (address) =>
             address?.address1 === data.addressLineOne &&
-            address?.address2 === data.addressLineTwo &&
             address?.city === data.city &&
+            address?.thana === data.thana &&
             address?.postalCode === data.postalCode,
         )?.id;
 
@@ -141,8 +142,8 @@ export default function CheckoutForm({
               id: `${userData?.email}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
               nickname: undefined,
               address1: data.addressLineOne,
-              address2: data.addressLineTwo,
               city: data.city,
+              thana: data.thana,
               postalCode: data.postalCode,
             },
           ]
@@ -151,8 +152,8 @@ export default function CheckoutForm({
               ? {
                 ...availableAddress,
                 address1: data.addressLineOne,
-                address2: data.addressLineTwo,
                 city: data.city,
+                thana: data.thana,
                 postalCode: data.postalCode,
               }
               : availableAddress,
@@ -180,8 +181,8 @@ export default function CheckoutForm({
             deliveryAddresses: updatedDeliveryAddresses,
             savedDeliveryAddress: {
               address1: data.addressLineOne,
-              address2: data.addressLineTwo,
               city: data.city,
+              thana: data.thana,
               postalCode: data.postalCode,
             },
           },
@@ -266,6 +267,8 @@ export default function CheckoutForm({
     return () => clearTimeout(timeout);
   }, [formData]);
 
+  const thanas = selectedCity ? thanaByCity[selectedCity] || [] : [];
+
   // Load draft from localStorage or update form on user session change
   useEffect(() => {
     const draft = (() => {
@@ -282,8 +285,8 @@ export default function CheckoutForm({
     const prevSavedAddress = userData?.userInfo?.savedDeliveryAddress || {};
     const wasDeliveryEdited =
       draft?.addressLineOne ||
-      draft?.addressLineTwo ||
       draft?.city ||
+      draft?.thana ||
       draft?.postalCode;
 
     reset({
@@ -296,11 +299,8 @@ export default function CheckoutForm({
         (wasDeliveryEdited
           ? draft.addressLineOne
           : prevSavedAddress?.address1) || "",
-      addressLineTwo:
-        (wasDeliveryEdited
-          ? draft.addressLineTwo
-          : prevSavedAddress?.address2) || "",
       city: (wasDeliveryEdited ? draft.city : prevSavedAddress?.city) || "",
+      thana: (wasDeliveryEdited ? draft.thana : prevSavedAddress?.thana) || "",
       postalCode:
         (wasDeliveryEdited ? draft.postalCode : prevSavedAddress?.postalCode) ||
         "",
@@ -380,6 +380,7 @@ export default function CheckoutForm({
             errors={errors}
             deliveryAddresses={userData?.userInfo?.deliveryAddresses}
             selectedCity={selectedCity}
+            thanas={thanas}
             selectedDeliveryType={selectedDeliveryType}
             shippingZones={shippingZones}
           />

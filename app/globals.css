@@ -217,17 +217,23 @@
     @apply mt-2.5 h-10 min-h-10 px-4 transition-[padding-left,padding-right,height,border-color] duration-300 ease-in-out [&:has(input:disabled)]:mt-0 [&:has(input:disabled)_[data-slot='inner-wrapper']>div]:hidden [&:has(input:disabled)_input]:mt-5 [&:has(input:disabled)_input]:rounded-[4px] [&:has(input:disabled)_input]:text-neutral-700 [&>div>button]:bg-transparent;
   }
 
+  .select-with-search-thana [data-slot="input-wrapper"] {
+    @apply mt-2.5 h-10 min-h-10 px-4 transition-[padding-left,padding-right,height,border-color] duration-300 ease-in-out [&:has(input:disabled)]:mt-2.5 [&:has(input:disabled)_[data-slot='inner-wrapper']>div]:hidden [&:has(input:disabled)_input]:mt-0 [&:has(input:disabled)_input]:rounded-[4px] [&:has(input:disabled)_input]:text-neutral-700 [&>div>button]:bg-transparent;
+  }
+
   .date-picker > div {
     @apply h-10 w-full rounded-[4px] border-2 border-neutral-200 bg-white/20 px-3 text-xs text-neutral-700 shadow-none outline-none backdrop-blur-2xl transition-[background-color,border-color,opacity] duration-300 ease-in-out placeholder:text-neutral-400 focus:border-[var(--color-primary-500)] focus:bg-white/75 md:text-[13px];
   }
 
   .select-with-search input,
+  .select-with-search-thana input,
   .select-without-search span[data-slot="value"],
   .date-picker > div {
     @apply text-xs font-semibold text-neutral-700 placeholder:text-neutral-500 md:text-[13px];
   }
 
   .select-with-search label,
+  .select-with-search-thana label,
   .select-without-search label {
     @apply top-[calc(50%-6px)] text-sm text-neutral-500 transition-[top] duration-300 ease-in-out after:content-[''] md:text-base;
   }

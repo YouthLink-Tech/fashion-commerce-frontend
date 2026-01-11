@@ -47,8 +47,8 @@ export default function CheckoutSelectDeliveryAddress({
                       onClick={() => {
                         reset({
                           addressLineOne: address.address1,
-                          addressLineTwo: address.address2,
                           city: address.city,
+                          thana: address.thana,
                           postalCode: address.postalCode,
                         });
                         setIsAddressModalOpen(false);
@@ -63,18 +63,18 @@ export default function CheckoutSelectDeliveryAddress({
                       <div className="space-y-6">
                         <div className="max-sm:space-y-4 sm:flex sm:gap-x-4">
                           <div className="w-full space-y-2 font-semibold">
-                            <h4>Address Line 1</h4>
+                            <h4>Detailed Address</h4>
                             <p>{address?.address1}</p>
-                          </div>
-                          <div className="w-full space-y-2 font-semibold">
-                            <h4>Address Line 2</h4>
-                            <p>{address?.address2 || "--"}</p>
                           </div>
                         </div>
                         <div className="max-sm:space-y-4 sm:flex sm:gap-x-4">
                           <div className="w-full space-y-2 font-semibold">
                             <h4>City</h4>
                             <p>{address?.city}</p>
+                          </div>
+                          <div className="w-full space-y-2 font-semibold">
+                            <h4>Thana</h4>
+                            <p>{address?.thana}</p>
                           </div>
                           <div className="w-full space-y-2 font-semibold">
                             <h4>Postal Code</h4>

@@ -13,22 +13,12 @@ export default function CheckoutConfirmation({
   isPaymentStepDone,
 }) {
   const [showConeftti, setShowConeftti] = useState(false);
-  const fullAddressLine =
-    orderDetails?.address1.trimEnd() +
-    (!orderDetails?.address2
-      ? ""
-      : (orderDetails?.address1.trimEnd().slice(-1) !== "," // If address line 1 doesn't have trailing comma
-          ? ", " // Add a space with comma
-          : " ") + // Add a space without comma
-        orderDetails?.address2);
-  const fullAddress =
-    fullAddressLine.trimEnd() +
-    (fullAddressLine.trimEnd().slice(-1) !== "," // If address line 1 doesn't have trailing comma
-      ? ", " // Add a space with comma
-      : " ") +
-    orderDetails?.postalCode +
-    " " +
-    orderDetails?.city;
+  const fullAddress = [
+    orderDetails?.address1?.trim(),
+    orderDetails?.thana?.trim(),
+    orderDetails?.city?.trim(),
+    orderDetails?.postalCode?.trim()
+  ].filter(Boolean).join(", ");
 
   useEffect(() => {
     if (isPaymentStepDone) {

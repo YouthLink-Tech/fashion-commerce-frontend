@@ -1,15 +1,6 @@
 export const cities = [
-  "Dhaka",
-  "Gazipur",
-  "Narayanganj",
-  "Savar",
-  "Nabinagar",
-  "Ashulia",
-  "Keraniganj",
-  "Tongi",
-  "St. Martin's",
-  "Hatiya",
-  "Sandwip",
+  "Dhaka Metro",
+  "Dhaka Suburb",
   "Bagerhat",
   "Bandarban",
   "Barguna",
@@ -27,6 +18,7 @@ export const cities = [
   "Faridpur",
   "Feni",
   "Gaibandha",
+  "Gazipur",
   "Gopalganj",
   "Habiganj",
   "Jamalpur",
@@ -73,19 +65,7 @@ export const cities = [
   "Thakurgaon",
 ];
 
-export const dhakaSuburbs = [
-  "Savar",
-  "Nabinagar",
-  "Ashulia",
-  "Keraniganj",
-  "Tongi",
-];
-
-export const hillTractsArea = [
-  "Rangamati",
-  "Khagrachari",
-  "Bandarban",
-  "Patuakhali",
-  "Barguna",
-  "Bhola",
-];
+export const thanaByCity = {
+  "Dhaka Metro": ["Dhanmondi", "Gulshan", "Mirpur", "Uttara"],
+  "Dhaka Suburb": ["Dhamrai", "Keraniganj", "Savar",],
+};

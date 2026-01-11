@@ -31,8 +31,8 @@ export default function DeliveryAddress({
     defaultValues: {
       nickname: "",
       address1: "",
-      address2: "",
       city: "",
+      thana: "",
       postalCode: "",
     },
     mode: "onBlur",
@@ -43,8 +43,8 @@ export default function DeliveryAddress({
       reset({
         nickname: "",
         address1: "",
-        address2: "",
         city: "",
+        thana: "",
         postalCode: "",
       });
     } else {
@@ -53,18 +53,18 @@ export default function DeliveryAddress({
           (address?.nickname || "") +
           (address?.isPrimary
             ? (!isEditingForm && !!address?.nickname ? " " : "") +
-              (isEditingForm ? "" : "(Primary)")
+            (isEditingForm ? "" : "(Primary)")
             : ""),
         address1: address?.address1,
-        address2: address?.address2 || (isEditingForm ? "" : "--"),
         city: address?.city,
+        thana: address?.thana,
         postalCode: address?.postalCode,
       });
     }
   }, [
     address?.address1,
-    address?.address2,
     address?.city,
+    address?.thana,
     address?.isPrimary,
     address?.nickname,
     address?.postalCode,
@@ -101,8 +101,6 @@ export default function DeliveryAddress({
     let updatedUserData;
     setIsPageLoading(true);
 
-    if (data.address2 === "--") data.address2 = "";
-
     if (type === "new") {
       updatedUserData = {
         ...userData,
@@ -114,8 +112,8 @@ export default function DeliveryAddress({
               id: `${userEmail}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
               nickname: data.nickname,
               address1: data.address1,
-              address2: data.address2,
               city: data.city,
+              thana: data.thana,
               postalCode: data.postalCode,
               isPrimary: isAddressListEmpty,
             },
@@ -126,8 +124,8 @@ export default function DeliveryAddress({
       if (
         address?.nickname === data.nickname &&
         address?.address1 === data.address1 &&
-        address?.address2 === data.address2 &&
         address?.city === data.city &&
+        address?.thana === data.thana &&
         address?.postalCode === data.postalCode
       ) {
         toast.error("Not saved as no changes were made.");
@@ -143,13 +141,13 @@ export default function DeliveryAddress({
             (availableAddress) =>
               availableAddress.id === address?.id
                 ? {
-                    ...availableAddress,
-                    nickname: data.nickname,
-                    address1: data.address1,
-                    address2: data.address2,
-                    city: data.city,
-                    postalCode: data.postalCode,
-                  }
+                  ...availableAddress,
+                  nickname: data.nickname,
+                  address1: data.address1,
+                  city: data.city,
+                  thana: data.thana,
+                  postalCode: data.postalCode,
+                }
                 : availableAddress,
           ),
         },
@@ -347,9 +345,9 @@ export default function DeliveryAddress({
       </div>
       <div className="space-y-8 max-lg:space-y-4">
         <div className="max-lg:space-y-4 lg:flex lg:gap-x-10">
-          {/* Address Line 1 Input with Label */}
+          {/* Detailed Address Input with Label */}
           <div className="w-full space-y-2 font-semibold">
-            <label htmlFor="address-one">Address Line 1</label>
+            <label htmlFor="address-one">Detailed Address</label>
             <input
               id="address-one"
               type="text"
@@ -358,29 +356,13 @@ export default function DeliveryAddress({
               {...register("address1", {
                 required: {
                   value: true,
-                  message: "Address line 1 is required.",
+                  message: "Detailed Address is required.",
                 },
               })}
             />
             {errors.address1 && (
               <p className="text-xs font-semibold text-red-500">
                 {errors.address1?.message}
-              </p>
-            )}
-          </div>
-          {/* Address Line 2 Input with Label */}
-          <div className="w-full space-y-2 font-semibold">
-            <label htmlFor="address-two">Address Line 2</label>
-            <input
-              id="address-two"
-              type="text"
-              readOnly={type === "update" && !isEditingForm}
-              placeholder="Dhanmondi, Dhaka 1209"
-              {...register("address2")}
-            />
-            {errors.address2 && (
-              <p className="text-xs font-semibold text-red-500">
-                {errors.address2?.message}
               </p>
             )}
           </div>

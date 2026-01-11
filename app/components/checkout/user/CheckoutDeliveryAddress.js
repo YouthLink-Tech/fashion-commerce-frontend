@@ -2,7 +2,6 @@ import { Controller } from "react-hook-form";
 import {
   Autocomplete,
   AutocompleteItem,
-  Checkbox,
   Tooltip,
 } from "@nextui-org/react";
 import { cities } from "@/app/data/cities";
@@ -16,6 +15,7 @@ export default function CheckoutDeliveryAddress({
   errors,
   deliveryAddresses,
   selectedCity,
+  thanas,
   selectedDeliveryType,
   shippingZones,
 }) {
@@ -33,7 +33,7 @@ export default function CheckoutDeliveryAddress({
       <div className="space-y-4">
         <div className="max-sm:space-y-4 sm:flex sm:gap-x-4">
           <div className="w-full space-y-2 font-semibold">
-            <label htmlFor="address-one">Address Line 1</label>
+            <label htmlFor="address-one">Detailed Address</label>
             <input
               id="address-one"
               type="text"
@@ -42,7 +42,7 @@ export default function CheckoutDeliveryAddress({
               {...register("addressLineOne", {
                 required: {
                   value: true,
-                  message: "Address line 1 is required.",
+                  message: "Detailed Address is required.",
                 },
               })}
               required
@@ -53,23 +53,6 @@ export default function CheckoutDeliveryAddress({
               </p>
             )}
           </div>
-          <div className="w-full space-y-2 font-semibold">
-            <label htmlFor="address-two">Address Line 2</label>
-            <input
-              id="address-two"
-              type="text"
-              {...register("addressLineTwo")}
-              className="h-10 w-full rounded-[4px] border-2 border-neutral-200 bg-white/20 px-3 text-xs text-neutral-700 outline-none backdrop-blur-2xl transition-[background-color,border-color] duration-300 ease-in-out placeholder:text-neutral-400 focus:border-[var(--color-secondary-500)] focus:bg-white/75 md:text-[13px]"
-              placeholder="Sector 50, Gulshan"
-            />
-            {errors.addressLineTwo && (
-              <p className="text-xs font-semibold text-red-500">
-                {errors.addressLineTwo?.message}
-              </p>
-            )}
-          </div>
-        </div>
-        <div className="max-sm:space-y-4 sm:flex sm:gap-x-4">
           <div className="w-full space-y-2 font-semibold">
             <Controller
               name="city"
@@ -100,6 +83,41 @@ export default function CheckoutDeliveryAddress({
             {errors.city && (
               <p className="text-xs font-semibold text-red-500">
                 {errors.city?.message}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="max-sm:space-y-4 sm:flex sm:gap-x-4">
+          <div className="w-full space-y-2 font-semibold">
+            <Controller
+              name="thana"
+              control={control}
+              rules={{
+                required: selectedCity ? "Thana is required." : false,
+              }}
+              render={({ field: { onChange, value } }) => (
+                <Autocomplete
+                  isDisabled={!selectedCity}
+                  isRequired={!!selectedCity}
+                  labelPlacement="outside"
+                  label="Thana"
+                  placeholder={selectedCity ? "Select thana" : "Select city first"}
+                  size="sm"
+                  variant="bordered"
+                  selectedKey={value}
+                  onSelectionChange={onChange}
+                  className={`select-with-search-thana [&:has(input:focus)_[data-slot='input-wrapper']]:border-[var(--color-secondary-500)] [&_[data-slot='input-wrapper']]:rounded-[4px] [&_[data-slot='input-wrapper']]:bg-white/20 [&_[data-slot='input-wrapper']]:hover:border-[var(--color-secondary-500)] [&_label]:!text-neutral-500 ${!selectedCity ? "pointer-events-none" : ""}`}
+                >
+                  {thanas.map((thana) => (
+                    <AutocompleteItem key={thana}>{thana}</AutocompleteItem>
+                  ))}
+                </Autocomplete>
+              )}
+            />
+
+            {errors.thana && (
+              <p className="text-xs font-semibold text-red-500">
+                {errors.thana.message}
               </p>
             )}
           </div>
@@ -143,7 +161,7 @@ export default function CheckoutDeliveryAddress({
             </p>
           )}
         </div>
-        {selectedCity === "Dhaka" && (
+        {selectedCity === "Dhaka Metro" && (
           <div className="w-full space-y-2 font-semibold">
             <p>Select Delivery Type</p>
             <div className="payment-methods max-sm:space-y-4 sm:flex sm:gap-x-4">
@@ -254,7 +272,7 @@ export default function CheckoutDeliveryAddress({
           </div>
         )}
         {!!selectedCity &&
-          (selectedCity !== "Dhaka" || !!selectedDeliveryType) && (
+          (selectedCity !== "Dhaka Metro" || !!selectedDeliveryType) && (
             <p className="text-xs lg:text-sm">
               After confirmation, you will get the delivery within{" "}
               {getEstimatedDeliveryTime(
@@ -263,7 +281,7 @@ export default function CheckoutDeliveryAddress({
                 shippingZones,
               )}{" "}
               {selectedDeliveryType === "EXPRESS" ? "hours" : "days"}
-              {selectedCity === "Dhaka" && selectedDeliveryType === "STANDARD"
+              {selectedCity === "Dhaka Metro" && selectedDeliveryType === "STANDARD"
                 ? " with FREE of charge"
                 : ""}
               .
