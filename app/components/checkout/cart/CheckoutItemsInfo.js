@@ -108,11 +108,11 @@ export default function CheckoutItemsInfo({
         </div>
       )}
       {!!selectedCity &&
-        (selectedCity !== "Dhaka" || !!selectedDeliveryType) && (
+        (selectedCity !== "Dhaka Metro" || !!selectedDeliveryType) && (
           <div>
             <h5 className="text-neutral-500">Shipping Charge</h5>
             <span>
-              {selectedCity === "Dhaka" &&
+              {selectedCity === "Dhaka Metro" &&
                 selectedDeliveryType === "STANDARD" ? (
                 <>
                   <span className="relative h-fit before:absolute before:-left-0.5 before:top-1/2 before:h-0.5 before:w-[calc(100%+4px)] before:bg-neutral-400 before:content-['']">{`৳ ${shippingCharge?.toLocaleString()}`}</span>
@@ -125,7 +125,7 @@ export default function CheckoutItemsInfo({
           </div>
         )}
       {!!selectedCity &&
-        (selectedCity !== "Dhaka" || !!selectedDeliveryType) && (
+        (selectedCity !== "Dhaka Metro" || !!selectedDeliveryType) && (
           <div className="text-sm text-neutral-700 md:text-base">
             <h5>Payable Amount</h5>
             <span>৳ {total.toLocaleString()}</span>
