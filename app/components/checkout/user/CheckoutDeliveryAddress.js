@@ -161,7 +161,7 @@ export default function CheckoutDeliveryAddress({
             </p>
           )}
         </div>
-        {selectedCity === "Dhaka Metro" && (
+        {selectedCity === "Dhaka City" && (
           <div className="w-full space-y-2 font-semibold">
             <p>Select Delivery Type</p>
             <div className="payment-methods max-sm:space-y-4 sm:flex sm:gap-x-4">
@@ -194,7 +194,7 @@ export default function CheckoutDeliveryAddress({
                 }}
                 shouldFlip
                 showArrow={true}
-                content={`After confirmation, you will get the delivery within ${getEstimatedDeliveryTime("Dhaka Metro", "STANDARD", shippingZones)} days with FREE of charge.`}
+                content={`After confirmation, you will get the delivery within ${getEstimatedDeliveryTime("Dhaka City", "STANDARD", shippingZones)} days with FREE of charge.`}
               >
                 <input
                   className="!h-12 before:border-2 before:!border-neutral-900 before:!bg-[#020202] before:grayscale before:invert before:backdrop-blur-2xl before:transition-all before:duration-300 before:ease-in-out checked:before:!bg-[#383804] checked:before:grayscale-0 hover:before:!border-transparent hover:before:!bg-[#383804] hover:before:grayscale-0"
@@ -243,7 +243,7 @@ export default function CheckoutDeliveryAddress({
                 }}
                 shouldFlip
                 showArrow={true}
-                content={`After confirmation, you will get the delivery within ${getEstimatedDeliveryTime("Dhaka Metro", "EXPRESS", shippingZones)} hours.`}
+                content={`After confirmation, you will get the delivery within ${getEstimatedDeliveryTime("Dhaka City", "EXPRESS", shippingZones)} hours.`}
               >
                 <input
                   className="!h-12 before:border-2 before:!border-neutral-900 before:!bg-[#020202] before:grayscale before:invert before:backdrop-blur-2xl before:transition-[background-color,filter] before:duration-300 before:ease-in-out checked:before:!bg-[#383804] checked:before:grayscale-0 hover:before:!border-transparent hover:before:!bg-[#383804] hover:before:grayscale-0"
@@ -272,7 +272,7 @@ export default function CheckoutDeliveryAddress({
           </div>
         )}
         {!!selectedCity &&
-          (selectedCity !== "Dhaka Metro" || !!selectedDeliveryType) && (
+          (selectedCity !== "Dhaka City" || !!selectedDeliveryType) && (
             <p className="text-xs lg:text-sm">
               After confirmation, you will get the delivery within{" "}
               {getEstimatedDeliveryTime(
@@ -281,7 +281,7 @@ export default function CheckoutDeliveryAddress({
                 shippingZones,
               )}{" "}
               {selectedDeliveryType === "EXPRESS" ? "hours" : "days"}
-              {selectedCity === "Dhaka Metro" && selectedDeliveryType === "STANDARD"
+              {selectedCity === "Dhaka City" && selectedDeliveryType === "STANDARD"
                 ? " with FREE of charge"
                 : ""}
               .

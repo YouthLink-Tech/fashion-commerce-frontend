@@ -225,7 +225,7 @@ export const calculateShippingCharge = (
   selectedDeliveryType,
   shippingZones,
 ) => {
-  if (!selectedCity || (selectedCity === "Dhaka" && !selectedDeliveryType)) {
+  if (!selectedCity || (selectedCity === "Dhaka City" && !selectedDeliveryType)) {
     return 0;
   }
 
@@ -254,7 +254,7 @@ export const getEstimatedDeliveryTime = (
   selectedDeliveryType,
   shippingZones,
 ) => {
-  if (!selectedCity || (selectedCity === "Dhaka" && !selectedDeliveryType)) {
+  if (!selectedCity || (selectedCity === "Dhaka City" && !selectedDeliveryType)) {
     return null;
   } else {
     const shippingZone = shippingZones?.find((shippingZone) =>

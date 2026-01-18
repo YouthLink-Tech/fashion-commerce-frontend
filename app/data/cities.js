@@ -12,8 +12,8 @@ export const cities = [
   "Chuadanga",
   "Cox's Bazar",
   "Cumilla",
-  "Dhaka Metro",
-  "Dhaka Suburb",
+  "Dhaka City",
+  "Dhaka Sub-Urban",
   "Dinajpur",
   "Faridpur",
   "Feni",
@@ -66,8 +66,8 @@ export const cities = [
 ];
 
 export const thanaByCity = {
-  "Dhaka Metro": ["Adabor", "Airport", "Ati Bazar (Keraniganj)", "Azompur", "Badda", "Banani", "Bongshal", "Bashundhara R/A", "Bhasantek", "Cantonment", "Chalkbazar", "Dakshin Khan", "Darus salam", "Demra", "Dhanmondi", "Gendaria", "Gulistan", "Gulshan", "Hatirjheel", "Hazaribag", "Jattrabari", "Kadamtali", "Kafrul", "Kalabagan", "Kamrangirchar", "Khilgaon", "Khilkhet", "Kotwali", "Lalbagh", "Mirpur", "Mohammadpur", "Motijheel", "Mugda", "New Market", "Pallabi", "Paltan", "Panthapath", "Purbachal", "Ramna", "Rampura", "Rupnagar", "Sabujbag", "Shah Ali", "Shah Ali Market", "Shahbag", "Shahjahanpur", "Sher-e-Bangla Nagar", "Shyampur", "Sutrapur", "Tejgaon", "Tejgaon Industrial Area", "Turag", "Uttara", "Uttarkhan", "Vasantek", "Vatara", "Wari"],
-  "Dhaka Suburb": ["Dhamrai", "Keraniganj", "Savar",],
+  "Dhaka City": ["Adabor", "Airport", "Ati Bazar (Keraniganj)", "Azompur", "Badda", "Banani", "Bongshal", "Bashundhara R/A", "Bhasantek", "Cantonment", "Chalkbazar", "Dakshin Khan", "Darus salam", "Demra", "Dhanmondi", "Gendaria", "Gulistan", "Gulshan", "Hatirjheel", "Hazaribag", "Jattrabari", "Kadamtali", "Kafrul", "Kalabagan", "Kamrangirchar", "Khilgaon", "Khilkhet", "Kotwali", "Lalbagh", "Mirpur", "Mohammadpur", "Motijheel", "Mugda", "New Market", "Pallabi", "Paltan", "Panthapath", "Purbachal", "Ramna", "Rampura", "Rupnagar", "Sabujbag", "Shah Ali", "Shah Ali Market", "Shahbag", "Shahjahanpur", "Sher-e-Bangla Nagar", "Shyampur", "Sutrapur", "Tejgaon", "Tejgaon Industrial Area", "Turag", "Uttara", "Uttarkhan", "Vasantek", "Vatara", "Wari"],
+  "Dhaka Sub-Urban": ["Ashulia", "Dhamrai", "Dohar", "Hemayetpur", "Keraniganj Model", "Nowabganj", "Savar", "South Keraniganj"],
   "Gazipur": ["Gazipur Sadar", "Tongi East", "Tongi West", "Konabari"],
   "Tangail": ["Tangail Sadar", "Mirzapur", "Nagarpur", "Kalihati"],
   "Kishoreganj": ["Kishoreganj Sadar", "Bhairab", "Kuliarchar", "Hossainpur"],
