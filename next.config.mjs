@@ -1,11 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: [
-      "i.ibb.co",
-      "i.ibb.co.com",
-      "storage.googleapis.com",
-      "media.poshax.shop",
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
     ],
   },
   reactStrictMode: false,
