@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { routeFetch } from "@/app/lib/fetcher/routeFetch";
 import { CgShoppingCart } from "react-icons/cg";
 import ProductToast from "@/app/components/toast/ProductToast";
+import * as fbq from "@/app/lib/fpixel";
 
 export default function ProductCartButton({
   userData,
@@ -60,6 +61,13 @@ export default function ProductCartButton({
     }
 
     localStorage.setItem("cartItems", JSON.stringify(updatedCart)); // Save item in local cart
+
+    // Trigger FB Pixel AddToCart
+    fbq.event("AddToCart", {
+      content_type: "product",
+      content_ids: [productId],
+      num_items: selectedOptions.quantity,
+    });
 
     // Save item in server cart, if user is logged in
     if (userData) {

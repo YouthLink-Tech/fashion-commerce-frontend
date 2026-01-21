@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { routeFetch } from "@/app/lib/fetcher/routeFetch";
 import TransitionLink from "../../ui/TransitionLink";
 import ProductToast from "@/app/components/toast/ProductToast";
+import * as fbq from "@/app/lib/fpixel";
 
 export default function CartModalButtons({
   userData,
@@ -64,6 +65,12 @@ export default function CartModalButtons({
     }
 
     localStorage.setItem("cartItems", JSON.stringify(updatedCart)); // Save item in local cart
+
+    fbq.event("AddToCart", {
+      content_type: "product",
+      content_ids: [productId],
+      num_items: selectedOptions.quantity,
+    });
 
     // Save item in server cart, if user is logged in
     if (userData) {

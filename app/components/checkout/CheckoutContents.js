@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import { routeFetch } from "@/app/lib/fetcher/routeFetch";
 import getImageSetsBasedOnColors from "@/app/utils/getImageSetsBasedOnColors";
@@ -8,6 +8,7 @@ import ProductToast from "../toast/ProductToast";
 import CheckoutConfirmation from "@/app/components/checkout/CheckoutConfirmation";
 import CheckoutForm from "./CheckoutForm";
 import CheckoutEmpty from "./CheckoutEmpty";
+import * as fbq from "@/app/lib/fpixel";
 
 export default function CheckoutContents({
   userData,
@@ -20,6 +21,9 @@ export default function CheckoutContents({
   const [cartItems, setCartItems] = useState(null);
   const [orderDetails, setOrderDetails] = useState(null);
   const [isPaymentStepDone, setIsPaymentStepDone] = useState(false);
+  const [resolvedCart, setResolvedCart] = useState([]);
+  const hasTrackedCheckout = useRef(false);
+  const hasTrackedPurchase = useRef(false);
 
   useEffect(() => {
     const handleStorageUpdate = () =>
@@ -140,6 +144,44 @@ export default function CheckoutContents({
     }
   }, [primaryLocation, productList, userData]);
 
+  useEffect(() => {
+    if (!cartItems?.length) return;
+    if (hasTrackedCheckout.current) return;
+
+    const content_ids = [...new Set(cartItems.map(item => item._id))];
+    const totalQuantity = cartItems.reduce((sum, i) => sum + i.selectedQuantity, 0);
+
+    fbq.event("InitiateCheckout", {
+      content_type: "product",
+      content_ids,
+      num_items: totalQuantity,
+    });
+
+    hasTrackedCheckout.current = true;
+  }, [cartItems]);
+
+  useEffect(() => {
+    if (!isPaymentStepDone || !orderDetails || !resolvedCart?.length) return;
+    if (hasTrackedPurchase.current) return;
+
+    const eventId = orderDetails.orderNumber;
+    const totalOrderPrice = orderDetails.totalAmount;
+
+    const contentIds = resolvedCart.map(item => item._id);
+    const totalQuantity = resolvedCart.reduce((sum, item) => sum + item.selectedQuantity, 0);
+
+    fbq.event("Purchase", {
+      event_id: eventId,
+      content_type: "product",
+      content_ids: contentIds,
+      num_items: totalQuantity,
+      value: totalOrderPrice,
+      currency: "BDT",
+    });
+
+    hasTrackedPurchase.current = true;
+  }, [isPaymentStepDone, orderDetails, resolvedCart]);
+
   if (isPaymentStepDone)
     return (
       <CheckoutConfirmation
@@ -166,7 +208,9 @@ export default function CheckoutContents({
           shippingZones={shippingZones}
           primaryLocation={primaryLocation}
           setIsPaymentStepDone={setIsPaymentStepDone}
+          setResolvedCart={setResolvedCart}
           cartItems={cartItems}
+          setCartItems={setCartItems}
           setOrderDetails={setOrderDetails}
           legalPolicyPdfLinks={legalPolicyPdfLinks}
         />

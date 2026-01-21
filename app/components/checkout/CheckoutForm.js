@@ -25,7 +25,9 @@ export default function CheckoutForm({
   shippingZones,
   primaryLocation,
   setIsPaymentStepDone,
+  setResolvedCart,
   cartItems,
+  setCartItems,
   setOrderDetails,
   legalPolicyPdfLinks,
 }) {
@@ -104,6 +106,8 @@ export default function CheckoutForm({
 
       if (result.ok) {
         const { orderNumber, totalAmount } = result.data;
+
+        setResolvedCart(cartItems);
 
         setOrderDetails({
           orderNumber,
@@ -192,6 +196,7 @@ export default function CheckoutForm({
         };
 
         try {
+          setCartItems([]);
           localStorage.removeItem("checkoutFormDraft");
           localStorage.removeItem("cartItems");
           window.dispatchEvent(new Event("storageCart"));

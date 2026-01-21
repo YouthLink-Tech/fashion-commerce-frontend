@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  calculateFinalPrice,
   checkIfSpecialOfferIsAvailable,
   getProductSpecialOffer,
 } from "@/app/utils/orderCalculations";
@@ -9,6 +10,7 @@ import getImageSetsBasedOnColors from "@/app/utils/getImageSetsBasedOnColors";
 import ProductImageGallery from "./ProductImageGallery";
 import ExpandedImagesModal from "../shared/ExpandedImageModal";
 import ProductInfo from "./ProductInfo";
+import * as fbq from "@/app/lib/fpixel";
 
 export default function ProductContents({
   userData,
@@ -34,6 +36,23 @@ export default function ProductContents({
     (imageSet) => imageSet?.color?._id === selectedOptions?.color?._id,
   );
   const activeImageUrl = activeImageSet?.images[activeImageIndex];
+  const hasTrackedViewContent = useRef(false);
+
+  useEffect(() => {
+    if (!product) return;
+    if (hasTrackedViewContent.current) return;
+
+    const finalPrice = calculateFinalPrice(product, specialOffers);
+
+    fbq.event("ViewContent", {
+      content_type: "product",
+      content_ids: [product._id],
+      value: finalPrice,
+      currency: "BDT",
+    });
+
+    hasTrackedViewContent.current = true;
+  }, [product, specialOffers]);
 
   useEffect(() => {
     if (!!product)
