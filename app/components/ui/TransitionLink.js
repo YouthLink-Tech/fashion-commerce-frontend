@@ -10,6 +10,7 @@ function TransitionLinkInner({
   href,
   hasDrawer,
   setIsDrawerOpen,
+  checkoutIntent = false,
   ...props
 }) {
   const router = useRouter();
@@ -19,6 +20,10 @@ function TransitionLinkInner({
 
   const handleTransition = (event) => {
     event.preventDefault();
+
+    if (checkoutIntent && href === "/checkout") {
+      sessionStorage.setItem("checkout_intent", "true");
+    }
 
     const filterParam = searchParams.get("filterBy");
     const isSamePage = !filterParam

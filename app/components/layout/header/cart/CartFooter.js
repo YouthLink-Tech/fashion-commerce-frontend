@@ -24,6 +24,7 @@ export default function CartFooter({ subtotal, setIsDropdownOpen }) {
         <TransitionLink
           href="/checkout"
           hasDrawer={true}
+          checkoutIntent={true}
           setIsDrawerOpen={setIsDropdownOpen}
           className="block w-full rounded-[4px] bg-[var(--color-secondary-500)] py-2.5 text-center text-sm transition-[background-color] duration-300 hover:bg-[var(--color-secondary-600)]"
         >

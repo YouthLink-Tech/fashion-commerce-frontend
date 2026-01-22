@@ -22,8 +22,13 @@ export default function CheckoutContents({
   const [orderDetails, setOrderDetails] = useState(null);
   const [isPaymentStepDone, setIsPaymentStepDone] = useState(false);
   const [resolvedCart, setResolvedCart] = useState([]);
-  const hasTrackedCheckout = useRef(false);
   const hasTrackedPurchase = useRef(false);
+
+  const buildCartSignature = (cartItems = []) =>
+    cartItems
+      .map(i => `${i._id}:${i.selectedQuantity}`)
+      .sort()
+      .join("|");
 
   useEffect(() => {
     const handleStorageUpdate = () =>
@@ -146,7 +151,14 @@ export default function CheckoutContents({
 
   useEffect(() => {
     if (!cartItems?.length) return;
-    if (hasTrackedCheckout.current) return;
+
+    const hasIntent = sessionStorage.getItem("checkout_intent");
+    if (!hasIntent) return;
+
+    const signature = buildCartSignature(cartItems);
+    const lastSignature = sessionStorage.getItem("checkout_cart_signature");
+
+    if (signature === lastSignature) return;
 
     const content_ids = [...new Set(cartItems.map(item => item._id))];
     const totalQuantity = cartItems.reduce((sum, i) => sum + i.selectedQuantity, 0);
@@ -157,7 +169,9 @@ export default function CheckoutContents({
       num_items: totalQuantity,
     });
 
-    hasTrackedCheckout.current = true;
+    sessionStorage.setItem("checkout_cart_signature", signature);
+    sessionStorage.removeItem("checkout_intent");
+
   }, [cartItems]);
 
   useEffect(() => {
