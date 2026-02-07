@@ -7,11 +7,7 @@ import { CgArrowUp } from "react-icons/cg";
 import circleWithStarShape from "@/public/shapes/circle-with-star.svg";
 import swirlyArrowShape from "@/public/shapes/swirly-arrow.svg";
 import swirlyScribbledArrowShape from "@/public/shapes/swirly-scribbled-arrow.svg";
-
-import dynamic from "next/dynamic";
-const RichTextRenderer = dynamic(() => import("../shared/RichTextRenderer"), {
-  ssr: false,
-});
+import RichTextRenderer from "../shared/RichTextRenderer";
 
 export default function StoryDetails({
   gsap,

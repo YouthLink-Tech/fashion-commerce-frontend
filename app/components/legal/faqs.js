@@ -1,11 +1,7 @@
 "use client";
 
 import { Accordion, AccordionItem } from "@nextui-org/react";
-import dynamic from "next/dynamic";
-
-const RichTextRenderer = dynamic(() => import("../shared/RichTextRenderer"), {
-  ssr: false,
-});
+import RichTextRenderer from "../shared/RichTextRenderer";
 
 export default function FAQs({ faqs }) {
   return (
