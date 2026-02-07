@@ -5,7 +5,11 @@ import customerServiceImg from "@/public/help-center/customer-service.svg";
 import { COMPANY_NAME } from "@/app/config/company";
 import FAQs from "@/app/components/legal/faqs";
 import TransitionLink from "@/app/components/ui/TransitionLink";
-import RichTextRenderer from "@/app/components/shared/RichTextRenderer";
+import dynamic from "next/dynamic";
+
+const RichTextRenderer = dynamic(() => import("@/app/components/shared/RichTextRenderer"), {
+  ssr: false,
+});
 
 export default async function HelpCenter() {
   let pageTitle, faqDescription, faqs;

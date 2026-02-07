@@ -1,6 +1,8 @@
-
-import RichTextRenderer from "../shared/RichTextRenderer";
 import FAQs from "./faqs";
+import dynamic from "next/dynamic";
+const RichTextRenderer = dynamic(() => import("../shared/RichTextRenderer"), {
+  ssr: false,
+});
 
 export default function LegalDoc({ pageTitle, docContent, faqs }) {
   return (

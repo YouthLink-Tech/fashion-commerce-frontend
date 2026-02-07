@@ -1,5 +1,8 @@
 import { useState } from "react";
-import RichTextRenderer from "../shared/RichTextRenderer";
+import dynamic from "next/dynamic";
+const RichTextRenderer = dynamic(() => import("../shared/RichTextRenderer"), {
+  ssr: false,
+});
 
 export default function ProductInfoDetails({ productInfoDetails }) {
   const [activeTabKey, setActiveTabKey] = useState("productDetails");
