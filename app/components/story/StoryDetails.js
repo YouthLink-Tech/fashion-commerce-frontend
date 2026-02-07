@@ -7,6 +7,7 @@ import { CgArrowUp } from "react-icons/cg";
 import circleWithStarShape from "@/public/shapes/circle-with-star.svg";
 import swirlyArrowShape from "@/public/shapes/swirly-arrow.svg";
 import swirlyScribbledArrowShape from "@/public/shapes/swirly-scribbled-arrow.svg";
+import RichTextRenderer from "../shared/RichTextRenderer";
 
 export default function StoryDetails({
   gsap,
@@ -159,10 +160,14 @@ export default function StoryDetails({
                 className={`quote relative max-w-2xl ${index % 2 === 0 ? "mr-auto text-left" : "ml-auto text-right"}`}
               >
                 {/* Quote */}
-                <div
+                {/* <div
                   dangerouslySetInnerHTML={{
                     __html: content.quote,
                   }}
+                  className="text-xl font-semibold text-neutral-600 sm:text-3xl [&_strong]:bg-[linear-gradient(to_right,#804D3A,#D86F4D,#F3A761)] [&_strong]:bg-clip-text [&_strong]:text-transparent"
+                /> */}
+                <RichTextRenderer
+                  content={content.quote}
                   className="text-xl font-semibold text-neutral-600 sm:text-3xl [&_strong]:bg-[linear-gradient(to_right,#804D3A,#D86F4D,#F3A761)] [&_strong]:bg-clip-text [&_strong]:text-transparent"
                 />
                 {/* Shape/SVG (swirly arrow) */}
@@ -191,9 +196,8 @@ export default function StoryDetails({
                     )}
                     {/* Video Element */}
                     <video
-                      className={`media-video relative h-full w-full rounded-md object-cover transition-opacity duration-300 ease-in-out ${
-                        videoLoaded[index] ? "opacity-100" : "opacity-0"
-                      }`}
+                      className={`media-video relative h-full w-full rounded-md object-cover transition-opacity duration-300 ease-in-out ${videoLoaded[index] ? "opacity-100" : "opacity-0"
+                        }`}
                       autoPlay
                       muted
                       loop

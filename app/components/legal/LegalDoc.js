@@ -1,3 +1,5 @@
+
+import RichTextRenderer from "../shared/RichTextRenderer";
 import FAQs from "./faqs";
 
 export default function LegalDoc({ pageTitle, docContent, faqs }) {
@@ -12,11 +14,12 @@ export default function LegalDoc({ pageTitle, docContent, faqs }) {
           className={`p-5 sm:p-7 xl:p-9 [&_:is(h2,h3):not(:first-child)]:mt-10 [&_:is(h2,h3)]:mb-2 [&_a]:text-[var(--color-primary-900)] [&_a]:underline [&_a]:underline-offset-2 [&_h2]:text-xl [&_h3]:text-lg [&_li:not(:last-child)]:mb-2 [&_p]:mb-4 [&_p]:text-justify [&_ul]:-mt-1 [&_ul]:mb-4 [&_ul]:ml-10 [&_ul]:list-disc ${!faqs?.length ? "[&_p:last-child]:mb-0" : "[&_p:last-child]:mb-10"}`}
         >
           {/* Texts */}
-          <div
+          {/* <div
             dangerouslySetInnerHTML={{
               __html: docContent,
             }}
-          ></div>
+          ></div> */}
+          <RichTextRenderer content={docContent} />
           {/* Accordions/FAQs (if any) */}
           {faqs?.length && <FAQs faqs={faqs} />}
         </section>

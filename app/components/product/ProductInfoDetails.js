@@ -1,4 +1,5 @@
 import { useState } from "react";
+import RichTextRenderer from "../shared/RichTextRenderer";
 
 export default function ProductInfoDetails({ productInfoDetails }) {
   const [activeTabKey, setActiveTabKey] = useState("productDetails");
@@ -30,10 +31,14 @@ export default function ProductInfoDetails({ productInfoDetails }) {
       </div>
       {/* Tab Details Section */}
       <div className="custom-desktop-scrollbar mx-auto min-h-0 w-full flex-1 space-y-3.5 overflow-y-auto">
-        <div
+        {/* <div
           className="custom-desktop-scrollbar list-none overflow-y-auto text-neutral-500 [&_:is(h1,h2,h3,h4,h5,h6)]:mb-2 [&_:is(h1,h2,h3,h4,h5,h6)]:font-semibold"
           dangerouslySetInnerHTML={{ __html: productInfoDetails[activeTabKey] }}
-        ></div>
+        ></div> */}
+        <RichTextRenderer
+          content={productInfoDetails[activeTabKey]}
+          className="custom-desktop-scrollbar list-none overflow-y-auto text-neutral-500 [&_:is(h1,h2,h3,h4,h5,h6)]:mb-2 [&_:is(h1,h2,h3,h4,h5,h6)]:font-semibold"
+        />
       </div>
     </section>
   );

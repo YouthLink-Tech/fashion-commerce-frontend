@@ -5,6 +5,7 @@ import customerServiceImg from "@/public/help-center/customer-service.svg";
 import { COMPANY_NAME } from "@/app/config/company";
 import FAQs from "@/app/components/legal/faqs";
 import TransitionLink from "@/app/components/ui/TransitionLink";
+import RichTextRenderer from "@/app/components/shared/RichTextRenderer";
 
 export default async function HelpCenter() {
   let pageTitle, faqDescription, faqs;
@@ -71,11 +72,12 @@ export default async function HelpCenter() {
               {pageTitle}
             </h2>
             {/* FAQ Description */}
-            <div
+            {/* <div
               dangerouslySetInnerHTML={{
                 __html: faqDescription,
               }}
-            ></div>
+            ></div> */}
+            <RichTextRenderer content={faqDescription} />
             {/* Accordions/FAQs */}
             <FAQs faqs={faqs} />
           </section>
