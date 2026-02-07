@@ -1,7 +1,7 @@
 "use client";
 import DOMPurify from "dompurify";
 
-const RichTextViewer = ({ content, className = "" }) => {
+const RichTextRenderer = ({ content, className = "" }) => {
   if (!content?.trim()) return null;
 
   const sanitized = DOMPurify.sanitize(content, {
@@ -29,4 +29,4 @@ const RichTextViewer = ({ content, className = "" }) => {
   );
 };
 
-export default RichTextViewer;
+export default RichTextRenderer;
