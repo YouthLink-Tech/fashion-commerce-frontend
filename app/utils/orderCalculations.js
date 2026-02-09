@@ -125,7 +125,9 @@ export const calculateSubtotal = (productList, cartItems, specialOffers) => {
     const product = productList?.find(
       (product) => product._id === cartItem?._id,
     );
-    const quantity = cartItem?.selectedQuantity || 0;
+
+    const quantity = Number(cartItem?.selectedQuantity);
+
     return calculateFinalPrice(product, specialOffers) * quantity + accumulator;
   }, 0);
 
@@ -152,8 +154,12 @@ export const calculatePromoDiscount = (
   if (userPromoCode?.promoDiscountType === "Amount") {
     promoDiscount = promoDiscountValue;
   } else {
+
+    const subtotal = calculateSubtotal(productList, cartItems);
+    if (!Number.isFinite(subtotal)) return 0;
+
     promoDiscount =
-      (promoDiscountValue / 100) * calculateSubtotal(productList, cartItems);
+      (promoDiscountValue / 100) * subtotal;
   }
 
   const promoMaxAmount = userPromoCode?.maxAmount || 0;
@@ -171,7 +177,9 @@ export const calculateProductSpecialOfferDiscount = (
   specialOffer,
 ) => {
   const regularPrice = product?.regularPrice || 0;
-  const quantity = cartItem?.selectedQuantity || 0;
+
+  const quantity = Number(cartItem?.selectedQuantity);
+
   const totalProductPrice = regularPrice * quantity;
   const offerDiscountValue = specialOffer?.offerDiscountValue || 0;
 

@@ -39,8 +39,8 @@ export default function ProductSizeGuideButton({ sizeGuideImageUrl }) {
               <ModalHeader>SIZE GUIDE</ModalHeader>
               <ModalBody className="-mt-5">
                 <p className="mb-5 text-sm text-neutral-500">
-                  Lorem ipsum dolor, sit amet consectetur adipisicing elit. Enim
-                  ullam aliquid consequatur.
+                  Compare your body measurements with the chart below for an accurate fit.
+                  Allow a small margin for manual measurement differences.
                 </p>
                 <div className="relative h-auto min-h-[20svh] w-full sm:min-h-[25svh] xl:min-h-[33.33svh]">
                   <Skeleton className="absolute inset-0 z-[0] h-full w-full rounded-md" />
