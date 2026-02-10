@@ -18,7 +18,7 @@ export default function ProductToast({
   const [marginTop, setMarginTop] = useState(0);
   const toastRef = useRef(null);
 
-  console.log("variantColors", variantColors);
+  // console.log("variantColors", variantColors);
 
   // Scroll listener to update marginTop
   useEffect(() => {

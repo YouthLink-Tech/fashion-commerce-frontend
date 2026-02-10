@@ -1,34 +1,50 @@
-import { cookies } from "next/headers";
+// import { cookies } from "next/headers";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { rawFetch } from "../lib/fetcher/rawFetch";
 
+let refreshPromise = null;
+
 const refreshAccessToken = async (token) => {
+  if (!token.refreshToken) {
+    throw new Error("Missing refresh token");
+  }
+
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      const result = await rawFetch("/api/customer/refresh-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          refreshToken: token.refreshToken,
+        }),
+      });
+
+      if (!result.ok) {
+        throw new Error("Failed to refresh access token");
+      }
+
+      return {
+        accessToken: result.data.accessToken,
+        accessTokenExpires: Date.now() + 10 * 1000,
+      };
+    })();
+  }
+
   try {
-    const result = await rawFetch("/api/customer/refresh-token", {
-      method: "POST",
-      headers: { Cookie: cookies().toString() },
-    });
-
-    if (!result.ok)
-      throw new Error(result.message || "Failed to refresh access token.");
-
-    const newAccessToken = result.data.accessToken;
-
-    if (!newAccessToken)
-      throw new Error("Failed to generate new access token.");
-
+    const refreshed = await refreshPromise;
     return {
       ...token,
-      accessToken: newAccessToken,
-      accessTokenExpires: Date.now() + 5 * 60 * 1000, // 5 minutes
+      ...refreshed,
       error: undefined,
     };
-  } catch (error) {
-    console.error(
-      `RefreshTokenError (authOptions/refreshAccessToken): ${error.message || "Failed to refresh access token."}`,
-    );
-    throw new Error(error.message);
+  } catch (err) {
+    return {
+      ...token,
+      error: "RefreshAccessTokenError",
+    };
+  } finally {
+    refreshPromise = null;
   }
 };
 
@@ -115,36 +131,57 @@ export const authOptions = {
 
           const userData = result.data;
 
-          cookies().set("refreshToken", userData.refreshToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "None",
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-          });
+          // cookies().set("refreshToken", userData.refreshToken, {
+          //   httpOnly: true,
+          //   secure: true,
+          //   sameSite: "None",
+          //   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+          // });
 
           token._id = userData._id;
           token.email = userData.email;
           token.accessToken = userData.accessToken;
-          token.accessTokenExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
+          token.refreshToken = userData.refreshToken;
+          token.accessTokenExpires = Date.now() + 10 * 1000; // 5 minutes
 
           return token;
         } catch (error) {
           console.error(
             `TokenError (authOptions/callbacks/jwt): ${error.message || "Failed to generate customer tokens."}`,
           );
-          throw new Error(error.message);
+          // throw new Error(error.message);
+          return {
+            ...token,
+            error: "RefreshAccessTokenError",
+          };
         }
       }
 
       // Return previous token if the access token has not expired yet
-      if (Date.now() < token.accessTokenExpires) {
+      if (token.accessToken && Date.now() < token.accessTokenExpires) {
         return token;
       }
 
-      // Access token has expired, try to update it
-      return refreshAccessToken(token);
+      // expired — refresh
+      const refreshedToken = await refreshAccessToken(token);
+
+      // 🔥 GUARANTEE
+      if (!refreshedToken.accessToken) {
+        return {
+          ...token,
+          error: "AccessTokenMissingAfterRefresh",
+        };
+      }
+
+      return refreshedToken;
     },
     async session({ session, token }) {
+
+      if (!token.accessToken) {
+        session.error = "UNAUTHORIZED";
+        return session;
+      }
+
       session.user._id = token._id;
       session.user.email = token.email;
       session.accessToken = token.accessToken;
