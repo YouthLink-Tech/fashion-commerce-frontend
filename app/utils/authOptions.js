@@ -1,27 +1,44 @@
-import { cookies } from "next/headers";
+// import { cookies } from "next/headers";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { rawFetch } from "../lib/fetcher/rawFetch";
 
+let refreshPromise = null;
+
 const refreshAccessToken = async (token) => {
+  if (!token.refreshToken) {
+    throw new Error("Missing refresh token");
+  }
+
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      const result = await rawFetch("/api/user-access/refresh-token-frontend", {
+        method: "POST",
+        body: JSON.stringify({
+          refreshToken: token.refreshToken,
+        }),
+      });
+
+      if (!result.ok)
+        throw new Error(result.message || "Failed to refresh access token.");
+
+      const newAccessToken = result.data.accessToken;
+
+      if (!newAccessToken)
+        throw new Error("Failed to generate new access token.");
+
+      return {
+        accessToken: newAccessToken,
+        accessTokenExpires: Date.now() + 5 * 60 * 1000, // 5 minutes
+      };
+    })();
+  }
+
   try {
-    const result = await rawFetch("/api/user-access/refresh-token-frontend", {
-      method: "POST",
-      headers: { Cookie: cookies().toString() },
-    });
-
-    if (!result.ok)
-      throw new Error(result.message || "Failed to refresh access token.");
-
-    const newAccessToken = result.data.accessToken;
-
-    if (!newAccessToken)
-      throw new Error("Failed to generate new access token.");
-
+    const refreshed = await refreshPromise;
     return {
       ...token,
-      accessToken: newAccessToken,
-      accessTokenExpires: Date.now() + 5 * 60 * 1000, // 5 minutes
+      ...refreshed,
       error: undefined,
     };
   } catch (error) {
@@ -29,8 +46,41 @@ const refreshAccessToken = async (token) => {
       `RefreshTokenError (authOptions/refreshAccessToken): ${error.message || "Failed to refresh access token."}`,
     );
     throw new Error(error.message);
+  } finally {
+    refreshPromise = null;
   }
 };
+
+// const refreshAccessToken = async (token) => {
+//   try {
+//     const result = await rawFetch("/api/user-access/refresh-token-frontend", {
+//       method: "POST",
+//       body: JSON.stringify({
+//         refreshToken: token.refreshToken,
+//       }),
+//     });
+
+//     if (!result.ok)
+//       throw new Error(result.message || "Failed to refresh access token.");
+
+//     const newAccessToken = result.data.accessToken;
+
+//     if (!newAccessToken)
+//       throw new Error("Failed to generate new access token.");
+
+//     return {
+//       ...token,
+//       accessToken: newAccessToken,
+//       accessTokenExpires: Date.now() + 5 * 60 * 1000, // 5 minutes
+//       error: undefined,
+//     };
+//   } catch (error) {
+//     console.error(
+//       `RefreshTokenError (authOptions/refreshAccessToken): ${error.message || "Failed to refresh access token."}`,
+//     );
+//     throw new Error(error.message);
+//   }
+// };
 
 export const authOptions = {
   providers: [
@@ -115,16 +165,17 @@ export const authOptions = {
 
           const userData = result.data;
 
-          cookies().set("refreshToken", userData.refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-          });
+          // cookies().set("refreshToken", userData.refreshToken, {
+          //   httpOnly: true,
+          //   secure: true,
+          //   sameSite: "None",
+          //   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+          // });
 
           token._id = userData._id;
           token.email = userData.email;
           token.accessToken = userData.accessToken;
+          token.refreshToken = userData.refreshToken;
           token.accessTokenExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
 
           return token;
@@ -136,8 +187,8 @@ export const authOptions = {
         }
       }
 
-      // Return previous token if the access token has not expired yet
-      if (Date.now() < token.accessTokenExpires) {
+      // If token still valid
+      if (token.accessToken && Date.now() < token.accessTokenExpires) {
         return token;
       }
 
