@@ -26,7 +26,7 @@ const refreshAccessToken = async (token) => {
 
       return {
         accessToken: result.data.accessToken,
-        accessTokenExpires: Date.now() + 10 * 1000,
+        accessTokenExpires: Date.now() + 5 * 60 * 1000,
       };
     })();
   }
@@ -142,7 +142,7 @@ export const authOptions = {
           token.email = userData.email;
           token.accessToken = userData.accessToken;
           token.refreshToken = userData.refreshToken;
-          token.accessTokenExpires = Date.now() + 10 * 1000; // 5 minutes
+          token.accessTokenExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
 
           return token;
         } catch (error) {
