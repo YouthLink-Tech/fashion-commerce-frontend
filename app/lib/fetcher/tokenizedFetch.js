@@ -10,13 +10,13 @@ export const tokenizedFetch = async (path, options = {}) => {
       "UnauthorizedError (tokenizedFetch/window): Forbidden in client-side.",
     );
 
-  const session = await getServerSession(authOptions);
+  // const session = await getServerSession(authOptions);
 
-  if (!session?.accessToken) {
-    throw new Error(
-      "UnauthorizedError (tokenizedFetch/sessionAccessToken): Access token unavailable inside session.",
-    );
-  }
+  // if (!session?.accessToken) {
+  //   throw new Error(
+  //     "UnauthorizedError (tokenizedFetch/sessionAccessToken): Access token unavailable inside session.",
+  //   );
+  // }
 
   const method = (options.method || "GET").toUpperCase();
   const isGetMethod = method === "GET";
@@ -24,27 +24,49 @@ export const tokenizedFetch = async (path, options = {}) => {
     options.cache === "force-cache" ||
     (options.next && "revalidate" in options.next);
 
-  const headers = {
-    ...(options.headers || {}),
-    "x-client-origin": FRONTEND_URL,
-    Authorization: `Bearer ${session.accessToken}`,
+  const makeRequest = async (accessToken) => {
+    const headers = {
+      ...(options.headers || {}),
+      "x-client-origin": FRONTEND_URL,
+      Authorization: `Bearer ${accessToken}`,
+    };
+
+    const isFormData = options.body instanceof FormData;
+    const isContentTypeNotSet =
+      !headers["Content-Type"] && !headers["content-type"];
+
+    if (options.body && !isFormData && isContentTypeNotSet) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    return fetch(`${BACKEND_URL}${path}`, {
+      ...options,
+      method,
+      headers,
+      ...(isGetMethod && !hasCustomCache && { cache: "no-store" }),
+      credentials: "include", // ensure httpOnly cookie is sent
+    });
   };
 
-  const isFormData = options.body instanceof FormData;
-  const isContentTypeNotSet =
-    !headers["Content-Type"] && !headers["content-type"];
+  // FIRST SESSION CHECK
+  let session = await getServerSession(authOptions);
 
-  if (options.body && !isFormData && isContentTypeNotSet) {
-    headers["Content-Type"] = "application/json";
+  if (!session?.accessToken) {
+    throw new Error("SESSION_EXPIRED");
   }
 
-  const res = await fetch(`${BACKEND_URL}${path}`, {
-    ...options,
-    method,
-    headers,
-    ...(isGetMethod && !hasCustomCache && { cache: "no-store" }),
-    credentials: "include", // ensure httpOnly cookie is sent
-  });
+  let res = await makeRequest(session.accessToken);
+
+  // Retry once if token expired (401)
+  if (res.status === 401) {
+    session = await getServerSession(authOptions);
+
+    if (!session?.accessToken) {
+      throw new Error("SESSION_EXPIRED");
+    }
+
+    res = await makeRequest(session.accessToken);
+  }
 
   return handleResponse(res);
 };
