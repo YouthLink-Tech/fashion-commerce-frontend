@@ -6,11 +6,17 @@ import { rawFetch } from "../lib/fetcher/rawFetch";
 let refreshPromise = null;
 
 const refreshAccessToken = async (token) => {
+
+  console.log(">>> REFRESH ACCESS TOKEN CALLED");
+  console.log("TIME:", Date.now());
+
   if (!token.refreshToken) {
+    console.log("NO REFRESH TOKEN FOUND");
     throw new Error("Missing refresh token");
   }
 
   if (!refreshPromise) {
+    console.log("CREATING NEW REFRESH PROMISE");
     refreshPromise = (async () => {
       const result = await rawFetch("/api/customer/refresh-token", {
         method: "POST",
@@ -20,7 +26,10 @@ const refreshAccessToken = async (token) => {
         }),
       });
 
+      console.log("REFRESH RESPONSE:", result);
+
       if (!result.ok) {
+        console.log("REFRESH FAILED");
         throw new Error("Failed to refresh access token");
       }
 
@@ -116,6 +125,18 @@ export const authOptions = {
   ],
   callbacks: {
     async jwt({ token, user, account }) {
+
+      console.log("=== JWT CALLBACK ===");
+      console.log("NOW:", Date.now());
+      console.log("TOKEN EXPIRES:", token.accessTokenExpires);
+
+      if (token.accessTokenExpires) {
+        console.log(
+          "IS EXPIRED:",
+          Date.now() > token.accessTokenExpires
+        );
+      }
+
       // Initial sign in
       if (user && account) {
         try {
@@ -157,15 +178,20 @@ export const authOptions = {
         }
       }
 
-      const REFRESH_BUFFER = 30 * 1000; // 30 seconds
+      const REFRESH_BUFFER = 60 * 1000; // 60 seconds
 
       // Return previous token if the access token has not expired yet
       if (token.accessToken && Date.now() < token.accessTokenExpires - REFRESH_BUFFER) {
+        console.log("TOKEN STILL VALID - RETURNING OLD TOKEN");
         return token;
       }
 
+      console.log("TOKEN EXPIRED - REFRESHING");
       // expired — refresh
       const refreshedToken = await refreshAccessToken(token);
+
+      console.log("REFRESH COMPLETE");
+      console.log("NEW EXPIRY:", refreshedToken.accessTokenExpires);
 
       // 🔥 GUARANTEE
       if (!refreshedToken.accessToken) {
