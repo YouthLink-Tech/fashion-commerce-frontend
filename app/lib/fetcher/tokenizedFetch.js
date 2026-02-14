@@ -12,11 +12,10 @@ export const tokenizedFetch = async (path, options = {}) => {
 
   const session = await getServerSession(authOptions);
 
-  if (!session?.accessToken) {
-    console.log("NO ACCESS TOKEN - SESSION EXPIRED");
-    throw new Error(
-      "UnauthorizedError (tokenizedFetch/sessionAccessToken): Access token unavailable inside session.",
-    );
+  if (!session?.accessToken || session.error) {
+    console.warn(`TokenizedFetchWarning: ${session?.error || "No access token"}`);
+    // returning null so server page can handle redirection
+    return null;
   }
 
   const method = (options.method || "GET").toUpperCase();

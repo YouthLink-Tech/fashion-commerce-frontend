@@ -22,6 +22,10 @@ const refreshAccessToken = async (token) => {
       const accessToken = result.data.accessToken;
       const decoded = jwtDecode(accessToken);
 
+      if (!decoded?.exp) {
+        throw new Error("Access token missing exp");
+      }
+
       return {
         accessToken: accessToken,
         accessTokenExpires: decoded.exp * 1000,
@@ -138,6 +142,10 @@ export const authOptions = {
 
           const decoded = jwtDecode(userData.accessToken);
 
+          if (!decoded?.exp) {
+            throw new Error("Access token missing exp");
+          }
+
           token._id = userData._id;
           token.email = userData.email;
           token.accessToken = userData.accessToken;
@@ -148,10 +156,9 @@ export const authOptions = {
           console.error(
             `TokenError (authOptions/callbacks/jwt): ${error.message || "Failed to generate customer tokens."}`,
           );
-          // throw new Error(error.message);
           return {
             ...token,
-            error: "RefreshAccessTokenError",
+            error: error.message || "TokenGenerationFailed",
           };
         }
       }
@@ -163,10 +170,10 @@ export const authOptions = {
         return token;
       }
 
-      // expired — refresh
+      // expired, so refresh
       const refreshedToken = await refreshAccessToken(token);
 
-      // 🔥 GUARANTEE
+      // Guarantee block for access token
       if (!refreshedToken.accessToken) {
         return {
           ...token,
@@ -177,17 +184,11 @@ export const authOptions = {
       return refreshedToken;
     },
     async session({ session, token }) {
-
-      if (!token.accessToken) {
-        session.error = "UNAUTHORIZED";
-        return session;
-      }
-
-      session.user._id = token._id;
-      session.user.email = token.email;
-      session.accessToken = token.accessToken;
-      session.error = token.error;
-
+      session.user = session.user || {};
+      session.user._id = token._id || null;
+      session.user.email = token.email || null;
+      session.accessToken = token.accessToken || null;
+      session.error = token.error || null;
       return session;
     },
   },
