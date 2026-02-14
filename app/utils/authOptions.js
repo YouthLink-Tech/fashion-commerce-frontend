@@ -1,46 +1,57 @@
-import { cookies } from "next/headers";
+// import { cookies } from "next/headers";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { rawFetch } from "../lib/fetcher/rawFetch";
 
 let refreshPromise = null;
 
-const refreshAccessToken = async () => {
+const refreshAccessToken = async (token) => {
 
   console.log(">>> REFRESH ACCESS TOKEN CALLED");
   console.log("TIME:", Date.now());
+
+  if (!token.refreshToken) {
+    console.log("NO REFRESH TOKEN FOUND");
+    throw new Error("Missing refresh token");
+  }
 
   if (!refreshPromise) {
     console.log("CREATING NEW REFRESH PROMISE");
     refreshPromise = (async () => {
       const result = await rawFetch("/api/customer/refresh-token", {
         method: "POST",
-        headers: { Cookie: cookies().toString() },
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          refreshToken: token.refreshToken,
+        }),
       });
 
       console.log("REFRESH RESPONSE:", result);
 
       if (!result.ok) {
         console.log("REFRESH FAILED");
-        throw new Error(result.message || "Failed to refresh access token");
+        throw new Error("Failed to refresh access token");
       }
 
-      const accessToken = result.data.accessToken;
-
-      // Safe decoding of JWT payload
-      const base64Url = accessToken.split(".")[1];
-      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-      const decoded = JSON.parse(Buffer.from(base64, "base64").toString());
-
       return {
-        accessToken: accessToken,
-        accessTokenExpires: decoded.exp * 1000,
+        accessToken: result.data.accessToken,
+        accessTokenExpires: Date.now() + 15 * 60 * 1000,
       };
     })();
   }
 
   try {
-    return await refreshPromise;
+    const refreshed = await refreshPromise;
+    return {
+      ...token,
+      ...refreshed,
+      error: undefined,
+    };
+  } catch (err) {
+    return {
+      ...token,
+      error: "RefreshAccessTokenError",
+    };
   } finally {
     refreshPromise = null;
   }
@@ -141,22 +152,18 @@ export const authOptions = {
 
           const userData = result.data;
 
-          cookies().set("refreshToken", userData.refreshToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "None",
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-          });
-
-          // Safe decoding of JWT payload
-          const base64Url = userData.accessToken.split(".")[1];
-          const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-          const decoded = JSON.parse(Buffer.from(base64, "base64").toString());
+          // cookies().set("refreshToken", userData.refreshToken, {
+          //   httpOnly: true,
+          //   secure: true,
+          //   sameSite: "None",
+          //   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+          // });
 
           token._id = userData._id;
           token.email = userData.email;
           token.accessToken = userData.accessToken;
-          token.accessTokenExpires = decoded.exp * 1000;
+          token.refreshToken = userData.refreshToken;
+          token.accessTokenExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
 
           return token;
         } catch (error) {
@@ -165,9 +172,7 @@ export const authOptions = {
           );
           // throw new Error(error.message);
           return {
-            // ...token,
-            accessToken: undefined,
-            accessTokenExpires: 0,
+            ...token,
             error: "RefreshAccessTokenError",
           };
         }
@@ -188,13 +193,11 @@ export const authOptions = {
       console.log("REFRESH COMPLETE");
       console.log("NEW EXPIRY:", refreshedToken.accessTokenExpires);
 
-      // GUARANTEE
+      // 🔥 GUARANTEE
       if (!refreshedToken.accessToken) {
         return {
-          error: "RefreshAccessTokenError",
-          accessToken: undefined,
-          refreshToken: undefined,
-          accessTokenExpires: 0,
+          ...token,
+          error: "AccessTokenMissingAfterRefresh",
         };
       }
 
@@ -202,9 +205,8 @@ export const authOptions = {
     },
     async session({ session, token }) {
 
-      if (!token.accessToken || token.error) {
-        session.error = token.error || "UNAUTHORIZED";
-        session.accessToken = undefined;
+      if (!token.accessToken) {
+        session.error = "UNAUTHORIZED";
         return session;
       }
 
@@ -218,4 +220,4 @@ export const authOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
   session: { strategy: "jwt" },
-};
+}

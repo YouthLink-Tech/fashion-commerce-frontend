@@ -19,20 +19,12 @@ export const tokenizedFetch = async (path, options = {}) => {
   console.log("SESSION EXISTS:", !!session);
   console.log("ACCESS TOKEN EXISTS:", !!session?.accessToken);
 
-  if (!session || session.error) {
-    throw new Error("SessionExpired");
+  if (!session?.accessToken) {
+    console.log("NO ACCESS TOKEN - SESSION EXPIRED");
+    throw new Error(
+      "UnauthorizedError (tokenizedFetch/sessionAccessToken): Access token unavailable inside session.",
+    );
   }
-
-  if (!session.accessToken) {
-    throw new Error("Unauthorized");
-  }
-
-  // if (!session?.accessToken) {
-  //   console.log("NO ACCESS TOKEN - SESSION EXPIRED");
-  //   throw new Error(
-  //     "UnauthorizedError (tokenizedFetch/sessionAccessToken): Access token unavailable inside session.",
-  //   );
-  // }
 
   const method = (options.method || "GET").toUpperCase();
   const isGetMethod = method === "GET";
