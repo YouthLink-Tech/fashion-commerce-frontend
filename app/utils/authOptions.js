@@ -1,7 +1,8 @@
-// import { cookies } from "next/headers";
+import { cookies } from "next/headers";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { rawFetch } from "../lib/fetcher/rawFetch";
+import { jwtDecode } from "jwt-decode";
 
 let refreshPromise = null;
 
@@ -10,20 +11,17 @@ const refreshAccessToken = async (token) => {
   console.log(">>> REFRESH ACCESS TOKEN CALLED");
   console.log("TIME:", Date.now());
 
-  if (!token.refreshToken) {
-    console.log("NO REFRESH TOKEN FOUND");
-    throw new Error("Missing refresh token");
-  }
+  // if (!token.refreshToken) {
+  //   console.log("NO REFRESH TOKEN FOUND");
+  //   throw new Error("Missing refresh token");
+  // }
 
   if (!refreshPromise) {
     console.log("CREATING NEW REFRESH PROMISE");
     refreshPromise = (async () => {
       const result = await rawFetch("/api/customer/refresh-token", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          refreshToken: token.refreshToken,
-        }),
+        headers: { Cookie: cookies().toString() },
       });
 
       console.log("REFRESH RESPONSE:", result);
@@ -33,9 +31,15 @@ const refreshAccessToken = async (token) => {
         throw new Error("Failed to refresh access token");
       }
 
+      const accessToken = result.data.accessToken;
+
+      const decoded = jwtDecode(accessToken);
+      console.log(decoded, "decoded");
+
+
       return {
-        accessToken: result.data.accessToken,
-        accessTokenExpires: Date.now() + 15 * 60 * 1000,
+        accessToken: accessToken,
+        accessTokenExpires: decoded.exp * 1000,
       };
     })();
   }
@@ -152,18 +156,21 @@ export const authOptions = {
 
           const userData = result.data;
 
-          // cookies().set("refreshToken", userData.refreshToken, {
-          //   httpOnly: true,
-          //   secure: true,
-          //   sameSite: "None",
-          //   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-          // });
+          cookies().set("refreshToken", userData.refreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "None",
+            maxAge: 7 * 24 * 60 * 60, // 7 days
+          });
+
+          const decoded = jwtDecode(userData.accessToken);
+          console.log(decoded, "decoded2");
 
           token._id = userData._id;
           token.email = userData.email;
           token.accessToken = userData.accessToken;
-          token.refreshToken = userData.refreshToken;
-          token.accessTokenExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
+          // token.refreshToken = userData.refreshToken;
+          token.accessTokenExpires = decoded.exp * 1000; // 15 minutes
 
           return token;
         } catch (error) {
@@ -178,7 +185,7 @@ export const authOptions = {
         }
       }
 
-      const REFRESH_BUFFER = 60 * 1000; // 60 seconds
+      const REFRESH_BUFFER = 10 * 1000; // 60 seconds
 
       // Return previous token if the access token has not expired yet
       if (token.accessToken && Date.now() < token.accessTokenExpires - REFRESH_BUFFER) {
