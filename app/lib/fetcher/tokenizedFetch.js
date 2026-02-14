@@ -10,14 +10,7 @@ export const tokenizedFetch = async (path, options = {}) => {
       "UnauthorizedError (tokenizedFetch/window): Forbidden in client-side.",
     );
 
-  console.log("----- TOKENIZED FETCH START -----");
-  console.log("PATH:", path);
-  console.log("TIME:", Date.now());
-
   const session = await getServerSession(authOptions);
-
-  console.log("SESSION EXISTS:", !!session);
-  console.log("ACCESS TOKEN EXISTS:", !!session?.accessToken);
 
   if (!session?.accessToken) {
     console.log("NO ACCESS TOKEN - SESSION EXPIRED");
@@ -53,9 +46,6 @@ export const tokenizedFetch = async (path, options = {}) => {
     ...(isGetMethod && !hasCustomCache && { cache: "no-store" }),
     credentials: "include", // ensure httpOnly cookie is sent
   });
-
-  console.log("BACKEND RESPONSE STATUS:", res.status);
-  console.log("----- TOKENIZED FETCH END -----");
 
   return handleResponse(res);
 };

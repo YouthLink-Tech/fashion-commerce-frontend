@@ -8,34 +8,19 @@ let refreshPromise = null;
 
 const refreshAccessToken = async (token) => {
 
-  console.log(">>> REFRESH ACCESS TOKEN CALLED");
-  console.log("TIME:", Date.now());
-
-  // if (!token.refreshToken) {
-  //   console.log("NO REFRESH TOKEN FOUND");
-  //   throw new Error("Missing refresh token");
-  // }
-
   if (!refreshPromise) {
-    console.log("CREATING NEW REFRESH PROMISE");
     refreshPromise = (async () => {
       const result = await rawFetch("/api/customer/refresh-token", {
         method: "POST",
         headers: { Cookie: cookies().toString() },
       });
 
-      console.log("REFRESH RESPONSE:", result);
-
       if (!result.ok) {
-        console.log("REFRESH FAILED");
         throw new Error("Failed to refresh access token");
       }
 
       const accessToken = result.data.accessToken;
-
       const decoded = jwtDecode(accessToken);
-      console.log(decoded, "decoded");
-
 
       return {
         accessToken: accessToken,
@@ -129,18 +114,6 @@ export const authOptions = {
   ],
   callbacks: {
     async jwt({ token, user, account }) {
-
-      console.log("=== JWT CALLBACK ===");
-      console.log("NOW:", Date.now());
-      console.log("TOKEN EXPIRES:", token.accessTokenExpires);
-
-      if (token.accessTokenExpires) {
-        console.log(
-          "IS EXPIRED:",
-          Date.now() > token.accessTokenExpires
-        );
-      }
-
       // Initial sign in
       if (user && account) {
         try {
@@ -164,13 +137,11 @@ export const authOptions = {
           });
 
           const decoded = jwtDecode(userData.accessToken);
-          console.log(decoded, "decoded2");
 
           token._id = userData._id;
           token.email = userData.email;
           token.accessToken = userData.accessToken;
-          // token.refreshToken = userData.refreshToken;
-          token.accessTokenExpires = decoded.exp * 1000; // 15 minutes
+          token.accessTokenExpires = decoded.exp * 1000;
 
           return token;
         } catch (error) {
@@ -185,20 +156,15 @@ export const authOptions = {
         }
       }
 
-      const REFRESH_BUFFER = 10 * 1000; // 60 seconds
+      const REFRESH_BUFFER = 60 * 1000; // 60 seconds
 
       // Return previous token if the access token has not expired yet
       if (token.accessToken && Date.now() < token.accessTokenExpires - REFRESH_BUFFER) {
-        console.log("TOKEN STILL VALID - RETURNING OLD TOKEN");
         return token;
       }
 
-      console.log("TOKEN EXPIRED - REFRESHING");
       // expired — refresh
       const refreshedToken = await refreshAccessToken(token);
-
-      console.log("REFRESH COMPLETE");
-      console.log("NEW EXPIRY:", refreshedToken.accessTokenExpires);
 
       // 🔥 GUARANTEE
       if (!refreshedToken.accessToken) {
