@@ -17,7 +17,6 @@ import customCurrentDateTimeFormat from "@/app/utils/customCurrentDateTimeFormat
 import ReturnItemsField from "./ReturnItemsField";
 import ReturnBriefDescriptionField from "./ReturnBriefDescriptionField";
 import ReturnImagesField from "./ReturnImagesField";
-import { errorMessage } from "@/app/utils/errorMessage";
 
 export default function ReturnOrderModal({
   isReturnModalOpen,
@@ -143,13 +142,11 @@ export default function ReturnOrderModal({
         router.refresh();
         setIsReturnModalOpen(false);
       } else {
-        const friendlyMsg = errorMessage(result);
-        toast.error(friendlyMsg);
-        console.error("UpdateError (returnOrderModal):", result);
+        toast.error(result.message);
+        console.error("UpdateError (returnOrderModal):", result.message);
       }
     } catch (err) {
-      const friendlyMsg = getFriendlyErrorMessage(err);
-      toast.error(friendlyMsg);
+      toast.error(err?.message);
       console.error("UpdateError (returnOrderModal):", err);
     }
 
@@ -165,11 +162,11 @@ export default function ReturnOrderModal({
           .filter((value) => !!value)[0],
     );
 
-    console.log("chk return error", {
-      errors,
-      itemsErrors: errors.items,
-      errorTypes,
-    });
+    // console.log("chk return error", {
+    //   errors,
+    //   itemsErrors: errors.items,
+    //   errorTypes,
+    // });
 
     if (errorTypes.includes("required"))
       toast.error("Please fill up the required fields.");
