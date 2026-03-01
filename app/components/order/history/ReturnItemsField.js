@@ -61,7 +61,7 @@ export default function ReturnItemsField({
                 <div className="relative min-h-full w-1/4 overflow-hidden rounded-[4px] bg-[var(--product-default)] max-sm:w-20">
                   {!!item?.thumbnailImgUrl && (
                     <Image
-                      className="h-full w-full object-contain"
+                      className="h-full w-full object-cover"
                       src={item?.thumbnailImgUrl}
                       alt={item?.productTitle}
                       fill
@@ -161,20 +161,20 @@ export default function ReturnItemsField({
                     validate: {
                       notSelectedProperly: (value) =>
                         value ||
-                        returnItems.some((returnItem) => returnItem.isRequested)
+                          returnItems.some((returnItem) => returnItem.isRequested)
                           ? returnItems.every(
+                            (returnItem) =>
+                              !returnItem.isRequested ||
+                              (returnItem.isRequested &&
+                                returnItem.quantity > 0),
+                          )
+                            ? returnItems.every(
                               (returnItem) =>
                                 !returnItem.isRequested ||
                                 (returnItem.isRequested &&
-                                  returnItem.quantity > 0),
-                            )
-                            ? returnItems.every(
-                                (returnItem) =>
-                                  !returnItem.isRequested ||
-                                  (returnItem.isRequested &&
-                                    returnItem.issues.length),
-                              ) ||
-                              "At least one issue must be chosen for selected products."
+                                  returnItem.issues.length),
+                            ) ||
+                            "At least one issue must be chosen for selected products."
                             : "Quantity must be at least 1 for selected products."
                           : "At least one product must be selected.",
                     },

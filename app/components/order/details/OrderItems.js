@@ -52,7 +52,7 @@ export default function OrderItems({ orderItems }) {
               >
                 {!!item?.thumbnailImgUrl && (
                   <Image
-                    className="h-full w-full object-contain"
+                    className="h-full w-full object-cover"
                     src={item?.thumbnailImgUrl}
                     alt={item?.productTitle}
                     fill
@@ -105,7 +105,7 @@ export default function OrderItems({ orderItems }) {
                             <span>
                               Special Offer (
                               {item?.offerInfo?.offerDiscountType ===
-                              "Percentage"
+                                "Percentage"
                                 ? item?.offerInfo?.offerDiscountValue + "%"
                                 : "৳ " + item?.offerInfo?.offerDiscountValue}
                               )
@@ -118,7 +118,7 @@ export default function OrderItems({ orderItems }) {
                             discountTitle={item?.offerInfo?.offerTitle}
                             discountAmount={
                               item?.offerInfo?.offerDiscountType ===
-                              "Percentage"
+                                "Percentage"
                                 ? item?.offerInfo?.offerDiscountValue + "%"
                                 : "৳ " + item?.offerInfo?.offerDiscountValue
                             }
@@ -131,7 +131,7 @@ export default function OrderItems({ orderItems }) {
                               <span>
                                 Special Offer (
                                 {item?.offerInfo?.offerDiscountType ===
-                                "Percentage"
+                                  "Percentage"
                                   ? item?.offerInfo?.offerDiscountValue + "%"
                                   : "৳ " + item?.offerInfo?.offerDiscountValue}
                                 )

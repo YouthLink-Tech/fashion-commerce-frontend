@@ -78,9 +78,8 @@ export default function CardProductThumbnail({
             {allImages.map((imgUrl, imgIndex) => (
               <Image
                 key={`card-thumbnail-all-img-${productTitle}-${imgIndex}`}
-                className={`absolute h-full w-full object-contain transition-[transform,opacity] duration-300 ease-in-out ${
-                  imgIndex === 0 ? "opacity-100" : "opacity-0"
-                }`}
+                className={`absolute h-full w-full object-cover transition-[transform,opacity] duration-300 ease-in-out ${imgIndex === 0 ? "opacity-100" : "opacity-0"
+                  }`}
                 src={imgUrl}
                 alt={`${productTitle} showcase image ${imgIndex + 1}`}
                 sizes="50vw"
@@ -105,13 +104,11 @@ export default function CardProductThumbnail({
               {imgSet.images.map((imgUrl, imgIndex) => (
                 <Image
                   key={`card-thumbnail-sub-img-${productTitle}-${imgSet.color.label}-${imgUrl}-${imgIndex}`}
-                  className={`h-full w-full object-contain transition-[transform,opacity] duration-300 ease-in-out ${
-                    imgIndex === 0 ? "opacity-100" : "opacity-0"
-                  }`}
+                  className={`h-full w-full object-cover transition-[transform,opacity] duration-300 ease-in-out ${imgIndex === 0 ? "opacity-100" : "opacity-0"
+                    }`}
                   src={imgUrl}
-                  alt={`${productTitle} ${imgSet.color.label} image ${
-                    imgIndex + 1
-                  }`}
+                  alt={`${productTitle} ${imgSet.color.label} image ${imgIndex + 1
+                    }`}
                   sizes="50vw"
                   fill
                 />

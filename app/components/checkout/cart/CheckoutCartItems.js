@@ -122,7 +122,7 @@ export default function CheckoutCartItems({
               >
                 {!!cartItemImgUrl && (
                   <Image
-                    className="h-full w-full object-contain"
+                    className="h-full w-full object-cover"
                     src={cartItemImgUrl}
                     alt={cartItem?.productTitle}
                     fill
@@ -174,7 +174,7 @@ export default function CheckoutCartItems({
                             style={{
                               background:
                                 cartItemInfo?.selectedColor?.label !==
-                                "Multicolor"
+                                  "Multicolor"
                                   ? cartItemInfo?.selectedColor?.color
                                   : "linear-gradient(90deg, blue 0%, red 40%, green 80%)",
                             }}
@@ -188,68 +188,26 @@ export default function CheckoutCartItems({
                         cartItem,
                         specialOffers,
                       ) && (
-                        <>
-                          <span
-                            className={`mt-[3px] flex cursor-default items-center gap-x-1 text-xs underline-offset-2 hover:underline xl:hidden ${isEligibleForSpecialOffer ? "text-[#45963a]" : "text-[#90623a]"}`}
-                            onClick={() => {
-                              setActiveModalItem({
-                                ...specialOfferInfo,
-                                savedAmount:
-                                  calculateProductSpecialOfferDiscount(
-                                    cartItem,
-                                    cartItemInfo,
-                                    specialOfferInfo,
-                                  ),
-                              });
-                              setIsSpecialOfferModalOpen(true);
-                            }}
-                          >
-                            <span>
-                              Special Offer* (
-                              {specialOfferInfo?.offerDiscountType ===
-                              "Percentage"
-                                ? specialOfferInfo?.offerDiscountValue + "%"
-                                : "৳ " + specialOfferInfo?.offerDiscountValue}
-                              )
-                            </span>
-                            <span>
-                              {isEligibleForSpecialOffer ? (
-                                <FaCircleCheck className="size-4" />
-                              ) : (
-                                <FaExclamationCircle className="size-4" />
-                              )}{" "}
-                            </span>
-                          </span>
-                          <DiscountTooptip
-                            discountTitle={specialOfferInfo?.offerTitle}
-                            discountAmount={
-                              specialOfferInfo?.offerDiscountType ===
-                              "Percentage"
-                                ? specialOfferInfo?.offerDiscountValue + "%"
-                                : "৳ " + specialOfferInfo?.offerDiscountValue
-                            }
-                            isEligibleForSpecialOffer={
-                              isEligibleForSpecialOffer
-                            }
-                            savedAmount={calculateProductSpecialOfferDiscount(
-                              cartItem,
-                              cartItemInfo,
-                              specialOfferInfo,
-                            )}
-                            discountMinAmount={Number(
-                              specialOfferInfo?.minAmount,
-                            )}
-                            discountMaxAmount={Number(
-                              specialOfferInfo?.maxAmount,
-                            )}
-                          >
+                          <>
                             <span
-                              className={`mt-[3px] hidden cursor-default items-center gap-x-1 text-xs underline-offset-2 hover:underline xl:flex ${isEligibleForSpecialOffer ? "text-[#45963a]" : "text-[#90623a]"}`}
+                              className={`mt-[3px] flex cursor-default items-center gap-x-1 text-xs underline-offset-2 hover:underline xl:hidden ${isEligibleForSpecialOffer ? "text-[#45963a]" : "text-[#90623a]"}`}
+                              onClick={() => {
+                                setActiveModalItem({
+                                  ...specialOfferInfo,
+                                  savedAmount:
+                                    calculateProductSpecialOfferDiscount(
+                                      cartItem,
+                                      cartItemInfo,
+                                      specialOfferInfo,
+                                    ),
+                                });
+                                setIsSpecialOfferModalOpen(true);
+                              }}
                             >
                               <span>
                                 Special Offer* (
                                 {specialOfferInfo?.offerDiscountType ===
-                                "Percentage"
+                                  "Percentage"
                                   ? specialOfferInfo?.offerDiscountValue + "%"
                                   : "৳ " + specialOfferInfo?.offerDiscountValue}
                                 )
@@ -262,9 +220,51 @@ export default function CheckoutCartItems({
                                 )}{" "}
                               </span>
                             </span>
-                          </DiscountTooptip>
-                        </>
-                      )}
+                            <DiscountTooptip
+                              discountTitle={specialOfferInfo?.offerTitle}
+                              discountAmount={
+                                specialOfferInfo?.offerDiscountType ===
+                                  "Percentage"
+                                  ? specialOfferInfo?.offerDiscountValue + "%"
+                                  : "৳ " + specialOfferInfo?.offerDiscountValue
+                              }
+                              isEligibleForSpecialOffer={
+                                isEligibleForSpecialOffer
+                              }
+                              savedAmount={calculateProductSpecialOfferDiscount(
+                                cartItem,
+                                cartItemInfo,
+                                specialOfferInfo,
+                              )}
+                              discountMinAmount={Number(
+                                specialOfferInfo?.minAmount,
+                              )}
+                              discountMaxAmount={Number(
+                                specialOfferInfo?.maxAmount,
+                              )}
+                            >
+                              <span
+                                className={`mt-[3px] hidden cursor-default items-center gap-x-1 text-xs underline-offset-2 hover:underline xl:flex ${isEligibleForSpecialOffer ? "text-[#45963a]" : "text-[#90623a]"}`}
+                              >
+                                <span>
+                                  Special Offer* (
+                                  {specialOfferInfo?.offerDiscountType ===
+                                    "Percentage"
+                                    ? specialOfferInfo?.offerDiscountValue + "%"
+                                    : "৳ " + specialOfferInfo?.offerDiscountValue}
+                                  )
+                                </span>
+                                <span>
+                                  {isEligibleForSpecialOffer ? (
+                                    <FaCircleCheck className="size-4" />
+                                  ) : (
+                                    <FaExclamationCircle className="size-4" />
+                                  )}{" "}
+                                </span>
+                              </span>
+                            </DiscountTooptip>
+                          </>
+                        )}
                     </div>
                     {/* Cart Item Price (unit price X quantity) */}
                     <span className="shrink-0 text-neutral-600">
@@ -286,9 +286,9 @@ export default function CheckoutCartItems({
                               !(
                                 item._id === cartItem?._id &&
                                 item.selectedSize ===
-                                  cartItemInfo?.selectedSize &&
+                                cartItemInfo?.selectedSize &&
                                 item.selectedColor?._id ===
-                                  cartItemInfo?.selectedColor?._id
+                                cartItemInfo?.selectedColor?._id
                               ),
                           ),
                         )
@@ -309,11 +309,11 @@ export default function CheckoutCartItems({
                               ...availableCartItem,
                               selectedQuantity:
                                 availableCartItem._id === cartItem?._id &&
-                                availableCartItem.selectedSize ===
+                                  availableCartItem.selectedSize ===
                                   cartItemInfo?.selectedSize &&
-                                availableCartItem.selectedColor?._id ===
+                                  availableCartItem.selectedColor?._id ===
                                   cartItemInfo?.selectedColor?._id &&
-                                Number(cartItemInfo?.selectedQuantity) > 1
+                                  Number(cartItemInfo?.selectedQuantity) > 1
                                   ? Number(cartItemInfo?.selectedQuantity) - 1
                                   : Number(availableCartItem?.selectedQuantity),
                             })),
@@ -338,9 +338,9 @@ export default function CheckoutCartItems({
                               selectedQuantity: !(
                                 availableCartItem._id === cartItem?._id &&
                                 availableCartItem.selectedSize ===
-                                  cartItemInfo?.selectedSize &&
+                                cartItemInfo?.selectedSize &&
                                 availableCartItem.selectedColor?._id ===
-                                  cartItemInfo?.selectedColor?._id
+                                cartItemInfo?.selectedColor?._id
                               )
                                 ? Number(availableCartItem.selectedQuantity)
                                 : inputValue < 1
@@ -364,11 +364,11 @@ export default function CheckoutCartItems({
                               ...availableCartItem,
                               selectedQuantity:
                                 availableCartItem._id === cartItem?._id &&
-                                availableCartItem.selectedSize ===
+                                  availableCartItem.selectedSize ===
                                   cartItemInfo?.selectedSize &&
-                                availableCartItem.selectedColor?._id ===
+                                  availableCartItem.selectedColor?._id ===
                                   cartItemInfo?.selectedColor?._id &&
-                                Number(cartItemInfo?.selectedQuantity) !=
+                                  Number(cartItemInfo?.selectedQuantity) !=
                                   cartItemSKU
                                   ? Number(cartItemInfo?.selectedQuantity) + 1
                                   : Number(availableCartItem?.selectedQuantity),

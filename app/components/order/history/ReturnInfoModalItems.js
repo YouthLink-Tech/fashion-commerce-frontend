@@ -41,7 +41,7 @@ export default function ReturnInfoModalItems({ returnProducts }) {
                 >
                   {!!item?.thumbnailImgUrl && (
                     <Image
-                      className="h-full w-full object-contain"
+                      className="h-full w-full object-cover"
                       src={item?.thumbnailImgUrl}
                       alt={`${item?.productTitle} - Marked Return Item (${index + 1})`}
                       fill

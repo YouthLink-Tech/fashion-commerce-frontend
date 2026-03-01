@@ -24,7 +24,7 @@ export default async function RootLayout({ children }) {
 
   const [topHeaderRes, logoRes] = await Promise.allSettled(promises);
 
-  const [topHeaderData] = extractData(topHeaderRes, {}, "layout/topHeader");
+  const [topHeaderData] = extractData(topHeaderRes, [{}], "layout/topHeader");
   const logos = extractData(logoRes, [{}], "layout/logo")[0];
 
   const logoWithoutTextSrc = logos?.mobileLogoUrl;

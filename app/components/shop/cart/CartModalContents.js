@@ -39,7 +39,7 @@ export default function CartModalContents({
           <Image
             src={imgUrl}
             alt={`${product?.productTitle} ${selectedOptions?.color.label}`}
-            className="h-full w-full select-none object-contain"
+            className="h-full w-full select-none object-cover"
             sizes="50vw"
             fill
           />
@@ -185,7 +185,7 @@ export default function CartModalContents({
           setSelectedOptions({
             color:
               product?.availableColors[
-                Object.keys(product?.availableColors)[0]
+              Object.keys(product?.availableColors)[0]
               ],
             size: undefined,
             quantity: 1,

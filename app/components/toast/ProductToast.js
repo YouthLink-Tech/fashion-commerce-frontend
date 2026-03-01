@@ -73,7 +73,7 @@ export default function ProductToast({
         {/* Cart Item Image */}
         <div className="relative min-h-full grow overflow-hidden rounded-[4px] bg-[var(--product-default)] max-sm:w-16 sm:aspect-[1.1/1] sm:h-[52px]">
           <Image
-            className="h-full w-full object-contain"
+            className="h-full w-full object-cover"
             src={productImg}
             alt={productTitle}
             fill

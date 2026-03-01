@@ -58,7 +58,7 @@ export default function ProductMainImage({
         <Image
           src={activeImageUrl}
           alt={`${productTitle} ${selectedColorLabel} ${activeImageIndex + 1}`}
-          className="h-full w-full select-none object-contain"
+          className="h-full w-full select-none object-cover"
           sizes="50vw"
           fill
           onContextMenu={(event) => event.preventDefault()}

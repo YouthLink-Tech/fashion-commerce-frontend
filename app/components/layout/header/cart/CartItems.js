@@ -99,7 +99,7 @@ export default function CartItems({
             >
               {!!cartItemImgUrl && (
                 <Image
-                  className="h-full w-full object-contain"
+                  className="h-full w-full object-cover"
                   src={cartItemImgUrl}
                   alt={cartItem?.productTitle}
                   fill
@@ -155,7 +155,7 @@ export default function CartItems({
                           style={{
                             background:
                               cartItemInfo?.selectedColor?.label !==
-                              "Multicolor"
+                                "Multicolor"
                                 ? cartItemInfo?.selectedColor?.color
                                 : "linear-gradient(90deg, blue 0%, red 40%, green 80%)",
                           }}
@@ -185,9 +185,9 @@ export default function CartItems({
                             !(
                               item._id === cartItem?._id &&
                               item.selectedSize ===
-                                cartItemInfo?.selectedSize &&
+                              cartItemInfo?.selectedSize &&
                               item.selectedColor?._id ===
-                                cartItemInfo?.selectedColor?._id
+                              cartItemInfo?.selectedColor?._id
                             ),
                         ),
                       )
@@ -206,11 +206,11 @@ export default function CartItems({
                             ...availableCartItem,
                             selectedQuantity:
                               availableCartItem._id === cartItem?._id &&
-                              availableCartItem.selectedSize ===
+                                availableCartItem.selectedSize ===
                                 cartItemInfo?.selectedSize &&
-                              availableCartItem.selectedColor?._id ===
+                                availableCartItem.selectedColor?._id ===
                                 cartItemInfo?.selectedColor?._id &&
-                              Number(cartItemInfo?.selectedQuantity) > 1
+                                Number(cartItemInfo?.selectedQuantity) > 1
                                 ? Number(cartItemInfo?.selectedQuantity) - 1
                                 : Number(availableCartItem?.selectedQuantity),
                           })),
@@ -235,9 +235,9 @@ export default function CartItems({
                             selectedQuantity: !(
                               availableCartItem._id === cartItem?._id &&
                               availableCartItem.selectedSize ===
-                                cartItemInfo?.selectedSize &&
+                              cartItemInfo?.selectedSize &&
                               availableCartItem.selectedColor?._id ===
-                                cartItemInfo?.selectedColor?._id
+                              cartItemInfo?.selectedColor?._id
                             )
                               ? Number(availableCartItem.selectedQuantity)
                               : inputValue < 1
@@ -259,11 +259,11 @@ export default function CartItems({
                             ...availableCartItem,
                             selectedQuantity:
                               availableCartItem._id === cartItem?._id &&
-                              availableCartItem.selectedSize ===
+                                availableCartItem.selectedSize ===
                                 cartItemInfo?.selectedSize &&
-                              availableCartItem.selectedColor?._id ===
+                                availableCartItem.selectedColor?._id ===
                                 cartItemInfo?.selectedColor?._id &&
-                              Number(cartItemInfo?.selectedQuantity) !=
+                                Number(cartItemInfo?.selectedQuantity) !=
                                 cartItemSKU
                                 ? Number(cartItemInfo?.selectedQuantity) + 1
                                 : Number(availableCartItem?.selectedQuantity),

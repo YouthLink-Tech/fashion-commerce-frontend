@@ -77,7 +77,7 @@ export default function WishlistItems({
             >
               {!!wishlistItem?.productVariants[0]?.imageUrls[0] && (
                 <Image
-                  className="h-full w-full object-contain"
+                  className="h-full w-full object-cover"
                   src={wishlistItem?.productVariants[0]?.imageUrls[0]}
                   alt={wishlistItem?.productTitle}
                   fill

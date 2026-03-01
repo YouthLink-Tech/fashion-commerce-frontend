@@ -46,7 +46,7 @@ export default async function SideLinks() {
         "desktopNav/primaryLocation",
         "primaryLocation",
       ),
-      extractData(legalPolicyPdfLinksRes, null, "desktopNav/legalPdfLinks"),
+      extractData(legalPolicyPdfLinksRes, [], "desktopNav/legalPdfLinks"),
     ];
 
   return (
