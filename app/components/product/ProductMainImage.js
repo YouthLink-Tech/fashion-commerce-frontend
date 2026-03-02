@@ -72,7 +72,7 @@ export default function ProductMainImage({
         id="img-zoomed"
         className="pointer-events-none absolute inset-0 z-[2] hidden h-full w-full bg-[var(--product-default)] bg-no-repeat"
         style={{
-          backgroundImage: `url(${activeImageUrl})`,
+          backgroundImage: `url("${encodeURI(activeImageUrl)}")`,
           backgroundSize: "200%",
           backgroundPosition: "0% 0%",
         }}
