@@ -2,51 +2,33 @@ import { cookies } from "next/headers";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { rawFetch } from "../lib/fetcher/rawFetch";
-import { jwtDecode } from "jwt-decode";
-
-let refreshPromise = null;
 
 const refreshAccessToken = async (token) => {
-
-  if (!refreshPromise) {
-    refreshPromise = (async () => {
-      const result = await rawFetch("/api/customer/refresh-token", {
-        method: "POST",
-        headers: { Cookie: cookies().toString() },
-      });
-
-      if (!result.ok) {
-        throw new Error("Failed to refresh access token");
-      }
-
-      const accessToken = result.data.accessToken;
-      const decoded = jwtDecode(accessToken);
-
-      if (!decoded?.exp) {
-        throw new Error("Access token missing exp");
-      }
-
-      return {
-        accessToken: accessToken,
-        accessTokenExpires: decoded.exp * 1000,
-      };
-    })();
-  }
-
   try {
-    const refreshed = await refreshPromise;
+    const result = await rawFetch("/api/customer/refresh-token", {
+      method: "POST",
+      headers: { Cookie: cookies().toString() },
+    });
+
+    if (!result.ok)
+      throw new Error(result.message || "Failed to refresh access token.");
+
+    const newAccessToken = result.data.accessToken;
+
+    if (!newAccessToken)
+      throw new Error("Failed to generate new access token.");
+
     return {
       ...token,
-      ...refreshed,
+      accessToken: newAccessToken,
+      accessTokenExpires: Date.now() + 15 * 60 * 1000, // 15 minutes
       error: undefined,
     };
-  } catch (err) {
-    return {
-      ...token,
-      error: "RefreshAccessTokenError",
-    };
-  } finally {
-    refreshPromise = null;
+  } catch (error) {
+    console.error(
+      `RefreshTokenError (authOptions/refreshAccessToken): ${error.message || "Failed to refresh access token."}`,
+    );
+    throw new Error(error.message);
   }
 };
 
@@ -140,58 +122,37 @@ export const authOptions = {
             maxAge: 7 * 24 * 60 * 60, // 7 days
           });
 
-          const decoded = jwtDecode(userData.accessToken);
-
-          if (!decoded?.exp) {
-            throw new Error("Access token missing exp");
-          }
-
           token._id = userData._id;
           token.email = userData.email;
           token.accessToken = userData.accessToken;
-          token.accessTokenExpires = decoded.exp * 1000;
+          token.accessTokenExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
 
           return token;
         } catch (error) {
           console.error(
             `TokenError (authOptions/callbacks/jwt): ${error.message || "Failed to generate customer tokens."}`,
           );
-          return {
-            ...token,
-            error: error.message || "TokenGenerationFailed",
-          };
+          throw new Error(error.message);
         }
       }
 
-      const REFRESH_BUFFER = 60 * 1000; // 60 seconds
-
       // Return previous token if the access token has not expired yet
-      if (token.accessToken && Date.now() < token.accessTokenExpires - REFRESH_BUFFER) {
+      if (Date.now() < token.accessTokenExpires) {
         return token;
       }
 
-      // expired, so refresh
-      const refreshedToken = await refreshAccessToken(token);
-
-      // Guarantee block for access token
-      if (!refreshedToken.accessToken) {
-        return {
-          ...token,
-          error: "AccessTokenMissingAfterRefresh",
-        };
-      }
-
-      return refreshedToken;
+      // Access token has expired, try to update it
+      return refreshAccessToken(token);
     },
     async session({ session, token }) {
-      session.user = session.user || {};
-      session.user._id = token._id || null;
-      session.user.email = token.email || null;
-      session.accessToken = token.accessToken || null;
-      session.error = token.error || null;
+      session.user._id = token._id;
+      session.user.email = token.email;
+      session.accessToken = token.accessToken;
+      session.error = token.error;
+
       return session;
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
   session: { strategy: "jwt" },
-}
+};
