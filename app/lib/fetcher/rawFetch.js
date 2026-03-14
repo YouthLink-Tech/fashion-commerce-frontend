@@ -1,5 +1,6 @@
 import { BACKEND_URL, FRONTEND_URL } from "@/app/config/site";
 import handleResponse from "./handleResponse";
+import fetchWithRetry from "./fetchWithRetry";
 
 // Fetch for routes that do not require access token
 export const rawFetch = async (path, options = {}) => {
@@ -22,7 +23,7 @@ export const rawFetch = async (path, options = {}) => {
     headers["Content-Type"] = "application/json";
   }
 
-  const res = await fetch(`${BACKEND_URL}${path}`, {
+  const res = await fetchWithRetry(`${BACKEND_URL}${path}`, {
     ...options,
     method,
     headers,

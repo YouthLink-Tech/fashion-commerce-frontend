@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../../utils/authOptions";
 import { BACKEND_URL, FRONTEND_URL } from "@/app/config/site";
 import handleResponse from "./handleResponse";
+import fetchWithRetry from "./fetchWithRetry";
 
 // Fetch for routes that require access token
 export const tokenizedFetch = async (path, options = {}) => {
@@ -38,7 +39,7 @@ export const tokenizedFetch = async (path, options = {}) => {
     headers["Content-Type"] = "application/json";
   }
 
-  const res = await fetch(`${BACKEND_URL}${path}`, {
+  const res = await fetchWithRetry(`${BACKEND_URL}${path}`, {
     ...options,
     method,
     headers,
