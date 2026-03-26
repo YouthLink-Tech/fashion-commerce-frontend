@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Popover, PopoverContent, PopoverTrigger } from "@nextui-org/react";
 import TransitionLink from "../../ui/TransitionLink";
+import { getImage } from "@/app/lib/cloudinaryUtils";
 
 export default function ReturnInfoModalItems({ returnProducts }) {
   const calculateTotalItems = () => {
@@ -42,7 +43,8 @@ export default function ReturnInfoModalItems({ returnProducts }) {
                   {!!item?.thumbnailImgUrl && (
                     <Image
                       className="h-full w-full object-cover"
-                      src={item?.thumbnailImgUrl}
+                      // src={item?.thumbnailImgUrl}
+                      src={getImage(item?.thumbnailImgUrl, 400)}
                       alt={`${item?.productTitle} - Marked Return Item (${index + 1})`}
                       fill
                       sizes="15vh"

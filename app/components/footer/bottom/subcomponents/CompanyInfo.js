@@ -4,6 +4,7 @@ import { TbBrandTiktok } from "react-icons/tb";
 import { FaInstagram, FaXTwitter } from "react-icons/fa6";
 import { COMPANY_NAME } from "@/app/config/company";
 import TransitionLink from "@/app/components/ui/TransitionLink";
+import { getImage } from "@/app/lib/cloudinaryUtils";
 
 export default function CompanyInfo({ logoWithTextSrc }) {
   return (
@@ -11,7 +12,8 @@ export default function CompanyInfo({ logoWithTextSrc }) {
       <TransitionLink href="/">
         <Image
           className="h-12 w-auto"
-          src={logoWithTextSrc}
+          // src={logoWithTextSrc}
+          src={getImage(logoWithTextSrc, 400)}
           alt={`${COMPANY_NAME} logo`}
           height={0}
           width={0}

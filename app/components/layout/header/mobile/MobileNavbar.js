@@ -12,6 +12,7 @@ import Search from "../Search";
 import WishlistButton from "../wishlist/WishlistButton";
 import CartButton from "../cart/CartButton";
 import NavButton from "./NavButton";
+import { getImage } from "@/app/lib/cloudinaryUtils";
 
 export default async function MobileNavbar({
   logoWithoutTextSrc,
@@ -54,7 +55,8 @@ export default async function MobileNavbar({
         <TransitionLink href="/">
           <Image
             className="h-8 w-auto sm:hidden"
-            src={logoWithoutTextSrc}
+            // src={logoWithoutTextSrc}
+            src={getImage(logoWithoutTextSrc, 400)}
             alt={`${COMPANY_NAME} logo (no text)`}
             height={0}
             width={0}
@@ -62,7 +64,8 @@ export default async function MobileNavbar({
           />
           <Image
             className="h-8 w-auto max-sm:hidden"
-            src={logoWithTextSrc}
+            // src={logoWithTextSrc}
+            src={getImage(logoWithTextSrc, 0)}
             alt={`${COMPANY_NAME} logo`}
             height={0}
             width={0}

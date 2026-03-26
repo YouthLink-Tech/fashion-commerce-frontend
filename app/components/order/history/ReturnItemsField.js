@@ -2,6 +2,7 @@ import Image from "next/image";
 import { Controller } from "react-hook-form";
 import { Select, SelectItem } from "@nextui-org/react";
 import { HiCheckCircle, HiChevronLeft, HiChevronRight } from "react-icons/hi2";
+import { getImage } from "@/app/lib/cloudinaryUtils";
 
 export default function ReturnItemsField({
   activeReturnOrder,
@@ -62,7 +63,8 @@ export default function ReturnItemsField({
                   {!!item?.thumbnailImgUrl && (
                     <Image
                       className="h-full w-full object-cover"
-                      src={item?.thumbnailImgUrl}
+                      // src={item?.thumbnailImgUrl}
+                      src={getImage(item?.thumbnailImgUrl, 400)}
                       alt={item?.productTitle}
                       fill
                       sizes="15vh"

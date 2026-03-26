@@ -2,6 +2,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { CgArrowsExpandRight } from "react-icons/cg";
 import ExpandedImagesModal from "../../shared/ExpandedImageModal";
+import { getImage } from "@/app/lib/cloudinaryUtils";
 
 export default function ReturnInfoModalProofImages({ returnProofImgUrls }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -23,7 +24,8 @@ export default function ReturnInfoModalProofImages({ returnProofImgUrls }) {
             }}
           >
             <Image
-              src={imgUrl}
+              // src={imgUrl}
+              src={getImage(imgUrl, 400)}
               alt={`Provided image as proof ${index + 1}`}
               className="size-28 rounded-[4px] border border-neutral-200 object-cover"
               height={0}

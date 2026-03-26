@@ -6,6 +6,7 @@ import { FaArrowRightLong } from "react-icons/fa6";
 import squigglyShape from "@/public/shapes/squiggly.png";
 import arrowShape from "@/public/shapes/arrow.png";
 import TransitionLink from "@/app/components/ui/TransitionLink";
+import { getImage } from "@/app/lib/cloudinaryUtils";
 
 const transitionDuration = 650; // Duration of the fade animation
 const transitionDelay = 150; // Base delay for staggering animations
@@ -91,7 +92,8 @@ export default function HomeHeroSlides({
           {leftSlides?.map((leftImgUrl, index) => (
             <Image
               key={`left-hero-img-${leftImgUrl}-${index}`}
-              src={leftImgUrl}
+              // src={leftImgUrl}
+              src={getImage(leftImgUrl, 400)}
               alt={`Hero section left side image ${index + 1}`}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -105,7 +107,8 @@ export default function HomeHeroSlides({
           {centerSlides?.map((centerImgUrl, index) => (
             <Image
               key={`center-hero-img-${centerImgUrl}-${index}`}
-              src={centerImgUrl}
+              // src={centerImgUrl}
+              src={getImage(centerImgUrl, 600)}
               alt={`Hero section center image ${index + 1}`}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -119,7 +122,8 @@ export default function HomeHeroSlides({
           {rightSlides?.map((rightImgUrl, index) => (
             <Image
               key={`right-hero-img-${rightImgUrl}-${index}`}
-              src={rightImgUrl}
+              // src={rightImgUrl}
+              src={getImage(rightImgUrl, 400)}
               alt={`Hero section right side image ${index + 1}`}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

@@ -6,6 +6,7 @@ import { FaCircleCheck } from "react-icons/fa6";
 import TransitionLink from "@/app/components/ui/TransitionLink";
 import DiscountModal from "../../ui/DiscountModal";
 import DiscountTooptip from "../../ui/DiscountTooltip";
+import { getImage } from "@/app/lib/cloudinaryUtils";
 
 export default function OrderItems({ orderItems }) {
   const [isSpecialOfferModalOpen, setIsSpecialOfferModalOpen] = useState(false);
@@ -53,7 +54,8 @@ export default function OrderItems({ orderItems }) {
                 {!!item?.thumbnailImgUrl && (
                   <Image
                     className="h-full w-full object-cover"
-                    src={item?.thumbnailImgUrl}
+                    // src={item?.thumbnailImgUrl}
+                    src={getImage(item?.thumbnailImgUrl, 400)}
                     alt={item?.productTitle}
                     fill
                     sizes="15vh"

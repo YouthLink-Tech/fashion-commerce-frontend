@@ -7,6 +7,7 @@ import MenuSection from "./MenuSection";
 import OrderSection from "./OrderSection";
 import AccountSection from "./AccountSection";
 import LoadingSpinner from "@/app/components/shared/LoadingSpinner";
+import { getImage } from "@/app/lib/cloudinaryUtils";
 
 export default function NavMenu({
   isLoggedIn,
@@ -32,7 +33,8 @@ export default function NavMenu({
         >
           <Image
             className="h-8 w-auto"
-            src={logoWithTextSrc}
+            // src={logoWithTextSrc}
+            src={getImage(logoWithTextSrc, 400)}
             alt={`${COMPANY_NAME} logo`}
             height={0}
             width={0}

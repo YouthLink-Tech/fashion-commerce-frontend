@@ -5,6 +5,7 @@ import { CgTrash } from "react-icons/cg";
 import { routeFetch } from "@/app/lib/fetcher/routeFetch";
 import { calculateFinalPrice } from "@/app/utils/orderCalculations";
 import TransitionLink from "@/app/components/ui/TransitionLink";
+import { getImage } from "@/app/lib/cloudinaryUtils";
 
 export default function WishlistItems({
   userData,
@@ -78,7 +79,8 @@ export default function WishlistItems({
               {!!wishlistItem?.productVariants[0]?.imageUrls[0] && (
                 <Image
                   className="h-full w-full object-cover"
-                  src={wishlistItem?.productVariants[0]?.imageUrls[0]}
+                  // src={wishlistItem?.productVariants[0]?.imageUrls[0]}
+                  src={getImage(wishlistItem?.productVariants[0]?.imageUrls[0], 400)}
                   alt={wishlistItem?.productTitle}
                   fill
                   sizes="15vh"

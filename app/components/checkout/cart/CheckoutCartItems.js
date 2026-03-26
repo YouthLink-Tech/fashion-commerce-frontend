@@ -20,6 +20,7 @@ import { getProductVariantSku } from "@/app/utils/productSkuCalculation";
 import TransitionLink from "@/app/components/ui/TransitionLink";
 import DiscountModal from "../../ui/DiscountModal";
 import DiscountTooptip from "../../ui/DiscountTooltip";
+import { getImage } from "@/app/lib/cloudinaryUtils";
 
 export default function CheckoutCartItems({
   userData,
@@ -123,7 +124,8 @@ export default function CheckoutCartItems({
                 {!!cartItemImgUrl && (
                   <Image
                     className="h-full w-full object-cover"
-                    src={cartItemImgUrl}
+                    // src={cartItemImgUrl}
+                    src={getImage(cartItemImgUrl, 400)}
                     alt={cartItem?.productTitle}
                     fill
                     sizes="15vh"

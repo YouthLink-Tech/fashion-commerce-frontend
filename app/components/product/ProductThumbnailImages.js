@@ -1,3 +1,4 @@
+import { getImage } from "@/app/lib/cloudinaryUtils";
 import Image from "next/image";
 import {
   CgChevronDown,
@@ -66,7 +67,8 @@ export default function ProductThumbnailImages({
                 {/* Thumbnail Image */}
                 {!!imageURL && (
                   <Image
-                    src={imageURL}
+                    // src={imageURL}
+                    src={getImage(imageURL, 400)}
                     alt={`${productTitle} ${selectedColorLabel} Thumbnail ${imageURLIndex + 1}`}
                     className="h-full w-full object-cover transition-[transform] duration-300 ease-in-out"
                     sizes="50vw"

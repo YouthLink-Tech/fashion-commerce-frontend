@@ -1,5 +1,6 @@
 import Image from "next/image";
 import TransitionLink from "@/app/components/ui/TransitionLink";
+import { getImage } from "@/app/lib/cloudinaryUtils";
 
 export default function TopFooterBanner({ bannerImg }) {
   return (
@@ -9,7 +10,8 @@ export default function TopFooterBanner({ bannerImg }) {
     >
       {!!bannerImg?.url && (
         <Image
-          src={bannerImg?.url}
+          // src={bannerImg?.url}
+          src={getImage(bannerImg?.url, 400)}
           className="h-full w-full object-contain"
           alt="Marketing Banner"
           height={0}

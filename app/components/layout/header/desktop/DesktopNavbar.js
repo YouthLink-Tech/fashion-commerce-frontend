@@ -6,6 +6,7 @@ import Search from "../Search";
 import SideLinks from "./SideLinks";
 import TransitionLink from "@/app/components/ui/TransitionLink";
 import LoadingSpinner from "@/app/components/shared/LoadingSpinner";
+import { getImage } from "@/app/lib/cloudinaryUtils";
 
 export default function DesktopNavbar({ logoWithTextSrc }) {
   return (
@@ -13,7 +14,8 @@ export default function DesktopNavbar({ logoWithTextSrc }) {
       <TransitionLink href="/">
         <Image
           className="h-9 w-auto"
-          src={logoWithTextSrc}
+          // src={logoWithTextSrc}
+          src={getImage(logoWithTextSrc, 400)}
           alt={`${COMPANY_NAME} logo`}
           height={0}
           width={0}

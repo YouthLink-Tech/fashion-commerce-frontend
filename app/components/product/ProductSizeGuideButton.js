@@ -10,6 +10,7 @@ import {
   Skeleton,
 } from "@nextui-org/react";
 import { CgRuler } from "react-icons/cg";
+import { getImage } from "@/app/lib/cloudinaryUtils";
 
 export default function ProductSizeGuideButton({ sizeGuideImageUrl }) {
   const [isSizeGuideModalOpen, setIsSizeGuideModalOpen] = useState(false);
@@ -45,7 +46,8 @@ export default function ProductSizeGuideButton({ sizeGuideImageUrl }) {
                 <div className="relative h-auto min-h-[20svh] w-full sm:min-h-[25svh] xl:min-h-[33.33svh]">
                   <Skeleton className="absolute inset-0 z-[0] h-full w-full rounded-md" />
                   <Image
-                    src={sizeGuideImageUrl}
+                    // src={sizeGuideImageUrl}
+                    src={getImage(sizeGuideImageUrl, 400)}
                     alt="Size guide"
                     className="relative h-auto w-full object-contain"
                     width={0}

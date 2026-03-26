@@ -4,6 +4,7 @@ import { MdCancel } from "react-icons/md";
 import fileUploadSVG from "@/public/shapes/upload.svg";
 import { useLoading } from "@/app/contexts/loading";
 import { routeFetch } from "@/app/lib/fetcher/routeFetch";
+import { getImage } from "@/app/lib/cloudinaryUtils";
 
 export default function ReturnImagesField({
   register,
@@ -51,7 +52,7 @@ export default function ReturnImagesField({
       });
 
       if (result.ok && Array.isArray(result.data)) {
-        const urls = result.data.map(item => item.url);
+        const urls = result.data.map(item => item.public_id);
         imageUrls.push(...urls);
       } else {
         throw new Error("Invalid upload response");
@@ -171,7 +172,8 @@ export default function ReturnImagesField({
             <li className="relative" key={returnImgUrl + urlIndex}>
               {!!returnImgUrl && (
                 <Image
-                  src={returnImgUrl}
+                  // src={returnImgUrl}
+                  src={getImage(returnImgUrl, 400)}
                   alt={`Image ${urlIndex + 1} as proof`}
                   className="size-20 rounded-[4px] border border-neutral-200 object-cover"
                   height={0}
