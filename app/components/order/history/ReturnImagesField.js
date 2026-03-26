@@ -34,44 +34,31 @@ export default function ReturnImagesField({
     }
   };
 
-  const uploadImagesToGCS = async (images) => {
+  const uploadImagesToCloudinary = async (images) => {
     const imageUrls = [];
 
     try {
       const formData = new FormData();
 
-      for (const image of images) {
-        formData.append("file", image); // Use 'file' for each image
-      }
+      const files = Array.from(images); // 🔥 safety
+
+      files.forEach((image) => formData.append("files", image));
+      formData.append("type", "returnOrderImage");
 
       const result = await routeFetch("/api/upload-files", {
         method: "POST",
         body: formData,
       });
 
-      if (result.ok) {
-        const urls = result.data?.urls;
-
-        if (urls && Array.isArray(urls)) {
-          imageUrls.push(...urls);
-        } else {
-          console.error(
-            "UrlsError (orderDetails/returnImagesField): No image URLs or URLs in wrong data-type.",
-          );
-          toast.error("Failed to get the uploaded image URLs.");
-        }
+      if (result.ok && Array.isArray(result.data)) {
+        const urls = result.data.map(item => item.url);
+        imageUrls.push(...urls);
       } else {
-        console.error(
-          "UploadError (orderDetails/returnImagesField):",
-          result.message || "Failed to upload images.",
-        );
-        toast.error(result.message || "Failed to upload images.");
+        throw new Error("Invalid upload response");
       }
+
     } catch (error) {
-      console.error(
-        "UploadError (orderDetails/returnImagesField):",
-        error.message || error,
-      );
+      console.error("UploadError:", error);
       toast.error("Failed to upload images.");
     }
 
@@ -79,62 +66,35 @@ export default function ReturnImagesField({
   };
 
   const validateFiles = async (uploadedFiles) => {
-    // Exit if another upload is already in progress.
-    if (isUploadingRef.current) {
-      return true;
-    }
+    if (isUploadingRef.current) return true;
 
     try {
       isUploadingRef.current = true;
 
-      // At least one file must be uploaded
-      if (!uploadedFiles.length) {
-        return "At least one image is required!";
+      const files = Array.from(uploadedFiles); // 🔥 FIX HERE
+
+      if (!files.length) return "At least one image is required!";
+
+      for (let file of files) {
+        if (!file.type.startsWith("image/")) return "Only image formats allowed";
+        if (imgFiles.some(f => f.name === file.name)) return "Duplicate images not allowed";
+        if (file.size > 10 * 1024 * 1024) return `${file.name} exceeds 10MB`;
       }
 
-      for (let uploadedFile of uploadedFiles) {
-        // Only image formats are allowed
-        if (!uploadedFile.type.startsWith("image/")) {
-          return "Only image formats are allowed.";
-        }
-
-        // Duplicate images are not allowed (by name)
-        if (
-          imgFiles.some((proofImage) => proofImage.name === uploadedFile.name)
-        ) {
-          return "Duplicate images are not allowed.";
-        }
-
-        // Max file size for each image is 10 MB
-        if (uploadedFile.size > 10 * 1024 * 1024 /* 10 MB */) {
-          return `The file ${uploadedFile.name} exceeds the 10MB size limit.`;
-        }
-      }
-
-      // Maximum 5 files
-      if (imgFiles.length + uploadedFiles.length > 5) {
-        return "You can upload up to 5 images.";
-      }
+      if (imgFiles.length + files.length > 5) return "Max 5 images allowed";
 
       setIsPageLoading(true);
 
-      const newImgUrls = await uploadImagesToGCS(uploadedFiles);
+      const newImgUrls = await uploadImagesToCloudinary(files);
 
-      setReturnImgUrls((prevImgUrls) => [
-        ...new Set([...prevImgUrls, ...newImgUrls]),
-      ]);
-      setImgFiles((prevFiles) => [
-        ...new Set([...prevFiles, ...uploadedFiles]),
-      ]);
-
-      setIsPageLoading(false);
+      setReturnImgUrls(prev => [...new Set([...prev, ...newImgUrls])]);
+      setImgFiles(prev => [...new Set([...prev, ...files])]);
 
       return true;
-    } catch (error) {
-      toast.error("Error while uploading images.");
-      console.error("UploadError: Error uploading images to GCS.", error);
+
     } finally {
       isUploadingRef.current = false;
+      setIsPageLoading(false);
     }
   };
 

@@ -5,7 +5,7 @@ export async function POST(req) {
   try {
     const formData = await req.formData();
 
-    const result = await tokenizedFetch("/api/gcs-file-upload/upload-multiple-files", {
+    const result = await tokenizedFetch("/api/cloudinary-upload/upload-multiple-files", {
       method: "POST",
       body: formData,
     });
