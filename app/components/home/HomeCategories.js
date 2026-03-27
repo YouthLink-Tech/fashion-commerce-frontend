@@ -4,6 +4,7 @@ import { rawFetch } from "@/app/lib/fetcher/rawFetch";
 import curvedDottedLineShape from "@/public/shapes/curved-dotted-line-categories.svg";
 import rightArrowShape from "@/public/shapes/custom-arrow-right.png";
 import TransitionLink from "@/app/components/ui/TransitionLink";
+import { getImage } from "@/app/lib/cloudinaryUtils";
 
 export default async function HomeCategories() {
   let categories;
@@ -72,7 +73,8 @@ export default async function HomeCategories() {
                   <div
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-300 ease-in-out after:absolute after:inset-0 after:h-full after:w-full after:bg-black after:bg-opacity-40 after:content-[''] hover:scale-[1.15]"
                     style={{
-                      backgroundImage: `url(${featuredCategory?.imageUrl})`,
+                      // backgroundImage: `url(${featuredCategory?.imageUrl})`,
+                      backgroundImage: `url(${getImage(featuredCategory?.imageUrl, 600)})`,
                     }}
                   />
                   <p className="pointer-events-none z-[2] p-1 text-center">
