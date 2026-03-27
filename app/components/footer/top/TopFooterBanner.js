@@ -11,7 +11,7 @@ export default function TopFooterBanner({ bannerImg }) {
       {!!bannerImg?.url && (
         <Image
           // src={bannerImg?.url}
-          src={getImage(bannerImg?.url, 400)}
+          src={getImage(bannerImg?.url, 1200)}
           className="h-full w-full object-contain"
           alt="Marketing Banner"
           height={0}

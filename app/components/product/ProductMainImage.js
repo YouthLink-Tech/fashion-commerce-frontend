@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { CgArrowsExpandRight } from "react-icons/cg";
 import ProductBadges from "../ui/badges/ProductBadges";
+import { getImage } from "@/app/lib/cloudinaryUtils";
 
 export default function ProductMainImage({
   productTitle,
@@ -56,7 +57,8 @@ export default function ProductMainImage({
       {/* Static Image (not hovered) */}
       {!!activeImageUrl && (
         <Image
-          src={activeImageUrl}
+          // src={activeImageUrl}
+          src={getImage(activeImageUrl, 400)}
           alt={`${productTitle} ${selectedColorLabel} ${activeImageIndex + 1}`}
           className="h-full w-full select-none object-cover"
           sizes="50vw"

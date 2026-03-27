@@ -9,6 +9,7 @@ import {
 } from "@/app/utils/orderCalculations";
 import NotifyMeButton from "./NotifyMeButton";
 import ColorButtonWithTooltip from "../../ui/ColorButtonWithTooltip";
+import { getImage } from "@/app/lib/cloudinaryUtils";
 
 export default function CartModalContents({
   userEmail,
@@ -37,7 +38,8 @@ export default function CartModalContents({
       <div className="relative min-h-full overflow-hidden rounded-[4px] bg-[var(--product-default)] p-5 max-md:h-[35vh] max-md:w-[60dvw] max-sm:w-[80dvw] md:w-60">
         {!!imgUrl && (
           <Image
-            src={imgUrl}
+            // src={imgUrl}
+            src={getImage(imgUrl, 400)}
             alt={`${product?.productTitle} ${selectedOptions?.color.label}`}
             className="h-full w-full select-none object-cover"
             sizes="50vw"

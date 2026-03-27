@@ -8,6 +8,7 @@ import circleWithStarShape from "@/public/shapes/circle-with-star.svg";
 import swirlyArrowShape from "@/public/shapes/swirly-arrow.svg";
 import swirlyScribbledArrowShape from "@/public/shapes/swirly-scribbled-arrow.svg";
 import RichTextRenderer from "../shared/RichTextRenderer";
+import { getImage, getVideo } from "@/app/lib/cloudinaryUtils";
 
 export default function StoryDetails({
   gsap,
@@ -112,9 +113,8 @@ export default function StoryDetails({
     });
   }, {});
 
-  const isSrcForVideo = (mediaSrc) => {
-    const videoExtensions = [".mp4", ".webm", ".ogg"];
-    return videoExtensions.some((ext) => mediaSrc.toLowerCase().endsWith(ext));
+  const isSrcForVideo = (resourceType) => {
+    return resourceType === "video";
   };
 
   return (
@@ -137,7 +137,8 @@ export default function StoryDetails({
         />
         {/* Staff Image */}
         <Image
-          src={selectedDept.staff.staffImgUrl}
+          // src={selectedDept.staff.staffImgUrl}
+          src={getImage(selectedDept.staff.staffImgUrl.public_id, 400)}
           alt={selectedDept.staff.staffName}
           height={0}
           width={0}
@@ -188,7 +189,7 @@ export default function StoryDetails({
               <div
                 className={`media relative mb-[calc(12px+1.875rem*1.25)] aspect-video w-full sm:mb-[calc(12px+3.75rem*1.25)] sm:w-2/3 md:mb-[calc(12px+2.25rem*1.25)] md:max-lg:w-3/4 lg:mb-[calc(12px+3rem*1.25)] ${index % 2 === 0 ? "ml-auto" : "mr-auto"}`}
               >
-                {isSrcForVideo(content.mediaSrc) ? (
+                {isSrcForVideo(content.mediaSrc.resource_type) ? (
                   <div className="relative z-[1] h-full w-full">
                     {/* Skeleton Placeholder */}
                     {!videoLoaded[index] && (
@@ -205,13 +206,14 @@ export default function StoryDetails({
                         setVideoLoaded((prev) => ({ ...prev, [index]: true }))
                       }
                     >
-                      <source src={content.mediaSrc} type="video/mp4" />
+                      <source src={getVideo(content.mediaSrc.public_id)} type="video/mp4" />
                     </video>
                   </div>
                 ) : (
                   // Image Element
                   <Image
-                    src={content.mediaSrc}
+                    // src={content.mediaSrc}
+                    src={getImage(content.mediaSrc.public_id, 600)}
                     alt={`Department Image ${index + 1}`}
                     className="media-image relative z-[1] aspect-video w-full rounded-md object-cover"
                     height={0}

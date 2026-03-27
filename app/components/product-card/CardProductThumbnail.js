@@ -108,7 +108,8 @@ export default function CardProductThumbnail({
                   key={`card-thumbnail-sub-img-${productTitle}-${imgSet.color.label}-${imgUrl}-${imgIndex}`}
                   className={`h-full w-full object-cover transition-[transform,opacity] duration-300 ease-in-out ${imgIndex === 0 ? "opacity-100" : "opacity-0"
                     }`}
-                  src={imgUrl}
+                  // src={imgUrl}
+                  src={getImage(imgUrl, 400)}
                   alt={`${productTitle} ${imgSet.color.label} image ${imgIndex + 1
                     }`}
                   sizes="50vw"

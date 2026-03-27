@@ -4,6 +4,7 @@ import { Modal, ModalContent, ModalHeader, ModalBody } from "@nextui-org/react";
 import { LuBox } from "react-icons/lu";
 import { IoCheckmarkCircle } from "react-icons/io5";
 import TrackingCode from "../TrackingCode";
+import { getImage } from "@/app/lib/cloudinaryUtils";
 
 export default function TrackOrderModal({
   isTrackModalOpen,
@@ -116,7 +117,8 @@ export default function TrackOrderModal({
               </div>
               {!!shipmentInfo?.trackingNumber && !!shipmentInfo?.imageUrl && (
                 <Image
-                  src={shipmentInfo?.imageUrl}
+                  // src={shipmentInfo?.imageUrl}
+                  src={getImage(shipmentInfo?.imageUrl, 500)}
                   alt={shipmentInfo?.selectedShipmentHandlerName}
                   width={0}
                   height={0}

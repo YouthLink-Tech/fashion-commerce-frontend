@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { generateCardRotations } from "@/app/utils/generateCardRotations";
+import { getImage } from "@/app/lib/cloudinaryUtils";
 
 const SMALL_CARD_WIDTH = 100;
 const SMALL_CARD_OFFSET = SMALL_CARD_WIDTH / 2;
@@ -165,7 +166,8 @@ export default function StoryHero({
                 className="hero-card relative shrink-0 transition-[transform] delay-150 duration-500 ease-in-out [&:has(img:hover)>div]:delay-[500ms] [&:has(img:hover)>h4]:opacity-100 [&:has(img:hover)>h4]:delay-[500ms] [&:has(img:hover)>img]:w-[calc(var(--small-card-width)*1.33334)] sm:[&:has(img:hover)>img]:w-[calc(var(--large-card-width)*1.66667)] [&:has(img:hover)]:z-[1] [&:has(img:hover)]:-translate-y-3 [&:has(img:hover)_div]:opacity-100"
               >
                 <Image
-                  src={dept.coverImgUrl}
+                  // src={dept.coverImgUrl}
+                  src={getImage(dept.coverImgUrl.public_id, 400)}
                   alt={`Image ${index + 1}`}
                   width={0}
                   height={0}

@@ -68,7 +68,7 @@ export default function ProductThumbnailImages({
                 {!!imageURL && (
                   <Image
                     // src={imageURL}
-                    src={getImage(imageURL, 400)}
+                    src={getImage(imageURL, 600)}
                     alt={`${productTitle} ${selectedColorLabel} Thumbnail ${imageURLIndex + 1}`}
                     className="h-full w-full object-cover transition-[transform] duration-300 ease-in-out"
                     sizes="50vw"

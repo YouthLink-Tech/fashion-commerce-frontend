@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { HiCheckCircle, HiXCircle } from "react-icons/hi2";
+import { getImage } from "@/app/lib/cloudinaryUtils";
 
 export default function ProductToast({
   defaultToast,
@@ -74,7 +75,8 @@ export default function ProductToast({
         <div className="relative min-h-full grow overflow-hidden rounded-[4px] bg-[var(--product-default)] max-sm:w-16 sm:aspect-[1.1/1] sm:h-[52px]">
           <Image
             className="h-full w-full object-cover"
-            src={productImg}
+            // src={productImg}
+            src={getImage(productImg, 400)}
             alt={productTitle}
             fill
             sizes="15vh"

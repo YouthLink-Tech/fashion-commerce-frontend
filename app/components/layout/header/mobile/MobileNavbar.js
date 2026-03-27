@@ -65,7 +65,7 @@ export default async function MobileNavbar({
           <Image
             className="h-8 w-auto max-sm:hidden"
             // src={logoWithTextSrc}
-            src={getImage(logoWithTextSrc, 0)}
+            src={getImage(logoWithTextSrc, 400)}
             alt={`${COMPANY_NAME} logo`}
             height={0}
             width={0}

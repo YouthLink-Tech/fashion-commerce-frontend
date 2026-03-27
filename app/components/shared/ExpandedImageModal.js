@@ -1,3 +1,4 @@
+import { getImage } from "@/app/lib/cloudinaryUtils";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import {
@@ -104,9 +105,8 @@ export default function ExpandedImagesModal({
         <button
           onClick={handleZoomOut}
           disabled={zoomLevel === 0}
-          className={`flex size-10 items-center justify-center rounded-[4px] bg-neutral-800 bg-opacity-50 backdrop-blur transition-opacity duration-300 ${
-            zoomLevel === 0 ? "pointer-events-none opacity-30" : ""
-          }`}
+          className={`flex size-10 items-center justify-center rounded-[4px] bg-neutral-800 bg-opacity-50 backdrop-blur transition-opacity duration-300 ${zoomLevel === 0 ? "pointer-events-none opacity-30" : ""
+            }`}
         >
           <CgMathMinus size={20} />
         </button>
@@ -118,9 +118,8 @@ export default function ExpandedImagesModal({
         <button
           onClick={handleZoomIn}
           disabled={zoomLevel === 4}
-          className={`flex size-10 items-center justify-center rounded-[4px] bg-neutral-800 bg-opacity-50 backdrop-blur transition-opacity duration-300 ${
-            zoomLevel === 4 ? "pointer-events-none opacity-30" : ""
-          }`}
+          className={`flex size-10 items-center justify-center rounded-[4px] bg-neutral-800 bg-opacity-50 backdrop-blur transition-opacity duration-300 ${zoomLevel === 4 ? "pointer-events-none opacity-30" : ""
+            }`}
         >
           <CgMathPlus size={20} />
         </button>
@@ -148,7 +147,8 @@ export default function ExpandedImagesModal({
       <div className="overflow-hidden">
         {!!expandedImgUrl && (
           <Image
-            src={expandedImgUrl}
+            // src={expandedImgUrl}
+            src={getImage(expandedImgUrl, 400)}
             alt={
               modalFor === "products"
                 ? `${productTitle} ${selectedColorLabel} ${activeImageIndex + 1} Expanded`

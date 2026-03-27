@@ -47,7 +47,7 @@ export default function ProductSizeGuideButton({ sizeGuideImageUrl }) {
                   <Skeleton className="absolute inset-0 z-[0] h-full w-full rounded-md" />
                   <Image
                     // src={sizeGuideImageUrl}
-                    src={getImage(sizeGuideImageUrl, 400)}
+                    src={getImage(sizeGuideImageUrl, 600)}
                     alt="Size guide"
                     className="relative h-auto w-full object-contain"
                     width={0}
