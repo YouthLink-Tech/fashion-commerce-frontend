@@ -108,7 +108,7 @@ export default function HomeHeroSlides({
             <Image
               key={`center-hero-img-${centerImgUrl}-${index}`}
               // src={centerImgUrl}
-              src={getImage(centerImgUrl, 600)}
+              src={getImage(centerImgUrl, 1000)}
               alt={`Hero section center image ${index + 1}`}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

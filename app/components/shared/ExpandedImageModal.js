@@ -148,7 +148,7 @@ export default function ExpandedImagesModal({
         {!!expandedImgUrl && (
           <Image
             // src={expandedImgUrl}
-            src={getImage(expandedImgUrl, 400)}
+            src={getImage(expandedImgUrl, 850)}
             alt={
               modalFor === "products"
                 ? `${productTitle} ${selectedColorLabel} ${activeImageIndex + 1} Expanded`

@@ -58,7 +58,7 @@ export default function ProductMainImage({
       {!!activeImageUrl && (
         <Image
           // src={activeImageUrl}
-          src={getImage(activeImageUrl, 400)}
+          src={getImage(activeImageUrl, 650)}
           alt={`${productTitle} ${selectedColorLabel} ${activeImageIndex + 1}`}
           className="h-full w-full select-none object-cover"
           sizes="50vw"
@@ -74,7 +74,7 @@ export default function ProductMainImage({
         id="img-zoomed"
         className="pointer-events-none absolute inset-0 z-[2] hidden h-full w-full bg-[var(--product-default)] bg-no-repeat"
         style={{
-          backgroundImage: `url("${encodeURI(activeImageUrl)}")`,
+          backgroundImage: `url("${encodeURI(getImage(activeImageUrl, 2000))}")`,
           backgroundSize: "200%",
           backgroundPosition: "0% 0%",
         }}
