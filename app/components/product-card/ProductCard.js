@@ -38,6 +38,7 @@ export default function ProductCard({
     >
       <CardProductThumbnail
         productTitle={product.productTitle}
+        slug={product.slug}
         productColors={product.availableColors}
         isProductOutOfStock={isProductOutOfStock}
         thumbnailImageUrl={product.thumbnailImageUrl}

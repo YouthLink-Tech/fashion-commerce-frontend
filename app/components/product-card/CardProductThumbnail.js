@@ -7,6 +7,7 @@ import { getImage } from "@/app/lib/cloudinaryUtils";
 
 export default function CardProductThumbnail({
   productTitle,
+  slug,
   productColors,
   isProductOutOfStock,
   thumbnailImageUrl,
@@ -67,7 +68,7 @@ export default function CardProductThumbnail({
   return (
     <div className="product-card relative aspect-[4/5.5] w-full overflow-hidden rounded-md bg-[var(--product-default)] max-xl:aspect-[4/5] sm:min-h-[350px] lg:min-h-[400px] xl:min-h-[450px]">
       <TransitionLink
-        href={`/product/${productTitle.split(" ").join("-").toLowerCase()}`}
+        href={`/product/${slug}`}
       >
         {activeColorIndex === null ? (
           // RENDER STATE 1: No color selected.

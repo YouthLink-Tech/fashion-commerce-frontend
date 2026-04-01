@@ -31,11 +31,11 @@ export default function AddToCartModal({
       !product || !selectedOptions?.size
         ? null
         : getProductVariantSku(
-            product?.productVariants,
-            primaryLocation,
-            selectedOptions.color._id,
-            selectedOptions.size,
-          ),
+          product?.productVariants,
+          primaryLocation,
+          selectedOptions.color._id,
+          selectedOptions.size,
+        ),
     );
   }, [
     primaryLocation,
@@ -95,7 +95,7 @@ export default function AddToCartModal({
             product?.availableColors[Object.keys(product?.availableColors)[0]]
           }
           productVariantSku={productVariantSku}
-          productPageLink={`/product/${product?.productTitle?.split(" ")?.join("-")?.toLowerCase()}`}
+          productPageLink={`/product/${product?.slug}`}
           selectedOptions={selectedOptions}
           setSelectedOptions={setSelectedOptions}
           setIsAddToCartModalOpen={setIsAddToCartModalOpen}

@@ -48,7 +48,7 @@ export default function OrderItems({ orderItems }) {
               className="flex w-full items-stretch justify-between gap-x-2.5"
             >
               <TransitionLink
-                href={`/product/${item?.productTitle?.split(" ")?.join("-")?.toLowerCase()}`}
+                href={`/product/${item?.slug}`}
                 className="relative block min-h-full w-[72px] overflow-hidden rounded-[4px] bg-[var(--product-default)] sm:w-20 xl:w-1/4"
               >
                 {!!item?.thumbnailImgUrl && (
@@ -67,7 +67,7 @@ export default function OrderItems({ orderItems }) {
                   <div className="flex justify-between gap-x-2 sm:gap-x-5">
                     <div>
                       <TransitionLink
-                        href={`/product/${item?.productTitle?.split(" ")?.join("-")?.toLowerCase()}`}
+                        href={`/product/${item?.slug}`}
                         className="underline-offset-1 hover:underline"
                       >
                         <h4 className="line-clamp-1 text-neutral-600 md:text-[15px]">

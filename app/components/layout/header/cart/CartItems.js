@@ -93,7 +93,7 @@ export default function CartItems({
           >
             {/* Cart Item Image (with link to product page) */}
             <TransitionLink
-              href={`/product/${cartItem?.productTitle?.split(" ")?.join("-")?.toLowerCase()}`}
+              href={`/product/${cartItem?.slug}`}
               hasDrawer={true}
               setIsDrawerOpen={setIsDropdownOpen}
               className="relative block min-h-full w-20 overflow-hidden rounded-[4px] bg-[var(--product-default)] sm:w-1/4"
@@ -115,7 +115,7 @@ export default function CartItems({
                   <div>
                     {/* Cart Item Title (with link to product page) */}
                     <TransitionLink
-                      href={`/product/${cartItem?.productTitle?.split(" ")?.join("-")?.toLowerCase()}`}
+                      href={`/product/${cartItem?.slug}`}
                       hasDrawer={true}
                       setIsDrawerOpen={setIsDropdownOpen}
                       className="underline-offset-1 hover:underline"

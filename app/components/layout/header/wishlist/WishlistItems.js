@@ -71,7 +71,7 @@ export default function WishlistItems({
           >
             {/* Wishlist Item Image (with link to product page) */}
             <TransitionLink
-              href={`/product/${wishlistItem?.productTitle?.split(" ")?.join("-")?.toLowerCase()}`}
+              href={`/product/${wishlistItem?.slug}`}
               className="relative min-h-full w-16 overflow-hidden rounded-[4px] bg-[var(--product-default)] sm:aspect-[1.1/1] sm:w-1/5"
               hasDrawer={true}
               setIsDrawerOpen={setIsDropdownOpen}
@@ -91,7 +91,7 @@ export default function WishlistItems({
               {/* Wishlist Item Title (with link to product page) */}
               <div className="flex justify-between gap-x-5">
                 <TransitionLink
-                  href={`/product/${wishlistItem?.productTitle?.split(" ")?.join("-")?.toLowerCase()}`}
+                  href={`/product/${wishlistItem?.slug}`}
                   className="block underline-offset-1 hover:underline"
                   hasDrawer={true}
                   setIsDrawerOpen={setIsDropdownOpen}

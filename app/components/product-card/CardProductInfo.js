@@ -17,7 +17,7 @@ export default function CardProductInfo({
 
   return (
     <TransitionLink
-      href={`/product/${product.productTitle.split(" ").join("-").toLowerCase()}`}
+      href={`/product/${product.slug}`}
       className="block pt-3"
     >
       <div className="flex items-center justify-between gap-1.5">

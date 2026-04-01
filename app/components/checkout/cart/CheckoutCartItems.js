@@ -118,7 +118,7 @@ export default function CheckoutCartItems({
             >
               {/* Cart Item Image (with link to product page) */}
               <TransitionLink
-                href={`/product/${cartItem?.productTitle.split(" ").join("-").toLowerCase()}`}
+                href={`/product/${cartItem?.slug}`}
                 className="relative block min-h-full w-1/4 overflow-hidden rounded-[4px] bg-[var(--product-default)] max-sm:w-20"
               >
                 {!!cartItemImgUrl && (
@@ -138,7 +138,7 @@ export default function CheckoutCartItems({
                     <div>
                       {/* Cart Item Title (with link to product page) */}
                       <TransitionLink
-                        href={`/product/${cartItem?.productTitle.split(" ").join("-").toLowerCase()}`}
+                        href={`/product/${cartItem?.slug}`}
                         className="underline-offset-1 hover:underline"
                       >
                         <h4 className="line-clamp-1 text-neutral-600">
