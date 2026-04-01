@@ -10,17 +10,18 @@ import ProductContents from "@/app/components/product/ProductContents";
 import ProductRelatedContents from "@/app/components/product/ProductRelatedContents";
 
 export default async function Product({ params: { slug } }) {
-  let products = [];
+  let product = null;
   try {
-    const result = await rawFetch("/api/products/all");
-    products = result.data || [];
+    const result = await rawFetch(`/api/products/slug/${slug}`, {
+      next: {
+        revalidate: 3600,
+        tags: ['all-products', `product-${slug}`]
+      }
+    });
+    product = result.data || null;
   } catch (error) {
     console.error("FetchError (productDetails/products):", error.message);
   }
-
-  const product = products?.find(
-    (p) => p?.productTitle?.split(" ")?.join("-")?.toLowerCase() === slug,
-  );
 
   if (!product || product.status !== "active") redirect("/shop");
 
@@ -30,16 +31,18 @@ export default async function Product({ params: { slug } }) {
     session?.user?.email
       ? tokenizedFetch(`/api/customer/single/${session?.user?.email}`)
       : Promise.resolve(null),
+    rawFetch("/api/products/all"),
     rawFetch("/api/special-offer/all"),
     rawFetch("/api/location/primary"),
     rawFetch("/api/notifications/all"),
   ];
 
-  const [userDataRes, offersRes, primaryLocationRes, notifyVariantsRes] =
+  const [userDataRes, productsRes, offersRes, primaryLocationRes, notifyVariantsRes] =
     await Promise.allSettled(promises);
 
-  const [userData, specialOffers, primaryLocation, notifyVariants] = [
+  const [userData, products, specialOffers, primaryLocation, notifyVariants] = [
     extractData(userDataRes, null, "productDetails/userData"),
+    extractData(productsRes, [], "productDetails/products"),
     extractData(offersRes, [], "productDetails/specialOffers"),
     extractData(
       primaryLocationRes,
