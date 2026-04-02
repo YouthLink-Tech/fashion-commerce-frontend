@@ -24,7 +24,12 @@ export default async function MobileNavbar({
     session?.user?.email
       ? tokenizedFetch(`/api/customer/single/${session.user.email}`)
       : Promise.resolve(null),
-    rawFetch("/api/products/all"),
+    rawFetch("/api/products/all", {
+      next: {
+        revalidate: 7200,
+        tags: ['all-products']
+      }
+    }),
     rawFetch("/api/special-offer/all"),
     rawFetch("/api/location/primary"),
     rawFetch("/api/policy-pdf/all"),
