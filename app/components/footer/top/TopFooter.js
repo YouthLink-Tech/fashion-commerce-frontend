@@ -7,7 +7,12 @@ import TopFooterNewsletter from "./TopFooterNewsletter";
 
 export default async function TopFooter({ userEmail }) {
   const promises = [
-    rawFetch("/api/marketing-banner/all"),
+    rawFetch("/api/marketing-banner/all", {
+      next: {
+        revalidate: 86400,  // 24 hours
+        tags: ['marketing-banner']
+      }
+    }),
     userEmail
       ? tokenizedFetch(`/api/newsletter/single/${userEmail}`)
       : Promise.resolve(null),
