@@ -5,7 +5,12 @@ export default async function HomeHero() {
   let sliderData;
 
   try {
-    const result = await rawFetch("/api/hero-banner/all");
+    const result = await rawFetch("/api/hero-banner/all", {
+      next: {
+        revalidate: 86400, // 24 hours — changes very rarely
+        tags: ['hero-banner']
+      }
+    });
     sliderData = result.data || [];
   } catch (error) {
     console.error("FetchError (home/sliderData):", error.message);

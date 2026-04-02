@@ -18,8 +18,18 @@ export default async function RootLayout({ children }) {
   const session = await getServerSession(authOptions);
 
   const promises = [
-    rawFetch("/api/top-header/all"),
-    rawFetch("/api/logo/all"),
+    rawFetch("/api/top-header/all", {
+      next: {
+        revalidate: 86400, // 24 hours — changes very rarely
+        tags: ['top-header']
+      }
+    }),
+    rawFetch("/api/logo/all", {
+      next: {
+        revalidate: 604800, // 7 days — logo almost never changes
+        tags: ['logo']
+      }
+    }),
   ];
 
   const [topHeaderRes, logoRes] = await Promise.allSettled(promises);

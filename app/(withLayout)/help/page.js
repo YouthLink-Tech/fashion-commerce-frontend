@@ -11,7 +11,12 @@ export default async function HelpCenter() {
   let pageTitle, faqDescription, faqs;
 
   try {
-    const result = await rawFetch("/api/faq/all");
+    const result = await rawFetch("/api/faq/all", {
+      next: {
+        revalidate: 86400, // 24 hours — FAQs change occasionally
+        tags: ['faqs']
+      }
+    });
     const [faqData] = result.data || [];
 
     pageTitle = faqData?.pageTitle;
