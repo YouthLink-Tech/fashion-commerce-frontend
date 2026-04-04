@@ -10,7 +10,12 @@ export default async function HomeCategories() {
   let categories;
 
   try {
-    const result = await rawFetch("/api/category/all");
+    const result = await rawFetch("/api/category/all", {
+      next: {
+        revalidate: 7200,
+        tags: ['categories']
+      }
+    });
     categories = result.data || [];
   } catch (error) {
     console.error("FetchError (home/categories):", error.message);

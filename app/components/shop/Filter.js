@@ -70,11 +70,11 @@ export default function Filter({
       options: !filteredProducts?.length
         ? []
         : [
-            ...new Set(
-              filteredProducts?.flatMap((product) => product.allSizes),
-            ),
-            "Clear",
-          ],
+          ...new Set(
+            filteredProducts?.flatMap((product) => product.allSizes),
+          ),
+          "Clear",
+        ],
     },
     {
       label: "Colors",
@@ -84,15 +84,15 @@ export default function Filter({
       options: !filteredProducts?.length
         ? []
         : [
-            ...[
-              ...new Set(
-                filteredProducts
-                  ?.flatMap((product) => product.availableColors)
-                  .map(JSON.stringify),
-              ),
-            ].map(JSON.parse),
-            "Clear",
-          ],
+          ...[
+            ...new Set(
+              filteredProducts
+                ?.flatMap((product) => product.availableColors)
+                .map(JSON.stringify),
+            ),
+          ].map(JSON.parse),
+          "Clear",
+        ],
     },
     {
       label: "Price",
@@ -104,17 +104,17 @@ export default function Filter({
           min: !filteredProducts?.length
             ? 0
             : Math.min(
-                ...filteredProducts?.map((product) =>
-                  calculateFinalPrice(product, specialOffers),
-                ),
+              ...filteredProducts?.map((product) =>
+                calculateFinalPrice(product, specialOffers),
               ),
+            ),
           max: !filteredProducts?.length
             ? 0
             : Math.max(
-                ...filteredProducts?.map((product) =>
-                  calculateFinalPrice(product, specialOffers),
-                ),
+              ...filteredProducts?.map((product) =>
+                calculateFinalPrice(product, specialOffers),
               ),
+            ),
         },
       ],
     },
@@ -140,7 +140,7 @@ export default function Filter({
                   >
                     {filterOption.selectionMode === "single"
                       ? ": " +
-                        selectedFilterOptions[filterOption.arrayKey].toString()
+                      selectedFilterOptions[filterOption.arrayKey].toString()
                       : selectedFilterOptions[filterOption.arrayKey].length}
                   </span>
                 )}
@@ -235,7 +235,7 @@ export default function Filter({
                 <span
                   className={
                     selectedFilterOptions.price.min ||
-                    selectedFilterOptions.price.max
+                      selectedFilterOptions.price.max
                       ? "inline text-black"
                       : "hidden"
                   }
@@ -258,9 +258,9 @@ export default function Filter({
                   max={filterOption.options[0].max * 100}
                   isInvalid={
                     selectedFilterOptions.price?.min <
-                      filterOption.options[0].min ||
+                    filterOption.options[0].min ||
                     selectedFilterOptions.price?.min >
-                      selectedFilterOptions.price?.max
+                    selectedFilterOptions.price?.max
                   }
                   value={
                     selectedFilterOptions.price?.min ||
@@ -292,9 +292,9 @@ export default function Filter({
                   max={filterOption.options[0].max * 100}
                   isInvalid={
                     selectedFilterOptions.price?.max >
-                      filterOption.options[0].max ||
+                    filterOption.options[0].max ||
                     selectedFilterOptions.price?.max <
-                      selectedFilterOptions.price?.min
+                    selectedFilterOptions.price?.min
                   }
                   value={
                     selectedFilterOptions.price?.max ||
@@ -321,9 +321,9 @@ export default function Filter({
                 maxValue={filterOption.options[0].max}
                 value={[
                   selectedFilterOptions.price?.min ||
-                    filterOption.options[0].min,
+                  filterOption.options[0].min,
                   selectedFilterOptions.price?.max ||
-                    filterOption.options[0].max,
+                  filterOption.options[0].max,
                 ]}
                 onChange={([min, max] = values) => {
                   setSelectedFilterOptions((prevOptions) => ({
