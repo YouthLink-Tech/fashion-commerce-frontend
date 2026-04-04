@@ -149,7 +149,12 @@ export default function Filter({
             selectionMode={filterOption.selectionMode}
             size="sm"
             defaultSelectedKeys=""
-            selectedKeys={selectedFilterOptions[filterOption.arrayKey]}
+            // selectedKeys={selectedFilterOptions[filterOption.arrayKey]}
+            selectedKeys={
+              filterOption.options.length
+                ? selectedFilterOptions[filterOption.arrayKey]
+                : new Set([])
+            }
             onSelectionChange={(newSelectedKeys) => {
               setSelectedFilterOptions((prevSelectedValues) => ({
                 ...prevSelectedValues,

@@ -43,10 +43,10 @@ export default function ShopContents({
   const isProductWithinPriceRange = (product) =>
     (!selectedFilterOptions.price.min ||
       selectedFilterOptions.price.min <=
-        calculateFinalPrice(product, specialOffers)) &&
+      calculateFinalPrice(product, specialOffers)) &&
     (!selectedFilterOptions.price.max ||
       selectedFilterOptions.price.max >=
-        calculateFinalPrice(product, specialOffers));
+      calculateFinalPrice(product, specialOffers));
 
   const isNoFilterOptionSelected = Object.values(selectedFilterOptions).every(
     (value) => {
@@ -67,14 +67,24 @@ export default function ShopContents({
   useEffect(() => {
     setKeyword(searchParams.get("search"));
 
+    // setSelectedFilterOptions((prevSelectedValues) => ({
+    //   ...prevSelectedValues,
+    //   filterBy: !searchParams.get("filterBy")
+    //     ? new Set([])
+    //     : [searchParams.get("filterBy")],
+    //   category: !searchParams.get("category")
+    //     ? new Set([])
+    //     : [searchParams.get("category")],
+    // }));
+
     setSelectedFilterOptions((prevSelectedValues) => ({
       ...prevSelectedValues,
       filterBy: !searchParams.get("filterBy")
         ? new Set([])
-        : [searchParams.get("filterBy")],
+        : new Set([searchParams.get("filterBy")]),  // ← Set
       category: !searchParams.get("category")
         ? new Set([])
-        : [searchParams.get("category")],
+        : new Set([searchParams.get("category")]),  // ← Set
     }));
 
     setIsPageLoading(false);
@@ -110,7 +120,7 @@ export default function ShopContents({
                   ))) &&
               (!selectedFilterOptions.category.length ||
                 product.category ===
-                  selectedFilterOptions.category.toString()) &&
+                selectedFilterOptions.category.toString()) &&
               (!selectedFilterOptions.sizes.length ||
                 selectedFilterOptions.sizes.some((selectedSize) =>
                   product.allSizes.some(
