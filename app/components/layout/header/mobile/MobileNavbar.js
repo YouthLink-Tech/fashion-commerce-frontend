@@ -30,8 +30,18 @@ export default async function MobileNavbar({
         tags: ['all-products']
       }
     }),
-    rawFetch("/api/special-offer/all"),
-    rawFetch("/api/location/primary"),
+    rawFetch("/api/special-offer/all", {
+      next: {
+        revalidate: 3600, // 1 hour
+        tags: ['special-offers']
+      }
+    }),
+    rawFetch("/api/location/primary", {
+      next: {
+        revalidate: 7200,           // 2 hours fallback
+        tags: ['primary-location']  // cleared when location changes
+      }
+    }),
     rawFetch("/api/policy-pdf/all"),
   ];
 
