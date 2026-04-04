@@ -49,7 +49,12 @@ export default async function Product({ params: { slug } }) {
         tags: ['primary-location']  // cleared when location changes
       }
     }),
-    rawFetch("/api/notifications/all"),
+    rawFetch("/api/notifications/all", {
+      next: {
+        revalidate: 3600, // 1 hour
+        tags: ['notifications']
+      }
+    }),
   ];
 
   const [userDataRes, productsRes, offersRes, primaryLocationRes, notifyVariantsRes] =

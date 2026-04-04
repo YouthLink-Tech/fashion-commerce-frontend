@@ -35,7 +35,12 @@ export default async function Home() {
         tags: ['primary-location']  // cleared when location changes
       }
     }),
-    rawFetch("/api/notifications/all"),
+    rawFetch("/api/notifications/all", {
+      next: {
+        revalidate: 3600, // 1 hour
+        tags: ['notifications']
+      }
+    }),
   ];
 
   const [
