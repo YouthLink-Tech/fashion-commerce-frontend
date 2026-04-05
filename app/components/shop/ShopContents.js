@@ -67,24 +67,14 @@ export default function ShopContents({
   useEffect(() => {
     setKeyword(searchParams.get("search"));
 
-    // setSelectedFilterOptions((prevSelectedValues) => ({
-    //   ...prevSelectedValues,
-    //   filterBy: !searchParams.get("filterBy")
-    //     ? new Set([])
-    //     : [searchParams.get("filterBy")],
-    //   category: !searchParams.get("category")
-    //     ? new Set([])
-    //     : [searchParams.get("category")],
-    // }));
-
     setSelectedFilterOptions((prevSelectedValues) => ({
       ...prevSelectedValues,
       filterBy: !searchParams.get("filterBy")
         ? new Set([])
-        : new Set([searchParams.get("filterBy")]),  // ← Set
+        : [searchParams.get("filterBy")],
       category: !searchParams.get("category")
         ? new Set([])
-        : new Set([searchParams.get("category")]),  // ← Set
+        : [searchParams.get("category")],
     }));
 
     setIsPageLoading(false);
