@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 export async function middleware(req) {
-  const pathname = req.url;
+  const pathname = req.nextUrl.pathname
+  const fullUrl = req.url;
 
   // If user enters wrong user/shop page URL, redirect to the correct one
-  if (/\/user\/?$/i.test(pathname))
-    return NextResponse.redirect(new URL("/user/profile", pathname));
-  if (/\/product\/?$/i.test(pathname))
-    return NextResponse.redirect(new URL("/shop", pathname));
+  if (/\/user\/?$/i.test(fullUrl))
+    return NextResponse.redirect(new URL("/user/profile", fullUrl));
+  if (/\/product\/?$/i.test(fullUrl))
+    return NextResponse.redirect(new URL("/shop", fullUrl));
 
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
@@ -19,7 +20,7 @@ export async function middleware(req) {
     (!token && pathname.includes("user")) ||
     (token && pathname.includes("reset-password"))
   ) {
-    return NextResponse.redirect(new URL("/", pathname));
+    return NextResponse.redirect(new URL("/", fullUrl));
   }
 
   return NextResponse.next();
