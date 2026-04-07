@@ -30,9 +30,9 @@ export default function ProductRelatedContents({
       )
         ? recentlyViewedProductIds
         : recentlyViewedProductIds?.filter(
-            (recentlyViewedProductId) =>
-              recentlyViewedProductId !== product?._id,
-          );
+          (recentlyViewedProductId) =>
+            recentlyViewedProductId !== product?._id,
+        );
 
       setRecentlyViewedProducts(
         products
@@ -56,13 +56,20 @@ export default function ProductRelatedContents({
     }
   }, [product, products]);
 
+  // const completeOutfitProducts = products
+  //   ?.filter((availableProduct) =>
+  //     product?.restOfOutfit.some(
+  //       (linkedProduct) =>
+  //         availableProduct._id === linkedProduct.id &&
+  //         availableProduct.status === "active",
+  //     ),
+  //   )
+  //   .slice(0, 8);
+
   const completeOutfitProducts = products
     ?.filter((availableProduct) =>
-      product?.restOfOutfit.some(
-        (linkedProduct) =>
-          availableProduct._id === linkedProduct.id &&
-          availableProduct.status === "active",
-      ),
+      product?.restOfOutfit.includes(availableProduct._id) &&
+      availableProduct.status === "active"
     )
     .slice(0, 8);
 
