@@ -56,16 +56,6 @@ export default function ProductRelatedContents({
     }
   }, [product, products]);
 
-  // const completeOutfitProducts = products
-  //   ?.filter((availableProduct) =>
-  //     product?.restOfOutfit.some(
-  //       (linkedProduct) =>
-  //         availableProduct._id === linkedProduct.id &&
-  //         availableProduct.status === "active",
-  //     ),
-  //   )
-  //   .slice(0, 8);
-
   const completeOutfitProducts = products
     ?.filter((availableProduct) =>
       product?.restOfOutfit.includes(availableProduct._id) &&
