@@ -188,11 +188,11 @@
   }
 
   .hero-images > div:is(:first-child, :last-child) {
-    @apply relative mb-auto h-[calc(40%-8px)] w-[calc(50%-8px)] max-sm:order-last sm:h-[90%] sm:w-[25vw] xl:h-[94%] xl:w-[60vh] [&>img]:rounded-md [&>img]:object-cover z-0 min-h-[1px];
+    @apply relative mb-auto h-[calc(40%-8px)] w-[calc(50%-8px)] max-sm:order-last sm:h-[90%] sm:w-[25vw] xl:h-[94%] xl:w-[60vh] [&>img]:rounded-md [&>img]:object-cover;
   }
 
   .hero-images > div:not(:is(:first-child, :last-child)) {
-    @apply relative mt-auto h-[calc(60%-8px)] w-full sm:h-[86%] sm:grow xl:h-[88%] [&>img]:rounded-md [&>img]:object-cover [&>img]:object-bottom z-0 min-h-[1px];
+    @apply relative mt-auto h-[calc(60%-8px)] w-full sm:h-[86%] sm:grow xl:h-[88%] [&>img]:rounded-md [&>img]:object-cover [&>img]:object-bottom;
   }
 
   .payment-methods input {

@@ -39,13 +39,6 @@ export default function HomeHeroSlides({
     }
   }, [isEnabled, canSlide, slideInterval, nextSlide]);
 
-  // useEffect(() => {
-  //   const script = document.createElement("script");
-  //   script.src = "//cdn.jsdelivr.net/npm/eruda";
-  //   document.body.appendChild(script);
-  //   script.onload = () => window.eruda.init();
-  // }, []);
-
   const getImageStyle = (index, delayMultiplier = 0) => {
     const isActive = index === currentIndex;
     return {
@@ -100,7 +93,7 @@ export default function HomeHeroSlides({
         </div>
       </div>
       {/* Image Sections */}
-      <div className="hero-images pointer-events-none mt-auto flex grow justify-center gap-2 max-sm:mt-7 max-sm:flex-wrap md:-mt-2 md:gap-3 xl:-mt-3 xl:justify-between xl:gap-4 landscape:max-h-[550px] min-h-[300px]">
+      <div className="hero-images pointer-events-none flex grow justify-center gap-2 max-sm:mt-7 max-sm:flex-wrap md:-mt-2 md:gap-3 xl:-mt-3 xl:justify-between xl:gap-4 landscape:mt-auto landscape:max-h-[550px]">
         {/* Left Images */}
         <div className="relative flex overflow-hidden" style={{ isolation: "isolate" }}>
           {leftSlides?.map((leftImgUrl, index) => (
