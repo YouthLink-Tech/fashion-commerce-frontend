@@ -49,8 +49,6 @@ export default function HomeHeroSlides({
       transitionDuration: `${transitionDuration}ms`,
       transitionDelay: isActive ? `${transitionDelay * delayMultiplier}ms` : "0ms",
       WebkitBackfaceVisibility: "hidden",
-      willChange: "opacity",
-      transform: "translateZ(0)",
     }
   };
 
