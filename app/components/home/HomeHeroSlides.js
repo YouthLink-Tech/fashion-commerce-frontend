@@ -45,6 +45,8 @@ export default function HomeHeroSlides({
     transitionTimingFunction: "ease-in-out",
     transitionDuration: `${transitionDuration}ms`,
     transitionDelay: `${transitionDelay * delayMultiplier}ms`,
+    willChange: "opacity",
+    transform: "translateZ(0)",
   });
 
   return (
