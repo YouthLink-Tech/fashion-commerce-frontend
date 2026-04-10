@@ -91,7 +91,7 @@ export default function HomeHeroSlides({
         </div>
       </div>
       {/* Image Sections */}
-      <div className="hero-images pointer-events-none flex justify-center gap-2 max-sm:mt-7 max-sm:flex-wrap md:-mt-2 md:gap-3 xl:-mt-3 xl:justify-between xl:gap-4 landscape:mt-auto landscape:max-h-[550px] h-[50svh] sm:h-[45svh] xl:h-[50svh]">
+      <div className="hero-images pointer-events-none flex grow min-h-0 justify-center gap-2 max-sm:mt-7 max-sm:flex-wrap md:-mt-2 md:gap-3 xl:-mt-3 xl:justify-between xl:gap-4 landscape:mt-auto landscape:max-h-[550px]">
         {/* Left Images */}
         <div className="relative flex overflow-hidden" style={{ isolation: "isolate" }}>
           {leftSlides?.map((leftImgUrl, index) => (
@@ -102,7 +102,7 @@ export default function HomeHeroSlides({
               alt={`Hero section left side image ${index + 1}`}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="object-cover"
+              className="object-cover rounded-md"
               style={getImageStyle(index, 0)} // No delay for left images
             />
           ))}
@@ -117,7 +117,7 @@ export default function HomeHeroSlides({
               alt={`Hero section center image ${index + 1}`}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="object-cover"
+              className="object-cover object-bottom rounded-md"
               style={getImageStyle(index, 1)} // Base delay for center images
             />
           ))}
@@ -132,7 +132,7 @@ export default function HomeHeroSlides({
               alt={`Hero section right side image ${index + 1}`}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="object-cover"
+              className="object-cover rounded-md"
               style={getImageStyle(index, 2)} // Double delay for right images
             />
           ))}
