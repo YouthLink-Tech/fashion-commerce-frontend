@@ -46,17 +46,20 @@ export default function HomeHeroSlides({
   //   script.onload = () => window.eruda.init();
   // }, []);
 
-  const getImageStyle = (index, delayMultiplier = 0) => ({
-    opacity: index === currentIndex ? 1 : 0,
-    visibility: index === currentIndex ? "visible" : "hidden",
-    transitionProperty: "opacity, visibility",
-    transitionTimingFunction: "ease-in-out",
-    transitionDuration: `${transitionDuration}ms`,
-    transitionDelay: `${transitionDelay * delayMultiplier}ms`,
-    WebkitBackfaceVisibility: "hidden",
-    willChange: "opacity",
-    transform: "translateZ(0)",
-  });
+  const getImageStyle = (index, delayMultiplier = 0) => {
+    const isActive = index === currentIndex;
+    return {
+      opacity: isActive ? 1 : 0,
+      visibility: isActive ? "visible" : "hidden",
+      transitionProperty: "opacity, visibility",
+      transitionTimingFunction: "ease-in-out",
+      transitionDuration: `${transitionDuration}ms`,
+      transitionDelay: isActive ? `${transitionDelay * delayMultiplier}ms` : "0ms",
+      WebkitBackfaceVisibility: "hidden",
+      willChange: "opacity",
+      transform: "translateZ(0)",
+    }
+  };
 
   return (
     <div className="relative flex h-svh flex-col px-5 pb-6 pt-[106px] sm:h-[65svh] sm:px-8 sm:pt-32 lg:px-12 xl:mx-auto xl:max-w-[1200px] xl:px-0 2xl:pb-[6vh] 2xl:pt-[calc(88px+6vh)] portrait:md:h-[75svh] portrait:lg:h-[60svh] landscape:h-svh">
@@ -97,7 +100,7 @@ export default function HomeHeroSlides({
         </div>
       </div>
       {/* Image Sections */}
-      <div className="hero-images pointer-events-none mt-auto flex grow justify-center gap-2 max-sm:mt-7 max-sm:flex-wrap md:-mt-2 md:gap-3 xl:-mt-3 xl:justify-between xl:gap-4 landscape:max-h-[550px]">
+      <div className="hero-images pointer-events-none mt-auto flex grow justify-center gap-2 max-sm:mt-7 max-sm:flex-wrap md:-mt-2 md:gap-3 xl:-mt-3 xl:justify-between xl:gap-4 landscape:max-h-[550px] min-h-[300px]">
         {/* Left Images */}
         <div className="relative flex overflow-hidden" style={{ isolation: "isolate" }}>
           {leftSlides?.map((leftImgUrl, index) => (
