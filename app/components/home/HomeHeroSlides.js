@@ -93,7 +93,7 @@ export default function HomeHeroSlides({
       {/* Image Sections */}
       <div className="hero-images pointer-events-none flex grow min-h-0 justify-center gap-2 max-sm:mt-7 max-sm:flex-wrap max-sm:h-[50svh] md:-mt-2 md:gap-3 xl:-mt-3 xl:justify-between xl:gap-4 landscape:mt-auto landscape:max-h-[550px]">
         {/* Left Images */}
-        <div className="relative flex overflow-hidden" style={{ isolation: "isolate" }}>
+        <div className="relative flex overflow-hidden">
           {leftSlides?.map((leftImgUrl, index) => (
             <Image
               key={`left-hero-img-${leftImgUrl}-${index}`}
@@ -108,7 +108,7 @@ export default function HomeHeroSlides({
           ))}
         </div>
         {/* Center Images */}
-        <div className="relative flex overflow-hidden" style={{ isolation: "isolate" }}>
+        <div className="relative flex overflow-hidden">
           {centerSlides?.map((centerImgUrl, index) => (
             <Image
               key={`center-hero-img-${centerImgUrl}-${index}`}
@@ -123,7 +123,7 @@ export default function HomeHeroSlides({
           ))}
         </div>
         {/* Right Images */}
-        <div className="relative flex overflow-hidden" style={{ isolation: "isolate" }}>
+        <div className="relative flex overflow-hidden">
           {rightSlides?.map((rightImgUrl, index) => (
             <Image
               key={`right-hero-img-${rightImgUrl}-${index}`}
