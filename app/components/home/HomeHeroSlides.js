@@ -39,6 +39,13 @@ export default function HomeHeroSlides({
     }
   }, [isEnabled, canSlide, slideInterval, nextSlide]);
 
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "//cdn.jsdelivr.net/npm/eruda";
+    document.body.appendChild(script);
+    script.onload = () => window.eruda.init();
+  }, []);
+
   const getImageStyle = (index, delayMultiplier = 0) => ({
     opacity: index === currentIndex ? 1 : 0,
     transitionProperty: "opacity",
