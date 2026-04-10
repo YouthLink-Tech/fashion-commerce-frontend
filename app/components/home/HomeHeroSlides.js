@@ -8,7 +8,7 @@ import arrowShape from "@/public/shapes/arrow.png";
 import TransitionLink from "@/app/components/ui/TransitionLink";
 import { getImage } from "@/app/lib/cloudinaryUtils";
 
-const transitionDuration = 650; // Duration of the fade animation
+const transitionDuration = 1000; // Duration of the fade animation
 const transitionDelay = 150; // Base delay for staggering animations
 
 export default function HomeHeroSlides({
