@@ -39,19 +39,21 @@ export default function HomeHeroSlides({
     }
   }, [isEnabled, canSlide, slideInterval, nextSlide]);
 
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "//cdn.jsdelivr.net/npm/eruda";
-    document.body.appendChild(script);
-    script.onload = () => window.eruda.init();
-  }, []);
+  // useEffect(() => {
+  //   const script = document.createElement("script");
+  //   script.src = "//cdn.jsdelivr.net/npm/eruda";
+  //   document.body.appendChild(script);
+  //   script.onload = () => window.eruda.init();
+  // }, []);
 
   const getImageStyle = (index, delayMultiplier = 0) => ({
     opacity: index === currentIndex ? 1 : 0,
-    transitionProperty: "opacity",
+    visibility: index === currentIndex ? "visible" : "hidden",
+    transitionProperty: "opacity, visibility",
     transitionTimingFunction: "ease-in-out",
     transitionDuration: `${transitionDuration}ms`,
     transitionDelay: `${transitionDelay * delayMultiplier}ms`,
+    WebkitBackfaceVisibility: "hidden",
     willChange: "opacity",
     transform: "translateZ(0)",
   });
@@ -95,7 +97,7 @@ export default function HomeHeroSlides({
         </div>
       </div>
       {/* Image Sections */}
-      <div className="hero-images pointer-events-none flex grow justify-center gap-2 max-sm:mt-7 max-sm:flex-wrap md:-mt-2 md:gap-3 xl:-mt-3 xl:justify-between xl:gap-4 landscape:mt-auto landscape:max-h-[550px]">
+      <div className="hero-images pointer-events-none mt-auto flex grow justify-center gap-2 max-sm:mt-7 max-sm:flex-wrap md:-mt-2 md:gap-3 xl:-mt-3 xl:justify-between xl:gap-4 landscape:max-h-[550px]">
         {/* Left Images */}
         <div className="relative flex overflow-hidden" style={{ isolation: "isolate" }}>
           {leftSlides?.map((leftImgUrl, index) => (
@@ -105,6 +107,7 @@ export default function HomeHeroSlides({
               src={getImage(leftImgUrl, 400)}
               alt={`Hero section left side image ${index + 1}`}
               fill
+              priority={index === 0}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover"
               style={getImageStyle(index, 0)} // No delay for left images
@@ -120,6 +123,7 @@ export default function HomeHeroSlides({
               src={getImage(centerImgUrl, 1000)}
               alt={`Hero section center image ${index + 1}`}
               fill
+              priority={index === 0}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover"
               style={getImageStyle(index, 1)} // Base delay for center images
@@ -135,6 +139,7 @@ export default function HomeHeroSlides({
               src={getImage(rightImgUrl, 400)}
               alt={`Hero section right side image ${index + 1}`}
               fill
+              priority={index === 0}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover"
               style={getImageStyle(index, 2)} // Double delay for right images
