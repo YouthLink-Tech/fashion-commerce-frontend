@@ -103,7 +103,6 @@ export default function HomeHeroSlides({
               src={getImage(leftImgUrl, 400)}
               alt={`Hero section left side image ${index + 1}`}
               fill
-              priority={index === 0}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover"
               style={getImageStyle(index, 0)} // No delay for left images
@@ -119,7 +118,6 @@ export default function HomeHeroSlides({
               src={getImage(centerImgUrl, 1000)}
               alt={`Hero section center image ${index + 1}`}
               fill
-              priority={index === 0}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover"
               style={getImageStyle(index, 1)} // Base delay for center images
@@ -135,7 +133,6 @@ export default function HomeHeroSlides({
               src={getImage(rightImgUrl, 400)}
               alt={`Hero section right side image ${index + 1}`}
               fill
-              priority={index === 0}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover"
               style={getImageStyle(index, 2)} // Double delay for right images
