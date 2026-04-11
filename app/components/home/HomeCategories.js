@@ -72,7 +72,7 @@ export default async function HomeCategories() {
               return (
                 <TransitionLink
                   key={"featured-category-" + featuredCategory?._id}
-                  href={`/shop?category=${featuredCategory?.label?.split(" ")?.join("+")}`}
+                  href={`/shop/${featuredCategory?.categorySlug}`}
                   className="relative flex aspect-[4/5.5] w-full items-center justify-center overflow-hidden rounded-md text-2xl font-semibold text-white max-xl:aspect-[4/5] sm:max-lg:min-h-[250px]"
                 >
                   <div

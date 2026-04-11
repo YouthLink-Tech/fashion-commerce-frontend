@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { HiOutlineAdjustmentsHorizontal } from "react-icons/hi2";
-import { FaRegEyeSlash } from "react-icons/fa6";
 import { useLoading } from "@/app/contexts/loading";
 import {
   calculateFinalPrice,
@@ -21,9 +20,10 @@ export default function ShopContents({
   specialOffers,
   primaryLocation,
   notifyVariants,
+  initialCategory
 }) {
   const { setIsPageLoading } = useLoading();
-  const [isFilterButtonClicked, setIsFilterButtonClicked] = useState(false);
+  const [isFilterButtonClicked, setIsFilterButtonClicked] = useState(!!initialCategory);
   const [selectedFilterOptions, setSelectedFilterOptions] = useState({
     sortBy: new Set([]),
     filterBy: new Set([]),
@@ -67,18 +67,20 @@ export default function ShopContents({
   useEffect(() => {
     setKeyword(searchParams.get("search"));
 
+    const filterByFromParam = searchParams.get("filterBy");
+
     setSelectedFilterOptions((prevSelectedValues) => ({
       ...prevSelectedValues,
-      filterBy: !searchParams.get("filterBy")
+      filterBy: !filterByFromParam
         ? new Set([])
-        : [searchParams.get("filterBy")],
-      category: !searchParams.get("category")
+        : [filterByFromParam],
+      category: !initialCategory
         ? new Set([])
-        : [searchParams.get("category")],
+        : [initialCategory],
     }));
 
     setIsPageLoading(false);
-  }, [searchParams, setIsPageLoading]);
+  }, [searchParams, setIsPageLoading, initialCategory]);
 
   useEffect(() => {
     if (!isLoading)

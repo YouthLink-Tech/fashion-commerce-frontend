@@ -8,11 +8,7 @@ import {
   Input,
   Slider,
 } from "@nextui-org/react";
-import { HiOutlineLightningBolt } from "react-icons/hi";
 import { HiChevronDown } from "react-icons/hi2";
-import { LuBadge } from "react-icons/lu";
-import { TbGift, TbRosetteDiscount } from "react-icons/tb";
-import { TiStarOutline } from "react-icons/ti";
 
 export default function Filter({
   isFilterButtonClicked,
