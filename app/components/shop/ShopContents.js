@@ -13,6 +13,7 @@ import { CheckIfProductIsOutOfStock } from "@/app/utils/productSkuCalculation";
 import Filter from "@/app/components/shop/Filter";
 import EmptyShopProducts from "@/app/components/shop/EmptyShopProducts";
 import ShopCards from "@/app/components/shop/cards/ShopCards";
+import { generateSlug } from "./generateSlug";
 
 export default function ShopContents({
   userData,
@@ -79,37 +80,110 @@ export default function ShopContents({
       },
     });
     setIsFilterButtonClicked(false);
-
+    sessionStorage.removeItem("filterState");
     if (pathname !== "/shop") router.push("/shop");
   };
 
   const handleCategoryChange = (newKeys) => {
-    const cleared = Array.from(newKeys).includes("Clear");
-    setSelectedFilterOptions((prev) => ({
-      ...prev,
-      category: cleared ? new Set([]) : Array.from(newKeys),
-    }));
+    const keysArray = Array.from(newKeys);
+    const cleared = keysArray.includes("Clear") || keysArray.length === 0;
 
-    if (cleared && pathname !== "/shop") router.push("/shop");
+    if (cleared) {
+      setSelectedFilterOptions((prev) => ({ ...prev, category: new Set([]) }));
+
+      // Save other filter state before navigating to /shop
+      const stateToSave = {
+        sortBy: Array.from(selectedFilterOptions.sortBy),
+        filterBy: Array.from(selectedFilterOptions.filterBy),
+        sizes: Array.from(selectedFilterOptions.sizes),
+        colors: Array.from(selectedFilterOptions.colors),
+        price: selectedFilterOptions.price,
+      };
+      sessionStorage.setItem("filterState", JSON.stringify(stateToSave));
+
+      if (pathname !== "/shop") router.push("/shop");
+      return;
+    }
+
+    const selectedLabel = keysArray[0];
+    const selectedSlug = generateSlug(selectedLabel);
+
+    const stateToSave = {
+      sortBy: Array.from(selectedFilterOptions.sortBy),
+      filterBy: Array.from(selectedFilterOptions.filterBy),
+      sizes: Array.from(selectedFilterOptions.sizes),
+      colors: Array.from(selectedFilterOptions.colors),
+      price: selectedFilterOptions.price,
+    };
+    sessionStorage.setItem("filterState", JSON.stringify(stateToSave));
+    sessionStorage.setItem("filterOpen", "true");
+
+    router.push(`/shop/${selectedSlug}`);
   };
 
   useEffect(() => {
     setKeyword(searchParams.get("search"));
-
     const filterByFromParam = searchParams.get("filterBy");
 
-    setSelectedFilterOptions((prevSelectedValues) => ({
-      ...prevSelectedValues,
-      filterBy: !filterByFromParam
-        ? new Set([])
-        : [filterByFromParam],
-      category: !initialCategory
-        ? new Set([])
-        : [initialCategory],
+    // Restore saved filter state from sessionStorage (only on mount)
+    let restoredState = null;
+    const savedFilter = sessionStorage.getItem("filterState");
+    if (savedFilter) {
+      try {
+        restoredState = JSON.parse(savedFilter);
+      } catch (e) {
+        // ignore
+      }
+      sessionStorage.removeItem("filterState");
+    }
+
+    setSelectedFilterOptions((prev) => ({
+      ...prev,
+      // filterBy: param takes priority, then restored state, then keep existing
+      filterBy: filterByFromParam
+        ? [filterByFromParam]
+        : restoredState?.filterBy?.length
+          ? restoredState.filterBy
+          : new Set([]),
+      // sortBy, sizes, colors, price: restore if available
+      sortBy: restoredState?.sortBy?.length ? restoredState.sortBy : prev.sortBy,
+      sizes: restoredState?.sizes?.length ? restoredState.sizes : prev.sizes,
+      colors: restoredState?.colors?.length ? restoredState.colors : prev.colors,
+      price: restoredState?.price?.min || restoredState?.price?.max
+        ? restoredState.price
+        : prev.price,
+      // category: always from route, never from restored state
+      category: !initialCategory ? new Set([]) : [initialCategory],
     }));
 
     setIsPageLoading(false);
   }, [searchParams, setIsPageLoading, initialCategory]);
+
+  // Keep only filterOpen restore in mount effect
+  useEffect(() => {
+    if (sessionStorage.getItem("filterOpen") === "true") {
+      setIsFilterButtonClicked(true);
+    }
+  }, []);
+
+  // Sync filter state to sessionStorage whenever it changes
+  useEffect(() => {
+    if (isFilterButtonClicked) {
+      sessionStorage.setItem("filterOpen", "true");
+    } else {
+      sessionStorage.removeItem("filterOpen");
+    }
+  }, [isFilterButtonClicked]);
+
+  // Cleanup when leaving shop entirely
+  useEffect(() => {
+    return () => {
+      if (!window.location.pathname.startsWith("/shop")) {
+        sessionStorage.removeItem("filterOpen");
+        sessionStorage.removeItem("filterState");
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!isLoading)

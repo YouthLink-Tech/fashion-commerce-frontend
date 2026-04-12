@@ -8,6 +8,7 @@ import ShopContents from "@/app/components/shop/ShopContents";
 import LoadingSpinner from "@/app/components/shared/LoadingSpinner";
 import { FRONTEND_URL } from "@/app/config/site";
 import { getImage } from "@/app/lib/cloudinaryUtils";
+import { redirect } from "next/navigation";
 
 export async function generateMetadata({ params }) {
   const { category } = params;
@@ -21,6 +22,13 @@ export async function generateMetadata({ params }) {
   const categoryImage = matched?.imageUrl
     ? getImage(matched.imageUrl, 1200)
     : `${FRONTEND_URL}/og-default.jpg`;
+
+  if (!matched) {
+    return {
+      title: "Category Not Found | Poshax",
+      robots: { index: false, follow: false },
+    };
+  }
 
   return {
     title: `${label} | Poshax`,
@@ -111,6 +119,8 @@ export default async function CategoryShop({ params }) {
 
   const resolvedCategory =
     categories.find((c) => c.categorySlug === category)?.label ?? null;
+
+  if (!resolvedCategory) redirect("/shop");
 
   return (
     <main>
