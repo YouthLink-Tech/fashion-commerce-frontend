@@ -6,6 +6,8 @@ import { extractData } from "@/app/lib/extractData";
 import { authOptions } from "@/app/utils/authOptions";
 import ShopContents from "@/app/components/shop/ShopContents";
 import LoadingSpinner from "@/app/components/shared/LoadingSpinner";
+import { FRONTEND_URL } from "@/app/config/site";
+import { getImage } from "@/app/lib/cloudinaryUtils";
 
 export async function generateMetadata({ params }) {
   const { category } = params;
@@ -15,20 +17,31 @@ export async function generateMetadata({ params }) {
   });
   const categories = result?.data ?? [];
   const matched = categories.find((c) => c.categorySlug === category);
-
-  // Fall back to humanizing the slug only if category not found in DB
   const label = matched?.label ?? category.replace(/-/g, " ");
+  const categoryImage = matched?.imageUrl
+    ? getImage(matched.imageUrl, 1200)
+    : `${FRONTEND_URL}/og-default.jpg`;
 
   return {
     title: `${label} | Poshax`,
-    description: `Shop ${label} at Poshax. Browse the latest styles and best prices.`,
-    alternates: { canonical: `${process.env.FRONTEND_URL}/shop/${category}` },
+    description: `Shop the latest ${label} collection at Poshax. Find the best styles, prices, and new arrivals in ${label}.`,
+    keywords: [label, "Poshax", "buy online", "fashion Bangladesh"],
+    robots: { index: true, follow: true },
+    alternates: { canonical: `${FRONTEND_URL}/shop/${category}` },
     openGraph: {
       title: `${label} | Shop at Poshax`,
-      description: `Browse our ${label} collection at Poshax.`,
-      url: `${process.env.FRONTEND_URL}/shop/${category}`,
+      description: `Shop the latest ${label} collection at Poshax.`,
+      url: `${FRONTEND_URL}/shop/${category}`,
       siteName: "Poshax",
       type: "website",
+      images: [
+        {
+          url: categoryImage,
+          width: 1200,
+          height: 630,
+          alt: `${label} collection at Poshax`,
+        },
+      ],
     },
   };
 }

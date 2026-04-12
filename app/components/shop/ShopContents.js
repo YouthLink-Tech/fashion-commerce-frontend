@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { HiOutlineAdjustmentsHorizontal } from "react-icons/hi2";
 import { useLoading } from "@/app/contexts/loading";
 import {
@@ -23,7 +23,7 @@ export default function ShopContents({
   initialCategory
 }) {
   const { setIsPageLoading } = useLoading();
-  const [isFilterButtonClicked, setIsFilterButtonClicked] = useState(!!initialCategory);
+  const [isFilterButtonClicked, setIsFilterButtonClicked] = useState(false);
   const [selectedFilterOptions, setSelectedFilterOptions] = useState({
     sortBy: new Set([]),
     filterBy: new Set([]),
@@ -39,6 +39,8 @@ export default function ShopContents({
   const [keyword, setKeyword] = useState("");
   const searchParams = useSearchParams();
   const isLoading = !products || !specialOffers || !primaryLocation;
+  const router = useRouter();
+  const pathname = usePathname();
 
   const isProductWithinPriceRange = (product) =>
     (!selectedFilterOptions.price.min ||
@@ -63,6 +65,33 @@ export default function ShopContents({
       accumulator + (isProductWithinPriceRange(product) ? 1 : 0),
     0,
   );
+
+  const handleClearAll = () => {
+    setSelectedFilterOptions({
+      sortBy: new Set([]),
+      filterBy: new Set([]),
+      category: new Set([]),
+      sizes: new Set([]),
+      colors: new Set([]),
+      price: {
+        min: undefined,
+        max: undefined,
+      },
+    });
+    setIsFilterButtonClicked(false);
+
+    if (pathname !== "/shop") router.push("/shop");
+  };
+
+  const handleCategoryChange = (newKeys) => {
+    const cleared = Array.from(newKeys).includes("Clear");
+    setSelectedFilterOptions((prev) => ({
+      ...prev,
+      category: cleared ? new Set([]) : Array.from(newKeys),
+    }));
+
+    if (cleared && pathname !== "/shop") router.push("/shop");
+  };
 
   useEffect(() => {
     setKeyword(searchParams.get("search"));
@@ -174,7 +203,6 @@ export default function ShopContents({
         </button>
         <Filter
           isFilterButtonClicked={isFilterButtonClicked}
-          setIsFilterButtonClicked={setIsFilterButtonClicked}
           unfilteredProducts={products}
           filteredProducts={filteredProducts}
           selectedFilterOptions={selectedFilterOptions}
@@ -182,6 +210,8 @@ export default function ShopContents({
           isNoFilterOptionSelected={isNoFilterOptionSelected}
           calculateFinalPrice={calculateFinalPrice}
           specialOffers={specialOffers}
+          onClearAll={handleClearAll}
+          onCategoryChange={handleCategoryChange}
         />
         {!filteredProductCount ? (
           <EmptyShopProducts

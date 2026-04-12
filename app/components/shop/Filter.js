@@ -12,7 +12,6 @@ import { HiChevronDown } from "react-icons/hi2";
 
 export default function Filter({
   isFilterButtonClicked,
-  setIsFilterButtonClicked,
   unfilteredProducts,
   filteredProducts,
   selectedFilterOptions,
@@ -20,6 +19,8 @@ export default function Filter({
   isNoFilterOptionSelected,
   calculateFinalPrice,
   specialOffers,
+  onClearAll,
+  onCategoryChange,
 }) {
   const filterOptions = [
     {
@@ -147,14 +148,17 @@ export default function Filter({
             defaultSelectedKeys=""
             selectedKeys={selectedFilterOptions[filterOption.arrayKey]}
             onSelectionChange={(newSelectedKeys) => {
-              setSelectedFilterOptions((prevSelectedValues) => ({
-                ...prevSelectedValues,
-                [filterOption.arrayKey]: Array.from(newSelectedKeys).includes(
-                  "Clear",
-                )
-                  ? new Set([])
-                  : Array.from(newSelectedKeys),
-              }));
+              if (filterOption.arrayKey === "category") {
+                // Use callback from ShopContents — router lives there
+                onCategoryChange(newSelectedKeys);
+              } else {
+                setSelectedFilterOptions((prevSelectedValues) => ({
+                  ...prevSelectedValues,
+                  [filterOption.arrayKey]: Array.from(newSelectedKeys).includes("Clear")
+                    ? new Set([])
+                    : Array.from(newSelectedKeys),
+                }));
+              }
             }}
             disabled={!filterOption.options.length}
             classNames={{
@@ -370,20 +374,7 @@ export default function Filter({
         <Button
           disableRipple
           className="z-[1] order-last h-12 w-auto min-w-fit !scale-100 rounded-[4px] bg-[var(--color-primary-500)] px-4 font-semibold text-neutral-700 !opacity-100 shadow-sm hover:bg-[var(--color-primary-700)]"
-          onClick={() => {
-            setSelectedFilterOptions({
-              sortBy: new Set([]),
-              filterBy: new Set([]),
-              category: new Set([]),
-              sizes: new Set([]),
-              colors: new Set([]),
-              price: {
-                min: undefined,
-                max: undefined,
-              },
-            });
-            setIsFilterButtonClicked(false);
-          }}
+          onClick={onClearAll}
         >
           Clear All
         </Button>
