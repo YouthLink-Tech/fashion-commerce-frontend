@@ -4,8 +4,19 @@ export default function robots() {
   return {
     rules: {
       userAgent: "*",
-      allow: "/",
+      // allow: "/",
+      // disallow: [
+      //   "/user",
+      //   "/reset-password",
+      //   "/api/",
+      // ],
+      allow: [
+        "/",
+        "/our-story",
+      ],
       disallow: [
+        "/shop",        // blocks /shop, /shop/[category]
+        "/product",     // blocks all /product/[slug]
         "/user",
         "/reset-password",
         "/api/",
