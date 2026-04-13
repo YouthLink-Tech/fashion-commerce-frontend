@@ -59,10 +59,17 @@ export default function ShopCards({
   const isProductWithinPriceRange = (product) =>
     (!selectedFilterOptions.price.min ||
       selectedFilterOptions.price.min <=
-        calculateFinalPrice(product, specialOffers)) &&
+      calculateFinalPrice(product, specialOffers)) &&
     (!selectedFilterOptions.price.max ||
       selectedFilterOptions.price.max >=
-        calculateFinalPrice(product, specialOffers));
+      calculateFinalPrice(product, specialOffers))
+
+  const handleColChange = (number) => {
+    setUserSelectedCols(number);
+    setCols(number);
+    setRows(Math.max(0, Math.ceil(filteredProductCount / number)));
+    sessionStorage.setItem("shopCols", String(number));
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -88,6 +95,17 @@ export default function ShopCards({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [filteredProductCount, userSelectedCols]);
+
+  // Restore userSelectedCols from sessionStorage after mount
+  useEffect(() => {
+    const saved = sessionStorage.getItem("shopCols");
+    if (saved) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed)) {
+        setUserSelectedCols(parsed);
+      }
+    }
+  }, []);
 
   const loadMoreRef = useCallback(
     (node) => {
@@ -137,13 +155,7 @@ export default function ShopCards({
           {colOptions.map((option) => (
             <button
               key={"grid-layout-option-" + option.number}
-              onClick={() => {
-                setUserSelectedCols(option.number);
-                setCols(option.number);
-                setRows(
-                  Math.max(0, Math.ceil(filteredProductCount / option.number)),
-                );
-              }}
+              onClick={() => handleColChange(option.number)}
               className={`rounded-[3px] border p-1.5 transition-[background-color,border-color] duration-300 ease-in-out hover:border-[var(--color-secondary-600)] hover:bg-[var(--color-secondary-500)] ${cols === option.number ? "border-[var(--color-secondary-600)] bg-[var(--color-secondary-500)]" : "border-neutral-200 bg-neutral-100"} ${option.number === 1 ? "sm:hidden" : option.number === 3 ? "max-sm:hidden" : option.number !== 2 ? "max-lg:hidden" : ""}`}
             >
               <Image

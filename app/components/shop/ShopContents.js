@@ -181,6 +181,7 @@ export default function ShopContents({
       if (!window.location.pathname.startsWith("/shop")) {
         sessionStorage.removeItem("filterOpen");
         sessionStorage.removeItem("filterState");
+        sessionStorage.removeItem("shopCols");
       }
     };
   }, []);
