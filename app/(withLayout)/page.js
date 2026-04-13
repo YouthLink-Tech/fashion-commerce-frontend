@@ -9,6 +9,30 @@ import HomeCategories from "../components/home/HomeCategories";
 import HomeTrending from "../components/home/HomeTrending";
 import HomeNewArrival from "../components/home/HomeNewArrival";
 import HomeFeatures from "../components/home/HomeFeatures";
+import { COMPANY_NAME } from "../config/company";
+import { FRONTEND_URL } from "../config/site";
+
+export const metadata = {
+  title: `${COMPANY_NAME} | Fashion & Comfort`,
+  description:
+    `Shop the latest men's fashion at ${COMPANY_NAME}. Discover trending styles, new arrivals, polo shirts, formal wear and more. Fast delivery across Bangladesh.`,
+  keywords: [COMPANY_NAME, "men's fashion", "clothing Bangladesh", "polo shirts", "new arrivals"],
+  alternates: { canonical: FRONTEND_URL },
+  openGraph: {
+    title: `Fashion & Comfort | ${COMPANY_NAME}`,
+    description: `Shop the latest men's fashion at ${COMPANY_NAME}.`,
+    url: FRONTEND_URL,
+    type: "website",
+    images: [
+      {
+        url: `${FRONTEND_URL}/home/home.webp`,
+        width: 1200,
+        height: 630,
+        alt: `${COMPANY_NAME} Fashion Store`,
+      },
+    ],
+  },
+}
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
@@ -81,29 +105,49 @@ export default async function Home() {
     )
     ?.slice(0, 4);
 
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: COMPANY_NAME,
+    url: FRONTEND_URL,
+    logo: `${FRONTEND_URL}/logo/logo.png`,
+    sameAs: [
+      "https://facebook.com/poshax",
+      "https://instagram.com/poshax",
+    ],
+  };
+
+  const safeJsonLd = JSON.stringify(orgJsonLd).replace(/</g, "\\u003c");
+
   return (
-    <main className="[&_img]:pointer-events-none">
-      <HomeHero />
-      <HomeCategories />
-      <HomeTrending
-        userData={userData}
-        trendingProducts={trendingProducts}
-        specialOffers={specialOffers}
-        primaryLocation={primaryLocation}
-        notifyVariants={notifyVariants}
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: safeJsonLd }}
       />
-      <HomeNewArrival
-        userData={userData}
-        isAnyTrendingProductAvailable={trendingProducts?.length}
-        newlyArrivedProducts={newlyArrivedProducts}
-        specialOffers={specialOffers}
-        primaryLocation={primaryLocation}
-        notifyVariants={notifyVariants}
-      />
-      <HomeFeatures
-        isAnyTrendingProductAvailable={trendingProducts?.length}
-        isAnyNewProductAvailable={newlyArrivedProducts?.length}
-      />
-    </main>
+      <main className="[&_img]:pointer-events-none">
+        <HomeHero />
+        <HomeCategories />
+        <HomeTrending
+          userData={userData}
+          trendingProducts={trendingProducts}
+          specialOffers={specialOffers}
+          primaryLocation={primaryLocation}
+          notifyVariants={notifyVariants}
+        />
+        <HomeNewArrival
+          userData={userData}
+          isAnyTrendingProductAvailable={trendingProducts?.length}
+          newlyArrivedProducts={newlyArrivedProducts}
+          specialOffers={specialOffers}
+          primaryLocation={primaryLocation}
+          notifyVariants={notifyVariants}
+        />
+        <HomeFeatures
+          isAnyTrendingProductAvailable={trendingProducts?.length}
+          isAnyNewProductAvailable={newlyArrivedProducts?.length}
+        />
+      </main>
+    </>
   );
 }

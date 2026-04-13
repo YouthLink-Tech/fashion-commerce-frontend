@@ -10,8 +10,17 @@ import ChatButton from "../components/ui/ChatButton";
 import LoaderFrontend from "../components/shared/LoaderFrontend";
 
 export const metadata = {
-  title: COMPANY_NAME,
+  title: {
+    default: `${COMPANY_NAME} | Fashion & Comfort`,
+    template: `%s | ${COMPANY_NAME}`,
+  },
   description: `Discover the latest trends in men's fashion at ${COMPANY_NAME}. Shop our extensive collection of stylish clothing, footwear, and accessories. Enjoy exclusive deals, fast shipping, and top-notch customer service. Elevate your wardrobe with our curated selection of high-quality men's products.`,
+  robots: { index: true, follow: true },
+  icons: { icon: "/favicon.ico" },
+  openGraph: {
+    siteName: `${COMPANY_NAME}`,
+    type: "website",
+  },
 };
 
 export default async function RootLayout({ children }) {

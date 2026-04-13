@@ -6,6 +6,52 @@ import { extractData } from "@/app/lib/extractData";
 import { authOptions } from "@/app/utils/authOptions";
 import ShopContents from "@/app/components/shop/ShopContents";
 import LoadingSpinner from "@/app/components/shared/LoadingSpinner";
+import { FRONTEND_URL } from "@/app/config/site";
+import { COMPANY_NAME } from "@/app/config/company";
+
+export async function generateMetadata({ searchParams }) {
+  const filterBy = searchParams?.filterBy;
+
+  if (filterBy) {
+    return {
+      title: `${filterBy}`,
+      description: `Browse ${filterBy} products at ${COMPANY_NAME}. Find the best styles and latest trends.`,
+      alternates: { canonical: `${FRONTEND_URL}/shop` },
+      robots: { index: false, follow: true },
+    };
+  }
+
+  return {
+    title: "Fashion & Comfort",
+    description:
+      `Shop all men's clothing at ${COMPANY_NAME}. Browse polo shirts, formal shirts, casual wear, new arrivals and more. Fast delivery across Bangladesh.`,
+    keywords: [
+      COMPANY_NAME,
+      "men's clothing Bangladesh",
+      "polo shirts",
+      "formal shirts",
+      "casual wear",
+      "men's fashion",
+    ],
+    robots: { index: true, follow: true },
+    alternates: { canonical: `${FRONTEND_URL}/shop` },
+    openGraph: {
+      title: `Fashion & Comfort | ${COMPANY_NAME}`,
+      description: `Shop men's clothing at ${COMPANY_NAME}. Polo shirts, formal wear, casual styles and more.`,
+      url: `${FRONTEND_URL}/shop`,
+      siteName: `${COMPANY_NAME}`,
+      type: "website",
+      images: [
+        {
+          url: `${FRONTEND_URL}/home/home.webp`,
+          width: 1200,
+          height: 630,
+          alt: `${COMPANY_NAME} Shop`,
+        },
+      ],
+    },
+  };
+}
 
 export default async function Shop() {
   const session = await getServerSession(authOptions);

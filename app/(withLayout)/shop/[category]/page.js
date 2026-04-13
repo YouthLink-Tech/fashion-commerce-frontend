@@ -9,6 +9,7 @@ import LoadingSpinner from "@/app/components/shared/LoadingSpinner";
 import { FRONTEND_URL } from "@/app/config/site";
 import { getImage } from "@/app/lib/cloudinaryUtils";
 import { redirect } from "next/navigation";
+import { COMPANY_NAME } from "@/app/config/company";
 
 export async function generateMetadata({ params }) {
   const { category } = params;
@@ -21,33 +22,43 @@ export async function generateMetadata({ params }) {
   const label = matched?.label ?? category.replace(/-/g, " ");
   const categoryImage = matched?.imageUrl
     ? getImage(matched.imageUrl, 1200)
-    : `${FRONTEND_URL}/og-default.jpg`;
+    : `${FRONTEND_URL}/home/home.webp`;
 
   if (!matched) {
     return {
-      title: "Category Not Found | Poshax",
+      title: `Category Not Found`,
       robots: { index: false, follow: false },
     };
   }
 
   return {
-    title: `${label} | Poshax`,
-    description: `Shop the latest ${label} collection at Poshax. Find the best styles, prices, and new arrivals in ${label}.`,
-    keywords: [label, "Poshax", "buy online", "fashion Bangladesh"],
+    title: `${label}`,
+    description: `Shop the latest ${label} collection at ${COMPANY_NAME}. Find the best styles, prices, and new arrivals in ${label}.`,
+    keywords: [
+      label,
+      COMPANY_NAME,
+      "men's clothing Bangladesh",
+      "polo shirts",
+      "formal shirts",
+      "casual wear",
+      "men's fashion",
+      "fashion Bangladesh",
+      "buy online",
+    ],
     robots: { index: true, follow: true },
     alternates: { canonical: `${FRONTEND_URL}/shop/${category}` },
     openGraph: {
-      title: `${label} | Shop at Poshax`,
-      description: `Shop the latest ${label} collection at Poshax.`,
+      title: `${label} | Shop at ${COMPANY_NAME}`,
+      description: `Shop the latest ${label} collection at ${COMPANY_NAME}.`,
       url: `${FRONTEND_URL}/shop/${category}`,
-      siteName: "Poshax",
+      siteName: `${COMPANY_NAME}`,
       type: "website",
       images: [
         {
           url: categoryImage,
           width: 1200,
           height: 630,
-          alt: `${label} collection at Poshax`,
+          alt: `${label} collection at ${COMPANY_NAME}`,
         },
       ],
     },
