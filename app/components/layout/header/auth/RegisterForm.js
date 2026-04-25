@@ -313,11 +313,11 @@ export default function RegisterForm({
             isInvalid={!isPoliciesCheckboxSelected}
           >
             I agree to the{" "}
-            <Link target="_blank" href={legalPolicyPdfLinks?.terms || "#"}>
+            <Link target="_blank" rel="noopener noreferrer" href={legalPolicyPdfLinks?.terms?.url || "#"}>
               Terms & Conditions
             </Link>
             {" and "}
-            <Link target="_blank" href={legalPolicyPdfLinks?.privacy || "#"}>
+            <Link target="_blank" rel="noopener noreferrer" href={legalPolicyPdfLinks?.privacy?.url || "#"}>
               Privacy Policy
             </Link>
           </Checkbox>

@@ -20,19 +20,19 @@ export default function CheckoutAgreement({
         isInvalid={!isAgreementCheckboxSelected}
       >
         I have read and agree to the{" "}
-        <Link target="_blank" href={legalPolicyPdfLinks?.terms || "#"}>
+        <Link target="_blank" rel="noopener noreferrer" href={legalPolicyPdfLinks[0]?.terms?.url || "#"}>
           terms and conditions
         </Link>
         ,{" "}
-        <Link target="_blank" href={legalPolicyPdfLinks?.privacy || "#"}>
+        <Link target="_blank" rel="noopener noreferrer" href={legalPolicyPdfLinks[0]?.privacy?.url || "#"}>
           privacy policy
         </Link>
         ,{" "}
-        <Link target="_blank" href={legalPolicyPdfLinks?.shipping || "#"}>
+        <Link target="_blank" rel="noopener noreferrer" href={legalPolicyPdfLinks[0]?.shipping?.url || "#"}>
           shipping policy
         </Link>
         , and{" "}
-        <Link target="_blank" href={legalPolicyPdfLinks?.refund || "#"}>
+        <Link target="_blank" rel="noopener noreferrer" href={legalPolicyPdfLinks[0]?.refund?.url || "#"}>
           refund policy
         </Link>
         .

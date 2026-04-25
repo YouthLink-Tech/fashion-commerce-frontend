@@ -45,6 +45,7 @@ export default function ProductInfoFooter({ productId, productTitle }) {
               className="hover:bg-[#cfe6ff] hover:text-[#0080ff]"
               href={`https://www.facebook.com/sharer/sharer.php?u=${fullUrl}`}
               target="_blank"
+              rel="noopener noreferrer"
             >
               <FaSquareFacebook />
             </Link>
@@ -54,6 +55,7 @@ export default function ProductInfoFooter({ productId, productTitle }) {
               className="hover:bg-black hover:text-white"
               href={`https://twitter.com/intent/tweet?url=${fullUrl}&text=Check+out+this+${productTitle?.split(" ")?.join("+")}!`}
               target="_blank"
+              rel="noopener noreferrer"
             >
               <FaXTwitter />
             </Link>
@@ -63,6 +65,7 @@ export default function ProductInfoFooter({ productId, productTitle }) {
               className="hover:bg-[#cce6ff] hover:text-[#168AFF]"
               href={`fb-messenger://share/?link=${fullUrl}`}
               target="_blank"
+              rel="noopener noreferrer"
             >
               <FaFacebookMessenger />
             </Link>
@@ -72,6 +75,7 @@ export default function ProductInfoFooter({ productId, productTitle }) {
               className="hover:bg-[#25D366] hover:text-white"
               href={`https://api.whatsapp.com/send?text=Check+out+this+${productTitle?.split(" ")?.join("+")}!+${fullUrl}`}
               target="_blank"
+              rel="noopener noreferrer"
             >
               <FaWhatsapp />
             </Link>

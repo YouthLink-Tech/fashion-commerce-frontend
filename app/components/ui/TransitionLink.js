@@ -19,6 +19,8 @@ function TransitionLinkInner({
   const { setIsPageLoading } = useLoading();
 
   const handleTransition = (event) => {
+    if (props.target === "_blank") return;
+
     event.preventDefault();
 
     if (checkoutIntent && href === "/checkout") {

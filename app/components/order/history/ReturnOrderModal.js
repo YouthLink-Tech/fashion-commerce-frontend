@@ -259,14 +259,16 @@ export default function ReturnOrderModal({
                     I have read and agree to the{" "}
                     <Link
                       target="_blank"
-                      href={legalPolicyPdfLinks?.return || "#"}
+                      rel="noopener noreferrer"
+                      href={legalPolicyPdfLinks?.return?.url || "#"}
                     >
                       Return Policy
                     </Link>
                     {" & "}
                     <Link
                       target="_blank"
-                      href={legalPolicyPdfLinks?.refund || "#"}
+                      rel="noopener noreferrer"
+                      href={legalPolicyPdfLinks?.refund?.url || "#"}
                     >
                       Refund Policy
                     </Link>

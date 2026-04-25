@@ -29,6 +29,7 @@ export default function CompanyInfo({ logoWithTextSrc }) {
             <TransitionLink
               href="https://www.facebook.com/fashion-commerce/"
               target="_blank"
+              rel="noopener noreferrer"
             >
               <LuFacebook />
             </TransitionLink>
@@ -37,6 +38,7 @@ export default function CompanyInfo({ logoWithTextSrc }) {
             <TransitionLink
               href="https://www.instagram.com/fashion-commerce/"
               target="_blank"
+              rel="noopener noreferrer"
             >
               <FaInstagram />
             </TransitionLink>
@@ -45,6 +47,7 @@ export default function CompanyInfo({ logoWithTextSrc }) {
             <TransitionLink
               href="https://www.twitter.com/fashion-commerce/"
               target="_blank"
+              rel="noopener noreferrer"
             >
               <FaXTwitter />
             </TransitionLink>
@@ -53,6 +56,7 @@ export default function CompanyInfo({ logoWithTextSrc }) {
             <TransitionLink
               href="https://www.tiktok.com/fashion-commerce/"
               target="_blank"
+              rel="noopener noreferrer"
             >
               <TbBrandTiktok />
             </TransitionLink>
