@@ -6,6 +6,7 @@ export default async function handleResponse(res) {
   let data = null;
   let message = "";
   let ok = res.ok;
+  let errorCode = null;
   let status = res.status;
 
   try {
@@ -19,9 +20,10 @@ export default async function handleResponse(res) {
         message = res.statusText;
       } else if (parsed && typeof parsed === "object") {
         message = parsed.message || parsed.error || res.statusText;
+        errorCode = parsed.errorCode || null;
 
-        const { message: _msg, error: _err, ...rest } = parsed;
-        data = Object.keys(rest).length > 0 ? rest : null;
+        const { message: _msg, errorCode: _e, error: _err, success: _s, data: innerData, ...rest } = parsed;
+        data = innerData !== undefined ? innerData : (Object.keys(rest).length > 0 ? rest : null);
       } else {
         message = res.statusText || "Unexpected response structure";
         data = null;
@@ -36,6 +38,7 @@ export default async function handleResponse(res) {
       status,
       message: "Invalid response format",
       data: null,
+      errorCode: null,
     };
   }
 
@@ -43,6 +46,7 @@ export default async function handleResponse(res) {
     ok,
     status,
     message,
+    errorCode,
     data,
   };
 }

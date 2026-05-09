@@ -10,9 +10,9 @@ import TransitionLink from "@/app/components/ui/TransitionLink";
 
 export default function CheckoutConfirmation({
   orderDetails,
-  isPaymentStepDone,
 }) {
   const [showConeftti, setShowConeftti] = useState(false);
+  const [size, setSize] = useState({ width: 0, height: 0 });
   const fullAddress = [
     orderDetails?.address1?.trim(),
     orderDetails?.thana?.trim(),
@@ -21,13 +21,19 @@ export default function CheckoutConfirmation({
   ].filter(Boolean).join(", ");
 
   useEffect(() => {
-    if (isPaymentStepDone) {
-      setShowConeftti(true);
-      const confettiTimer = setTimeout(() => setShowConeftti(false), 7500);
+    setShowConeftti(true);
+    const confettiTimer = setTimeout(() => setShowConeftti(false), 7500);
 
-      return () => clearTimeout(confettiTimer);
-    }
-  }, [isPaymentStepDone]);
+    return () => clearTimeout(confettiTimer);
+  }, []);
+
+  useEffect(() => {
+    const update = () =>
+      setSize({ width: window.innerWidth, height: window.innerHeight });
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
 
   return (
     <main className="pt-header-h-full-section-pb relative flex min-w-full items-center justify-center overflow-hidden bg-white px-5 pb-[var(--section-padding)] text-sm text-neutral-500 sm:px-8 md:text-base lg:px-12 xl:mx-auto xl:min-h-svh xl:max-w-[1200px] xl:px-0 [&_:is(h2,h3)]:text-neutral-800">
@@ -36,6 +42,7 @@ export default function CheckoutConfirmation({
         className="absolute inset-0 h-full w-full"
         numberOfPieces={showConeftti ? 300 : 0}
         recycle={true}
+        width={size.width} height={size.height}
       />
       {/* Mesh Gradients */}
       <div>

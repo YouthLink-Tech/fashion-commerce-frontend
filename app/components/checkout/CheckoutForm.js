@@ -17,6 +17,7 @@ import CheckoutPromoCode from "@/app/components/checkout/user/CheckoutPromoCode"
 import CheckoutPaymentMethod from "@/app/components/checkout/user/CheckoutPaymentMethod";
 import CheckoutCart from "@/app/components/checkout/cart/CheckoutCart";
 import { thanaByCity } from "@/app/data/cities";
+import { invalidateCheckoutIntent, resolveIdempotencyKey } from "@/app/utils/idempotency";
 
 export default function CheckoutForm({
   userData,
@@ -24,11 +25,7 @@ export default function CheckoutForm({
   specialOffers,
   shippingZones,
   primaryLocation,
-  setIsPaymentStepDone,
-  setResolvedCart,
   cartItems,
-  setCartItems,
-  setOrderDetails,
   legalPolicyPdfLinks,
 }) {
   const router = useRouter();
@@ -41,6 +38,7 @@ export default function CheckoutForm({
   const [isAgreementCheckboxSelected, setIsAgreementCheckboxSelected] =
     useState(true);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
@@ -73,6 +71,7 @@ export default function CheckoutForm({
   const selectedDeliveryType = watch("deliveryType");
 
   const onSubmit = async (data) => {
+    if (isSubmitting) return;
     if (!isAgreementCheckboxSelected)
       return toast.error(
         "You must agree with the terms and conditions and policies.",
@@ -81,6 +80,7 @@ export default function CheckoutForm({
     if (!userData) return toast.error("Please log in or register to continue.");
 
     setIsPageLoading(true);
+    setIsSubmitting(true);
 
     const userAgent = navigator.userAgent.toLowerCase();
     let userDevice;
@@ -93,11 +93,21 @@ export default function CheckoutForm({
       userDevice = "Desktop";
     }
 
+    // ── IDEMPOTENCY KEY RESOLUTION ────────────────────────────────────────
+    // This is the only place the key is resolved. It returns:
+    // - The SAME key if cart unchanged, session active, same user (retry/reload/re-click)
+    // - A NEW key if cart changed, session expired, or previous payment completed
+    const idempotencyKey = resolveIdempotencyKey(
+      userData._id,
+      cartItems,
+    );
+
     try {
       const result = await routeFetch("/api/order", {
         method: "POST",
         body: JSON.stringify({
           ...data,
+          idempotencyKey,
           promoCode: userPromoCode?.promoCode || null,
           cartItems,
           userDevice,
@@ -105,128 +115,60 @@ export default function CheckoutForm({
       });
 
       if (result.ok) {
-        const { orderNumber, totalAmount } = result.data;
 
-        setResolvedCart(cartItems);
+        const { checkoutSessionId } = result.data;
 
-        setOrderDetails({
-          orderNumber,
-          phoneNumber: data.phoneNumber,
-          totalAmount,
-          address1: data.addressLineOne,
-          city: data.city,
-          thana: data.thana,
-          postalCode: data.postalCode,
-        });
-        setIsPaymentStepDone(true);
-        window.scrollTo({
-          top: 0,
-          behavior: "smooth",
+        const paymentRes = await routeFetch('/api/payment-init', {
+          method: "POST",
+          body: JSON.stringify({ checkoutSessionId })
         });
 
-        const updatedPersonalInfo = {
-          ...userData.userInfo.personalInfo,
-          phoneNumber: data.phoneNumber,
-          phoneNumber2: data.altPhoneNumber,
-          hometown: userData?.userInfo?.personalInfo?.hometown || data.hometown,
-        };
-
-        const existingAddressId = userData?.userInfo?.deliveryAddresses?.find(
-          (address) =>
-            address?.address1 === data.addressLineOne &&
-            address?.city === data.city &&
-            address?.thana === data.thana &&
-            address?.postalCode === data.postalCode,
-        )?.id;
-
-        const updatedDeliveryAddresses = !existingAddressId
-          ? [
-            ...userData.userInfo.deliveryAddresses,
-            {
-              id: `${userData?.email}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-              nickname: undefined,
-              address1: data.addressLineOne,
-              city: data.city,
-              thana: data.thana,
-              postalCode: data.postalCode,
-            },
-          ]
-          : userData?.userInfo?.deliveryAddresses?.map((availableAddress) =>
-            availableAddress.id == existingAddressId
-              ? {
-                ...availableAddress,
-                address1: data.addressLineOne,
-                city: data.city,
-                thana: data.thana,
-                postalCode: data.postalCode,
-              }
-              : availableAddress,
-          );
-
-        const currentWishlist = JSON.parse(
-          localStorage.getItem("wishlistItems"),
-        );
-        const currentCart = JSON.parse(localStorage.getItem("cartItems"));
-
-        const updatedWishlist = !currentWishlist?.length
-          ? []
-          : currentWishlist.filter(
-            (wishlistItem) =>
-              !currentCart.some(
-                (cartItem) => wishlistItem._id === cartItem._id,
-              ),
-          );
-
-        const updatedUserData = {
-          ...userData,
-          userInfo: {
-            ...userData.userInfo,
-            personalInfo: updatedPersonalInfo,
-            deliveryAddresses: updatedDeliveryAddresses,
-            savedDeliveryAddress: {
-              address1: data.addressLineOne,
-              city: data.city,
-              thana: data.thana,
-              postalCode: data.postalCode,
-            },
-          },
-          cartItems: [],
-          isCartLastModified: true,
-          wishlistItems: updatedWishlist,
-        };
-
-        try {
-          setCartItems([]);
-          localStorage.removeItem("checkoutFormDraft");
-          localStorage.removeItem("cartItems");
-          window.dispatchEvent(new Event("storageCart"));
-          localStorage.setItem(
-            "wishlistItems",
-            JSON.stringify(updatedWishlist),
-          );
-          window.dispatchEvent(new Event("storageWishlist"));
-
-          const result = await routeFetch(`/api/user-data/${userData?._id}`, {
-            method: "PUT",
-            body: JSON.stringify(updatedUserData),
-          });
-
-          if (!result.ok) {
-            console.error(
-              "UpdateError (checkoutForm):",
-              result.message || "Failed update user data.",
-            );
-            toast.error(result.message || "Failed update user data.");
+        if (!paymentRes?.ok) {
+          if (paymentRes?.errorCode === "SESSION_EXPIRED") {
+            toast.error("Your session expired. Please try again.");
+            // Backend said expired → force a fresh key on next attempt
+            invalidateCheckoutIntent();
           } else {
-            router.refresh();
+            toast.error(paymentRes?.message || "Payment initialization failed");
           }
-        } catch (error) {
-          console.error("UpdateError (checkoutForm):", error.message || error);
-          toast.error("Failed update user data.");
+          // Only reset on failure
+          setIsSubmitting(false);
+          setIsPageLoading(false);
+          return;
         }
+
+        // UX signal
+        toast.loading("Redirecting to secure payment...");
+        localStorage.setItem("checkout_payment_pending", "true");
+
+        setTimeout(() => {
+          // redirect
+          window.location.href = paymentRes.data.redirectUrl;
+        }, 100);
       } else {
-        if (result.data.hasFaultyItems) {
+        if (result.errorCode === "FAULTY_ITEMS") {
           toast.error("Unable to place order. Please try again.");
+          router.refresh();
+        } else if (result.errorCode === "SESSION_EXPIRED") {
+          // Backend explicitly said this key's session is expired.
+          // Clear intent → next submit generates fresh key + new session.
+          invalidateCheckoutIntent();
+          toast.error("Your session expired. Please try again.");
+          setIsSubmitting(false);
+          setIsPageLoading(false);
+        } else if (result.errorCode === "SESSION_ALREADY_SPENT") {
+          toast.success("Your order has already been placed!");
+          setIsSubmitting(false);
+          setIsPageLoading(false);
+          router.push("/user/orders");
+        } else if (result.errorCode === "SESSION_PROCESSING") {
+          toast.loading("Your payment is being processed. Please wait...");
+          setIsSubmitting(false);
+          setIsPageLoading(false);
+        } else if (result.errorCode === "STOCK_UNAVAILABLE") {
+          // Stock was grabbed by someone else between page load and submit.
+          // Refresh to re-validate cart against live inventory.
+          toast.error("An item just went out of stock. Refreshing...");
           router.refresh();
         } else {
           console.error(
@@ -234,14 +176,16 @@ export default function CheckoutForm({
             result.message || "Unable to place order.",
           );
           toast.error(result.message || "Unable to place order.");
+          setIsSubmitting(false);
+          setIsPageLoading(false);
         }
       }
     } catch (error) {
       console.error("SubmissionError (checkoutForm):", error.message || error);
       toast.error("Something went wrong while placing your order.");
+      setIsSubmitting(false);
+      setIsPageLoading(false);
     }
-
-    setIsPageLoading(false);
   };
 
   const onError = (errors) => {
@@ -342,13 +286,6 @@ export default function CheckoutForm({
     });
   }, []);
 
-  useEffect(() => {
-    if (!userData) {
-      setIsPaymentStepDone(false);
-      setOrderDetails(null);
-    }
-  }, [userData, setIsPaymentStepDone, setOrderDetails]);
-
   return (
     <div className="pt-header-h-full-section-pb relative min-h-svh gap-4 px-5 sm:px-8 lg:flex lg:px-12 xl:mx-auto xl:max-w-[1200px] xl:px-0">
       <div className="bottom-[var(--section-padding)] top-[var(--section-padding)] h-fit space-y-4 lg:sticky lg:w-[calc(55%-16px/2)]">
@@ -428,6 +365,7 @@ export default function CheckoutForm({
         isAgreementCheckboxSelected={isAgreementCheckboxSelected}
         setIsAgreementCheckboxSelected={setIsAgreementCheckboxSelected}
         legalPolicyPdfLinks={legalPolicyPdfLinks}
+        isSubmitting={isSubmitting}
       />
     </div>
   );

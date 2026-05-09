@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { routeFetch } from "@/app/lib/fetcher/routeFetch";
 import getImageSetsBasedOnColors from "@/app/utils/getImageSetsBasedOnColors";
 import ProductToast from "../toast/ProductToast";
-import CheckoutConfirmation from "@/app/components/checkout/CheckoutConfirmation";
 import CheckoutForm from "./CheckoutForm";
 import CheckoutEmpty from "./CheckoutEmpty";
 import * as fbq from "@/app/lib/fpixel";
+import { useSearchParams } from "next/navigation";
+import { clearCheckoutIntent } from "@/app/utils/idempotency";
 
 export default function CheckoutContents({
   userData,
@@ -19,16 +20,37 @@ export default function CheckoutContents({
   legalPolicyPdfLinks,
 }) {
   const [cartItems, setCartItems] = useState(null);
-  const [orderDetails, setOrderDetails] = useState(null);
-  const [isPaymentStepDone, setIsPaymentStepDone] = useState(false);
-  const [resolvedCart, setResolvedCart] = useState([]);
-  const hasTrackedPurchase = useRef(false);
+  const searchParams = useSearchParams();
+
+  // const buildCartSignature = (cartItems = []) =>
+  //   cartItems
+  //     .map(i => `${i._id}:${i.selectedQuantity}`)
+  //     .sort()
+  //     .join("|");
 
   const buildCartSignature = (cartItems = []) =>
-    cartItems
-      .map(i => `${i._id}:${i.selectedQuantity}`)
-      .sort()
+    [...cartItems]
+      .sort((a, b) => a._id.localeCompare(b._id))
+      .map((i) => `${i._id}:${i.selectedColor._id}:${i.selectedSize}:${i.selectedQuantity}`)
       .join("|");
+
+  useEffect(() => {
+    const paymentStatus = searchParams.get("payment");
+    if (!paymentStatus) return;
+
+    const messages = {
+      failed: "Payment failed. Please try again.",
+      cancelled: "Payment was cancelled.",
+      expired: "Your session timed out. Please try again.",
+      error: "Something went wrong on our end. Contact support if charged.",
+    };
+
+    toast.error(messages[paymentStatus] || "Payment unsuccessful.");
+    localStorage.removeItem("checkout_payment_pending");
+
+    // Clean the URL so refresh doesn't re-show the toast
+    window.history.replaceState({}, "", "/checkout");
+  }, [searchParams]);
 
   useEffect(() => {
     const handleStorageUpdate = () =>
@@ -43,110 +65,126 @@ export default function CheckoutContents({
   }, []);
 
   useEffect(() => {
-    if (productList?.length) {
-      const localCart = JSON.parse(localStorage.getItem("cartItems"));
-      const storedCartItems = localCart?.length
-        ? localCart
-        : userData?.cartItems?.length
-          ? userData.cartItems
-          : [];
-      const activeItemsInCart = storedCartItems
-        .map((storedItem) => {
-          const product = productList?.find((p) => p?._id === storedItem?._id);
-          if (!product) return null;
+    if (!productList?.length) return;
 
-          const productVariant = product.productVariants.find(
-            (variant) =>
-              variant.location === primaryLocation &&
-              variant.size === storedItem.selectedSize &&
-              variant.color._id === storedItem.selectedColor._id,
-          );
+    const localCart = JSON.parse(localStorage.getItem("cartItems"));
+    const storedCartItems = localCart?.length
+      ? localCart
+      : userData?.cartItems?.length
+        ? userData.cartItems
+        : [];
+    const activeItemsInCart = storedCartItems
+      .map((storedItem) => {
+        const product = productList?.find((p) => p?._id === storedItem?._id);
+        if (!product) return null;
 
-          if (!productVariant) return null;
+        const productVariant = product.productVariants.find(
+          (variant) =>
+            variant.location === primaryLocation &&
+            variant.size === storedItem.selectedSize &&
+            variant.color._id === storedItem.selectedColor._id,
+        );
 
-          const isInactive = product.status !== "active";
-          const isOutOfStock = productVariant?.sku < 1;
-          const isInsufficientStock =
-            !isOutOfStock && productVariant?.sku < storedItem?.selectedQuantity;
+        if (!productVariant) return null;
 
-          if (!isInactive && !isOutOfStock && !isInsufficientStock)
-            return storedItem;
+        const isInactive = product.status !== "active";
+        const isOutOfStock = productVariant?.sku < 1;
+        const isInsufficientStock =
+          !isOutOfStock && productVariant?.sku < storedItem?.selectedQuantity;
 
-          toast.custom(
-            (t) => (
-              <ProductToast
-                defaultToast={t}
-                isSuccess={false}
-                message={
-                  isInactive
-                    ? "Item inactive"
-                    : isOutOfStock
-                      ? "Item out of stock"
-                      : "Item with insufficient stock"
-                }
-                productImg={
-                  getImageSetsBasedOnColors(product.productVariants)?.find(
-                    (imgSet) =>
-                      imgSet?.color?.color === productVariant?.color?.color,
-                  )?.images[0]
-                }
-                productTitle={product.productTitle}
-                variantSize={productVariant?.size}
-                variantColor={productVariant?.color}
-              />
-            ),
-            {
-              position: "top-right",
-            },
-          );
+        if (!isInactive && !isOutOfStock && !isInsufficientStock)
+          return storedItem;
 
-          if (isInsufficientStock) {
-            return {
-              ...storedItem,
-              selectedQuantity: productVariant?.sku,
-            };
-          } else {
-            return null;
-          }
-        })
-        .filter(Boolean);
+        toast.custom(
+          (t) => (
+            <ProductToast
+              defaultToast={t}
+              isSuccess={false}
+              message={
+                isInactive
+                  ? "Item inactive"
+                  : isOutOfStock
+                    ? "Item out of stock"
+                    : "Item with insufficient stock"
+              }
+              productImg={
+                getImageSetsBasedOnColors(product.productVariants)?.find(
+                  (imgSet) =>
+                    imgSet?.color?.color === productVariant?.color?.color,
+                )?.images[0]
+              }
+              productTitle={product.productTitle}
+              variantSize={productVariant?.size}
+              variantColor={productVariant?.color}
+            />
+          ),
+          {
+            position: "top-right",
+          },
+        );
 
-      const updateServerCart = async () => {
-        const updatedUserData = {
-          ...userData,
-          cartItems: activeItemsInCart,
-          isCartLastModified: true,
-        };
-
-        try {
-          const result = await routeFetch(`/api/user-data/${userData?._id}`, {
-            method: "PUT",
-            body: JSON.stringify(updatedUserData),
-          });
-
-          if (!result.ok) {
-            console.error(
-              "UpdateError (cartButton):",
-              result.message || "Failed to update the cart on server.",
-            );
-            toast.error(
-              result.message || "Failed to update the cart on server.",
-            );
-          }
-        } catch (error) {
-          console.error("UpdateError (cartButton):", error.message || error);
-          toast.error("Failed to update the cart on server.");
+        if (isInsufficientStock) {
+          return {
+            ...storedItem,
+            selectedQuantity: productVariant?.sku,
+          };
+        } else {
+          return null;
         }
+      })
+      .filter(Boolean);
+
+    // ── IDEMPOTENCY: detect stock-driven cart adjustments ─────────────────
+    // If items were removed or quantities capped, this is a new cart state.
+    // Clear the stored intent so the next submit generates a fresh key.
+    // We compare against storedCartItems (pre-validation) not cartItems state
+    // (which may still be null on first load).
+    const preValidationSignature = buildCartSignature(storedCartItems);
+    const postValidationSignature = buildCartSignature(activeItemsInCart);
+
+    if (preValidationSignature !== postValidationSignature) {
+      clearCheckoutIntent();
+    }
+
+    const updateServerCart = async () => {
+      const updatedUserData = {
+        ...userData,
+        cartItems: activeItemsInCart,
+        isCartLastModified: true,
       };
 
-      // If there are cart items in local storage and user just logged in,
-      // update the server cart with the newly added items
-      if (localCart?.length && userData) updateServerCart();
+      try {
+        const result = await routeFetch(`/api/user-data/${userData?._id}`, {
+          method: "PUT",
+          body: JSON.stringify(updatedUserData),
+        });
 
-      setCartItems(activeItemsInCart);
-      localStorage.setItem("cartItems", JSON.stringify(activeItemsInCart));
-      window.dispatchEvent(new Event("storageCart"));
+        if (!result.ok) {
+          console.error(
+            "UpdateError (cartButton):",
+            result.message || "Failed to update the cart on server.",
+          );
+          toast.error(
+            result.message || "Failed to update the cart on server.",
+          );
+        }
+      } catch (error) {
+        console.error("UpdateError (cartButton):", error.message || error);
+        toast.error("Failed to update the cart on server.");
+      }
+    };
+
+    // If there are cart items in local storage and user just logged in,
+    // update the server cart with the newly added items
+    // if (localCart?.length && userData) updateServerCart();
+    if (localCart?.length && userData && !localStorage.getItem("checkout_payment_pending")) {
+      updateServerCart();
     }
+
+    setCartItems(activeItemsInCart);
+    localStorage.setItem("cartItems", JSON.stringify(activeItemsInCart));
+    window.dispatchEvent(new Event("storageCart"));
+
   }, [primaryLocation, productList, userData]);
 
   useEffect(() => {
@@ -174,36 +212,6 @@ export default function CheckoutContents({
 
   }, [cartItems]);
 
-  useEffect(() => {
-    if (!isPaymentStepDone || !orderDetails || !resolvedCart?.length) return;
-    if (hasTrackedPurchase.current) return;
-
-    const eventId = orderDetails.orderNumber;
-    const totalOrderPrice = orderDetails.totalAmount;
-
-    const contentIds = resolvedCart.map(item => item._id);
-    const totalQuantity = resolvedCart.reduce((sum, item) => sum + item.selectedQuantity, 0);
-
-    fbq.event("Purchase", {
-      event_id: eventId,
-      content_type: "product",
-      content_ids: contentIds,
-      num_items: totalQuantity,
-      value: totalOrderPrice,
-      currency: "BDT",
-    });
-
-    hasTrackedPurchase.current = true;
-  }, [isPaymentStepDone, orderDetails, resolvedCart]);
-
-  if (isPaymentStepDone)
-    return (
-      <CheckoutConfirmation
-        orderDetails={orderDetails}
-        isPaymentStepDone={isPaymentStepDone}
-      />
-    );
-
   return (
     <main className="relative -mt-[calc(256*4px)] bg-neutral-50 pb-[var(--section-padding-double)] text-sm text-neutral-500 max-sm:-mt-[calc(256*2px)] md:text-base lg:pb-[var(--section-padding)] [&_h2]:uppercase [&_h2]:text-neutral-700">
       {/* Left Mesh Gradient */}
@@ -221,11 +229,7 @@ export default function CheckoutContents({
           specialOffers={specialOffers}
           shippingZones={shippingZones}
           primaryLocation={primaryLocation}
-          setIsPaymentStepDone={setIsPaymentStepDone}
-          setResolvedCart={setResolvedCart}
           cartItems={cartItems}
-          setCartItems={setCartItems}
-          setOrderDetails={setOrderDetails}
           legalPolicyPdfLinks={legalPolicyPdfLinks}
         />
       ) : (

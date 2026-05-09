@@ -17,7 +17,7 @@ export const metadata = {
     type: "website",
     images: [
       {
-        url: `${FRONTEND_URL}/home/home.webp`,
+        url: `${FRONTEND_URL}/logo/logo.png`,
         width: 1200,
         height: 630,
         alt: `${COMPANY_NAME} Our Story`,

@@ -23,6 +23,7 @@ export default function CheckoutCart({
   isAgreementCheckboxSelected,
   setIsAgreementCheckboxSelected,
   legalPolicyPdfLinks,
+  isSubmitting,
 }) {
   const isSpecialOfferApplied = cartItems.some((cartItem) => {
     const product = productList?.find(
@@ -71,6 +72,7 @@ export default function CheckoutCart({
               legalPolicyPdfLinks={legalPolicyPdfLinks}
             />
             <button
+              disabled={isSubmitting}
               onClick={() => handleSubmit(onSubmit, onError)()}
               className="relative z-[1] w-full rounded-[4px] bg-[var(--color-primary-500)] py-2.5 text-xs text-neutral-700 transition-[background-color] duration-300 hover:bg-[var(--color-primary-700)] md:text-sm"
             >

@@ -99,7 +99,10 @@ export default function CartButton({
 
       // If there are cart items in local storage and user just logged in,
       // update the server cart with the newly added items
-      if (localCart?.length && userData) updateServerCart();
+      // if (localCart?.length && userData) updateServerCart();
+      if (localCart?.length && userData && !localStorage.getItem("checkout_payment_pending")) {
+        updateServerCart();
+      }
 
       setCartItems(activeItemsInCart);
       localStorage.setItem("cartItems", JSON.stringify(activeItemsInCart));

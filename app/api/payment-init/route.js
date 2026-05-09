@@ -5,14 +5,14 @@ export async function POST(req) {
   try {
     const body = await req.json();
 
-    const result = await tokenizedFetch("/api/order/checkout", {
+    const result = await tokenizedFetch("/api/order/init-payment", {
       method: "POST",
       body: JSON.stringify(body),
     });
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("UploadError (api/order):", error.message || error);
+    console.error("UploadError (api/order/payment):", error.message || error);
     return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }

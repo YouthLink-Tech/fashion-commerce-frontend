@@ -25,11 +25,11 @@ export default function CardProductInfo({
           <p
             className={`relative w-fit text-nowrap font-semibold ${isOnlyRegularDiscountAvailable ? "text-neutral-400 before:absolute before:left-0 before:right-0 before:top-1/2 before:h-0.5 before:w-full before:-translate-y-1/2 before:bg-neutral-400 before:content-['']" : "text-neutral-800"}`}
           >
-            ৳ {Number(product.regularPrice).toLocaleString()}
+            ৳ {Number(product.regularPrice || 0).toLocaleString()}
           </p>
           {isOnlyRegularDiscountAvailable && (
             <p className="font-semibold text-neutral-800">
-              ৳ {calculateFinalPrice(product, specialOffers).toLocaleString()}
+              ৳ {(calculateFinalPrice(product, specialOffers) || 0).toLocaleString()}
             </p>
           )}
         </div>

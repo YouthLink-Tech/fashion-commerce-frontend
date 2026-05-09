@@ -7,7 +7,6 @@ import { authOptions } from "@/app/utils/authOptions";
 import ShopContents from "@/app/components/shop/ShopContents";
 import LoadingSpinner from "@/app/components/shared/LoadingSpinner";
 import { FRONTEND_URL } from "@/app/config/site";
-import { getImage } from "@/app/lib/cloudinaryUtils";
 import { redirect } from "next/navigation";
 import { COMPANY_NAME } from "@/app/config/company";
 
@@ -20,9 +19,6 @@ export async function generateMetadata({ params }) {
   const categories = result?.data ?? [];
   const matched = categories.find((c) => c.categorySlug === category);
   const label = matched?.label ?? category.replace(/-/g, " ");
-  const categoryImage = matched?.imageUrl
-    ? getImage(matched.imageUrl, 1200)
-    : `${FRONTEND_URL}/home/home.webp`;
 
   if (!matched) {
     return {
@@ -55,7 +51,7 @@ export async function generateMetadata({ params }) {
       type: "website",
       images: [
         {
-          url: categoryImage,
+          url: `${FRONTEND_URL}/logo/logo.png`,
           width: 1200,
           height: 630,
           alt: `${label} collection at ${COMPANY_NAME}`,

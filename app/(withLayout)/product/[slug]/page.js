@@ -47,7 +47,7 @@ export async function generateMetadata({ params: { slug } }) {
     ? getImage(product.thumbnailImageUrl, 1200)
     : product.productVariants?.[0]?.imageUrls?.[0]
       ? getImage(firstVariantImage, 1200)
-      : `${FRONTEND_URL}/home/home.webp`;
+      : `${FRONTEND_URL}/logo/logo.png`;
 
   return {
     title: product.productTitle,

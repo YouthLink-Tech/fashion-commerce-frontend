@@ -4,6 +4,7 @@ import { rawFetch } from "@/app/lib/fetcher/rawFetch";
 import { extractData } from "@/app/lib/extractData";
 import { authOptions } from "@/app/utils/authOptions";
 import CheckoutContents from "@/app/components/checkout/CheckoutContents";
+import { Suspense } from "react";
 
 export default async function Checkout() {
   const session = await getServerSession(authOptions);
@@ -50,13 +51,15 @@ export default async function Checkout() {
     ];
 
   return (
-    <CheckoutContents
-      userData={userData}
-      productList={productList}
-      specialOffers={specialOffers}
-      shippingZones={shippingZones}
-      primaryLocation={primaryLocation}
-      legalPolicyPdfLinks={legalPolicyPdfLinks}
-    />
+    <Suspense fallback={null}>
+      <CheckoutContents
+        userData={userData}
+        productList={productList}
+        specialOffers={specialOffers}
+        shippingZones={shippingZones}
+        primaryLocation={primaryLocation}
+        legalPolicyPdfLinks={legalPolicyPdfLinks}
+      />
+    </Suspense>
   );
 }

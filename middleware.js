@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-const PROTECTED_ROUTES = ["/user", "/reset-password"];
+const PROTECTED_ROUTES = ["/user", "/reset-password", "/order-confirmed"];
 
 const needsAuthCheck = (pathname) =>
   PROTECTED_ROUTES.some((route) => pathname.includes(route));
@@ -24,7 +24,7 @@ export async function middleware(req) {
   //   2. logged in and trying to access the reset password page
 
   // Unauthenticated user hitting /user/* → redirect home
-  if (!token && pathname.includes("/user"))
+  if (!token && (pathname.includes("/user") || pathname.includes("/order-confirmed")))
     return NextResponse.redirect(new URL("/", fullUrl));
 
   // Authenticated user hitting exact /user → redirect to /user/profile

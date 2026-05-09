@@ -1,6 +1,9 @@
 import checkIfPromoCodeIsValid from "./isPromoCodeValid";
 
-const roundToTwo = (num) => Math.round(num * 100) / 100;
+const roundToTwo = (num) => {
+  const n = Number(num);
+  return isNaN(n) ? 0 : Math.round(n * 100) / 100;
+};
 
 export const checkIfAnyDiscountIsAvailable = (product, specialOffers) => {
   const now = new Date(
@@ -98,24 +101,28 @@ export const getProductSpecialOffer = (
 };
 
 export const calculateFinalPrice = (product, specialOffers) => {
+
+  const regularPrice = Number(product?.regularPrice) || 0;
+  const discountValue = Number(product?.discountValue) || 0;
+  const discountType = product?.discountType;
+
   const isSpecialOfferAvailable = checkIfSpecialOfferIsAvailable(
     product,
     specialOffers,
   );
-  const regularPrice = product?.regularPrice || 0;
-  const discountValue = product?.discountValue || 0;
 
-  if (isSpecialOfferAvailable || discountValue === 0) {
+  if (isSpecialOfferAvailable || discountValue <= 0) {
     return roundToTwo(regularPrice);
   }
 
   let finalPrice = regularPrice;
-  if (product?.discountType === "Percentage") {
+  if (discountType === "Percentage") {
     finalPrice = regularPrice - (regularPrice * discountValue) / 100;
-  } else if (product?.discountType === "Flat") {
+  } else if (discountType === "Flat") {
     finalPrice = regularPrice - discountValue;
   }
-  return roundToTwo(finalPrice);
+
+  return isNaN(finalPrice) ? 0 : roundToTwo(finalPrice);
 };
 
 export const calculateSubtotal = (productList, cartItems, specialOffers) => {
@@ -126,12 +133,17 @@ export const calculateSubtotal = (productList, cartItems, specialOffers) => {
       (product) => product._id === cartItem?._id,
     );
 
-    const quantity = Number(cartItem?.selectedQuantity);
+    if (!product) return accumulator;
 
-    return calculateFinalPrice(product, specialOffers) * quantity + accumulator;
+    const quantity = Number(cartItem?.selectedQuantity) || 0;
+    const price = calculateFinalPrice(product, specialOffers) || 0;
+
+    const itemTotal = price * quantity;
+
+    return isNaN(itemTotal) ? accumulator : accumulator + itemTotal;
   }, 0);
 
-  return roundToTwo(subtotal);
+  return isNaN(subtotal) ? 0 : roundToTwo(subtotal);
 };
 
 export const calculatePromoDiscount = (

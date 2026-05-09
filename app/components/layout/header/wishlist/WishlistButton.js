@@ -82,7 +82,8 @@ export default function WishlistButton({
 
       // If there are wishlist items in local storage and user just logged in,
       // update the server wishlist with the newly added items
-      if (localWishlist?.length && userData) updateServerWishlist();
+      // if (localWishlist?.length && userData) updateServerWishlist();
+      if (localWishlist?.length && userData && !localStorage.getItem("checkout_payment_pending")) updateServerWishlist();
 
       setWishlistItems(activeItemsInWishlist);
       localStorage.setItem(

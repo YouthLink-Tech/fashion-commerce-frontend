@@ -23,6 +23,12 @@ export default function getOrderStatusWithColor(orderStatus) {
         bgColor: "bg-red-100",
         textColor: "text-red-600",
       };
+    case "Cancelled":
+      return {
+        text: "Cancelled",
+        bgColor: "bg-neutral-100",
+        textColor: "text-neutral-600",
+      };
     default:
       return {
         text: orderStatus,
