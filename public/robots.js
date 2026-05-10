@@ -12,7 +12,7 @@ export default function robots() {
       // ],
       allow: [
         "/",
-        "/our-story",
+        "/story",
       ],
       disallow: [
         "/shop",        // blocks /shop, /shop/[category]
