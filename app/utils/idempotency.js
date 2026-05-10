@@ -8,10 +8,10 @@ const SESSION_TTL_MS = 15 * 60 * 1000;
  * Sorted so item order doesn't matter.
  * Includes userId so two users with identical carts get different keys.
  */
-function buildCartHash(userId, cartItems) {
-  if (!cartItems?.length) return "";
 
-  const normalized = [...cartItems]
+export function buildCartSignature(cartItems = []) {
+  if (!cartItems?.length) return "";
+  return [...cartItems]
     .sort((a, b) => {
       const idCompare = a._id.localeCompare(b._id);
       if (idCompare !== 0) return idCompare;
@@ -22,9 +22,33 @@ function buildCartHash(userId, cartItems) {
         `${i._id}:${i.selectedColor._id}:${i.selectedSize}:${i.selectedQuantity}`,
     )
     .join("|");
+}
+
+function buildCartHash(userId, cartItems, formDraft, promoCode) {
+  if (!cartItems?.length) return "";
+
+  const cartPart = buildCartSignature(cartItems);
+
+  // Order info portion — only fields stored in the checkout session
+  // Normalize with || "" so undefined and empty string are treated the same
+  const formPart = [
+    formDraft?.name || "",
+    formDraft?.email || "",
+    formDraft?.phoneNumber || "",
+    formDraft?.altPhoneNumber || "",
+    formDraft?.hometown || "",
+    formDraft?.addressLineOne || "",
+    formDraft?.city || "",
+    formDraft?.thana || "",
+    formDraft?.postalCode || "",
+    formDraft?.note || "",
+    formDraft?.deliveryType || "",
+    formDraft?.paymentMethod || "",
+    promoCode || "",
+  ].join("~");
 
   // btoa is fine — this is a change detector, not a security primitive
-  return btoa(`${userId}::${normalized}`);
+  return btoa(`${userId}::${cartPart}::${formPart}`);
 }
 
 function readStorage() {
@@ -56,10 +80,10 @@ function issueNewKey(cartHash) {
  * Returns the same key for retries/reloads/re-clicks on the same cart.
  * Returns a new key when cart changes, session expires, or payment completed.
  */
-export function resolveIdempotencyKey(userId, cartItems) {
+export function resolveIdempotencyKey(userId, cartItems, formDraft, promoCode) {
   if (!userId || !cartItems?.length) return crypto.randomUUID();
 
-  const currentCartHash = buildCartHash(userId, cartItems);
+  const currentCartHash = buildCartHash(userId, cartItems, formDraft, promoCode);
   const stored = readStorage();
   const now = Date.now();
 

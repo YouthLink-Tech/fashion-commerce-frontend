@@ -9,7 +9,7 @@ import CheckoutForm from "./CheckoutForm";
 import CheckoutEmpty from "./CheckoutEmpty";
 import * as fbq from "@/app/lib/fpixel";
 import { useSearchParams } from "next/navigation";
-import { clearCheckoutIntent } from "@/app/utils/idempotency";
+import { buildCartSignature, clearCheckoutIntent } from "@/app/utils/idempotency";
 
 export default function CheckoutContents({
   userData,
@@ -27,12 +27,6 @@ export default function CheckoutContents({
   //     .map(i => `${i._id}:${i.selectedQuantity}`)
   //     .sort()
   //     .join("|");
-
-  const buildCartSignature = (cartItems = []) =>
-    [...cartItems]
-      .sort((a, b) => a._id.localeCompare(b._id))
-      .map((i) => `${i._id}:${i.selectedColor._id}:${i.selectedSize}:${i.selectedQuantity}`)
-      .join("|");
 
   useEffect(() => {
     const paymentStatus = searchParams.get("payment");

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -69,6 +69,7 @@ export default function CheckoutForm({
   const formData = watch();
   const selectedCity = watch("city");
   const selectedDeliveryType = watch("deliveryType");
+  const isInitialCitySet = useRef(true);
 
   const onSubmit = async (data) => {
     if (isSubmitting) return;
@@ -93,13 +94,14 @@ export default function CheckoutForm({
       userDevice = "Desktop";
     }
 
-    // ── IDEMPOTENCY KEY RESOLUTION ────────────────────────────────────────
     // This is the only place the key is resolved. It returns:
     // - The SAME key if cart unchanged, session active, same user (retry/reload/re-click)
     // - A NEW key if cart changed, session expired, or previous payment completed
     const idempotencyKey = resolveIdempotencyKey(
       userData._id,
       cartItems,
+      data,
+      userPromoCode?.promoCode || "",
     );
 
     try {
@@ -204,6 +206,10 @@ export default function CheckoutForm({
   };
 
   useEffect(() => {
+    if (isInitialCitySet.current) {
+      isInitialCitySet.current = false;
+      return;
+    }
     setValue("deliveryType", "");
   }, [selectedCity, setValue]);
 
@@ -237,6 +243,8 @@ export default function CheckoutForm({
       draft?.city ||
       draft?.thana ||
       draft?.postalCode;
+
+    isInitialCitySet.current = true;
 
     reset({
       name: personalInfo?.customerName || draft.name || "",
