@@ -10,6 +10,7 @@ import CheckoutEmpty from "./CheckoutEmpty";
 import * as fbq from "@/app/lib/fpixel";
 import { useSearchParams } from "next/navigation";
 import { buildCartSignature, clearCheckoutIntent } from "@/app/utils/idempotency";
+import { calculateSubtotal, calculateTotalSpecialOfferDiscount } from "@/app/utils/orderCalculations";
 
 export default function CheckoutContents({
   userData,
@@ -183,6 +184,8 @@ export default function CheckoutContents({
 
   useEffect(() => {
     if (!cartItems?.length) return;
+    if (!productList?.length) return;
+    if (!specialOffers) return;
 
     const hasIntent = sessionStorage.getItem("checkout_intent");
     if (!hasIntent) return;
@@ -195,16 +198,26 @@ export default function CheckoutContents({
     const content_ids = [...new Set(cartItems.map(item => item._id))];
     const totalQuantity = cartItems.reduce((sum, i) => sum + i.selectedQuantity, 0);
 
+    const subtotal = calculateSubtotal(productList, cartItems, specialOffers);
+    const specialOfferDiscount = calculateTotalSpecialOfferDiscount(
+      productList,
+      cartItems,
+      specialOffers,
+    );
+    const cartValue = subtotal - specialOfferDiscount;
+
     fbq.event("InitiateCheckout", {
       content_type: "product",
       content_ids,
       num_items: totalQuantity,
+      value: cartValue,
+      currency: "BDT",
     });
 
     sessionStorage.setItem("checkout_cart_signature", signature);
     sessionStorage.removeItem("checkout_intent");
 
-  }, [cartItems]);
+  }, [cartItems, productList, specialOffers]);
 
   return (
     <main className="relative -mt-[calc(256*4px)] bg-neutral-50 pb-[var(--section-padding-double)] text-sm text-neutral-500 max-sm:-mt-[calc(256*2px)] md:text-base lg:pb-[var(--section-padding)] [&_h2]:uppercase [&_h2]:text-neutral-700">

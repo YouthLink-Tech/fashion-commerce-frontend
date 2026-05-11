@@ -29,14 +29,16 @@ export default function OrderConfirmedContents({ order }) {
     if (hasTracked.current) return;
     hasTracked.current = true;
 
-    fbq.event("Purchase", {
-      event_id: order.orderNumber,
-      content_type: "product",
-      content_ids: order.productInformation.map((p) => p._id),
-      num_items: order.productInformation.reduce((sum, p) => sum + p.sku, 0),
-      value: order.total,
-      currency: "BDT",
-    });
+    fbq.event(
+      "Purchase",
+      {
+        content_type: "product",
+        content_ids: order.productInformation.map((p) => p._id),
+        num_items: order.productInformation.reduce((sum, p) => sum + p.sku, 0),
+        value: order.total,
+        currency: "BDT",
+      },
+      { eventID: `purchase_${order.orderNumber}`, });
   }, [order.orderNumber, order.productInformation, order.total]);
 
   // Map order fields to what CheckoutConfirmation expects

@@ -99,6 +99,8 @@ export default function AddToCartModal({
           selectedOptions={selectedOptions}
           setSelectedOptions={setSelectedOptions}
           setIsAddToCartModalOpen={setIsAddToCartModalOpen}
+          product={product}
+          specialOffers={specialOffers}
         />
       </div>
     </div>

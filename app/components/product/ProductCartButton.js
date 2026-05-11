@@ -10,6 +10,7 @@ import { routeFetch } from "@/app/lib/fetcher/routeFetch";
 import { CgShoppingCart } from "react-icons/cg";
 import ProductToast from "@/app/components/toast/ProductToast";
 import * as fbq from "@/app/lib/fpixel";
+import { calculateFinalPrice } from "@/app/utils/orderCalculations";
 
 export default function ProductCartButton({
   userData,
@@ -20,6 +21,8 @@ export default function ProductCartButton({
   productVariantSku,
   selectedOptions,
   setSelectedOptions,
+  product,
+  specialOffers,
 }) {
   const router = useRouter();
 
@@ -67,6 +70,8 @@ export default function ProductCartButton({
       content_type: "product",
       content_ids: [productId],
       num_items: selectedOptions.quantity,
+      value: calculateFinalPrice(product, specialOffers) * selectedOptions.quantity,
+      currency: "BDT",
     });
 
     // Save item in server cart, if user is logged in

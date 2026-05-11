@@ -167,6 +167,8 @@ export default function ProductInfoOverview({
           productVariantSku={productVariantSku}
           selectedOptions={selectedOptions}
           setSelectedOptions={setSelectedOptions}
+          product={product}
+          specialOffers={specialOffers}
         />
         <ProductWishlistButton
           userData={userData}

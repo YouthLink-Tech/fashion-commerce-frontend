@@ -15,6 +15,7 @@ import { routeFetch } from "@/app/lib/fetcher/routeFetch";
 import ProductToast from "@/app/components/toast/ProductToast";
 import getImageSetsBasedOnColors from "@/app/utils/getImageSetsBasedOnColors";
 import {
+  calculateFinalPrice,
   calculateSubtotal,
   getTotalItemCount,
 } from "@/app/utils/orderCalculations";
@@ -170,6 +171,8 @@ export default function CartButton({
           content_type: "product",
           content_ids: [productId],
           num_items: 1,
+          value: calculateFinalPrice(product, specialOffers) * 1,
+          currency: "BDT",
         });
 
         // Save item in server cart, if user is logged in
@@ -185,6 +188,7 @@ export default function CartButton({
               method: "PUT",
               body: JSON.stringify(updatedUserData),
             });
+            console.log(result, "result from cart button");
 
             if (result.ok) {
               // Display custom success toast notification, if server cart is updated
@@ -268,6 +272,7 @@ export default function CartButton({
     userData,
     router,
     pathname,
+    specialOffers,
   ]);
 
   return (
