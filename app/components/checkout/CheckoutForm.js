@@ -71,6 +71,11 @@ export default function CheckoutForm({
   const selectedDeliveryType = watch("deliveryType");
   const isInitialCitySet = useRef(true);
 
+  function getCookie(name) {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    return match ? decodeURIComponent(match[2]) : null;
+  }
+
   const onSubmit = async (data) => {
     if (isSubmitting) return;
     if (!isAgreementCheckboxSelected)
@@ -94,6 +99,9 @@ export default function CheckoutForm({
       userDevice = "Desktop";
     }
 
+    const fbp = getCookie('_fbp');
+    const fbc = getCookie('_fbc');
+
     // This is the only place the key is resolved. It returns:
     // - The SAME key if cart unchanged, session active, same user (retry/reload/re-click)
     // - A NEW key if cart changed, session expired, or previous payment completed
@@ -113,6 +121,8 @@ export default function CheckoutForm({
           promoCode: userPromoCode?.promoCode || null,
           cartItems,
           userDevice,
+          fbp: fbp || null,
+          fbc: fbc || null,
         }),
       });
 

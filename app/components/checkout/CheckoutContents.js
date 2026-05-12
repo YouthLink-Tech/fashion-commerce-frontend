@@ -9,7 +9,7 @@ import CheckoutForm from "./CheckoutForm";
 import CheckoutEmpty from "./CheckoutEmpty";
 import * as fbq from "@/app/lib/fpixel";
 import { useSearchParams } from "next/navigation";
-import { buildCartSignature, clearCheckoutIntent } from "@/app/utils/idempotency";
+import { buildCartSignature, clearCheckoutIntent, invalidateCheckoutIntent } from "@/app/utils/idempotency";
 import { calculateSubtotal, calculateTotalSpecialOfferDiscount } from "@/app/utils/orderCalculations";
 
 export default function CheckoutContents({
@@ -42,6 +42,7 @@ export default function CheckoutContents({
 
     toast.error(messages[paymentStatus] || "Payment unsuccessful.");
     localStorage.removeItem("checkout_payment_pending");
+    invalidateCheckoutIntent();
 
     // Clean the URL so refresh doesn't re-show the toast
     window.history.replaceState({}, "", "/checkout");
