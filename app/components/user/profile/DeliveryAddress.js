@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { useLoading } from "@/app/contexts/loading";
 import { routeFetch } from "@/app/lib/fetcher/routeFetch";
 import FormEditorButtons from "./FormEditorButtons";
-import { cities } from "@/app/data/cities";
+import { cities, thanaByCity } from "@/app/data/cities";
 
 export default function DeliveryAddress({
   type,
@@ -26,6 +26,8 @@ export default function DeliveryAddress({
     handleSubmit,
     control,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -37,6 +39,9 @@ export default function DeliveryAddress({
     },
     mode: "onBlur",
   });
+
+  const selectedCity = watch("city");
+  const thanas = selectedCity ? thanaByCity[selectedCity] || [] : [];
 
   useEffect(() => {
     if (type === "new") {
@@ -236,9 +241,9 @@ export default function DeliveryAddress({
     } catch (error) {
       console.error(
         "UpdateError (deliveryAddress/primary):",
-        result.message || "Failed to update data on server.",
+        error.message || error || "Failed to update data on server.",
       );
-      toast.error(result.message || "Failed to update data on server.");
+      toast.error("Failed to update data on server.");
     }
 
     setIsPageLoading(false);
@@ -278,9 +283,9 @@ export default function DeliveryAddress({
     } catch (error) {
       console.error(
         "UpdateError (deliveryAddress/delete):",
-        result.message || "Failed to update data on server.",
+        error.message || error || "Failed to update data on server.",
       );
-      toast.error(result.message || "Failed to update data on server.");
+      toast.error("Failed to update data on server.");
     }
 
     setIsPageLoading(false);
@@ -373,9 +378,7 @@ export default function DeliveryAddress({
             <Controller
               name="city"
               control={control}
-              rules={{
-                required: "City is required.",
-              }}
+              rules={{ required: "City is required." }}
               render={({ field: { onChange, value } }) => (
                 <Autocomplete
                   isReadOnly={type === "update" && !isEditingForm}
@@ -386,20 +389,59 @@ export default function DeliveryAddress({
                   size="sm"
                   variant="bordered"
                   selectedKey={value}
-                  onSelectionChange={onChange}
+                  onSelectionChange={(key) => {
+                    onChange(key);
+                    if (key !== value) {
+                      setValue("thana", "", { shouldValidate: false });
+                    }
+                  }}
                   className="select-with-search w-full [&:has(input:focus)_[data-slot='input-wrapper']]:border-[var(--color-secondary-500)] [&:has(input:focus)_[data-slot='input-wrapper']]:bg-white/75 [&>div]:opacity-100 [&_[data-slot='input-wrapper']]:rounded-[4px] [&_[data-slot='input-wrapper']]:bg-white/20 [&_[data-slot='input-wrapper']]:shadow-none [&_[data-slot='input-wrapper']]:backdrop-blur-2xl [&_[data-slot='input-wrapper']]:backdrop-opacity-100 [&_[data-slot='input-wrapper']]:hover:border-[var(--color-secondary-500)] [&_label]:!text-neutral-500"
                 >
-                  {cities.map((city) => {
-                    return (
-                      <AutocompleteItem key={city}>{city}</AutocompleteItem>
-                    );
-                  })}
+                  {cities.map((city) => (
+                    <AutocompleteItem key={city}>{city}</AutocompleteItem>
+                  ))}
                 </Autocomplete>
               )}
             />
             {errors.city && (
               <p className="text-xs font-semibold text-red-500">
                 {errors.city?.message}
+              </p>
+            )}
+          </div>
+          <div className="w-full space-y-2 font-semibold">
+            <Controller
+              name="thana"
+              control={control}
+              rules={{
+                required: selectedCity ? "Thana is required." : false,
+              }}
+              render={({ field: { onChange, value } }) => (
+                <Autocomplete
+                  isReadOnly={type === "update" && !isEditingForm}
+                  isDisabled={
+                    (type === "update" && !isEditingForm) || !selectedCity
+                  }
+                  isRequired={!!selectedCity}
+                  labelPlacement="outside"
+                  label="Thana"
+                  placeholder={selectedCity ? "Select thana" : "Select city first"}
+                  size="sm"
+                  variant="bordered"
+                  selectedKey={value}
+                  onSelectionChange={onChange}
+                  className={`select-with-search w-full [&:has(input:focus)_[data-slot='input-wrapper']]:border-[var(--color-secondary-500)] [&:has(input:focus)_[data-slot='input-wrapper']]:bg-white/75 [&>div]:opacity-100 [&_[data-slot='input-wrapper']]:rounded-[4px] [&_[data-slot='input-wrapper']]:bg-white/20 [&_[data-slot='input-wrapper']]:shadow-none [&_[data-slot='input-wrapper']]:backdrop-blur-2xl [&_[data-slot='input-wrapper']]:backdrop-opacity-100 [&_[data-slot='input-wrapper']]:hover:border-[var(--color-secondary-500)] [&_label]:!text-neutral-500 
+                    ${!selectedCity ? "pointer-events-none" : ""}`}
+                >
+                  {thanas.map((thana) => (
+                    <AutocompleteItem key={thana}>{thana}</AutocompleteItem>
+                  ))}
+                </Autocomplete>
+              )}
+            />
+            {errors.thana && (
+              <p className="text-xs font-semibold text-red-500">
+                {errors.thana?.message}
               </p>
             )}
           </div>
