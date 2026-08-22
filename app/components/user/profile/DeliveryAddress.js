@@ -6,7 +6,6 @@ import toast from "react-hot-toast";
 import { useLoading } from "@/app/contexts/loading";
 import { routeFetch } from "@/app/lib/fetcher/routeFetch";
 import FormEditorButtons from "./FormEditorButtons";
-import { cities, thanaByCity } from "@/app/data/cities";
 
 export default function DeliveryAddress({
   type,
@@ -17,6 +16,8 @@ export default function DeliveryAddress({
   setUserData,
   setIsAddingNewAddress,
   isAddressListEmpty,
+  cities,
+  thanas,
 }) {
   const router = useRouter();
   const { setIsPageLoading } = useLoading();
@@ -33,23 +34,25 @@ export default function DeliveryAddress({
     defaultValues: {
       nickname: "",
       address1: "",
-      city: "",
-      thana: "",
+      cityId: "",
+      thanaId: "",
       postalCode: "",
     },
     mode: "onBlur",
   });
 
-  const selectedCity = watch("city");
-  const thanas = selectedCity ? thanaByCity[selectedCity] || [] : [];
+  const selectedCityId = watch("cityId");
+  const thanasForSelectedCity = selectedCityId
+    ? thanas.filter((t) => t.city_id === selectedCityId)
+    : [];
 
   useEffect(() => {
     if (type === "new") {
       reset({
         nickname: "",
         address1: "",
-        city: "",
-        thana: "",
+        cityId: "",
+        thanaId: "",
         postalCode: "",
       });
     } else {
@@ -61,15 +64,15 @@ export default function DeliveryAddress({
             (isEditingForm ? "" : "(Primary)")
             : ""),
         address1: address?.address1,
-        city: address?.city,
-        thana: address?.thana,
+        cityId: address?.cityId,
+        thanaId: address?.thanaId,
         postalCode: address?.postalCode,
       });
     }
   }, [
     address?.address1,
-    address?.city,
-    address?.thana,
+    address?.cityId,
+    address?.thanaId,
     address?.isPrimary,
     address?.nickname,
     address?.postalCode,
@@ -117,8 +120,8 @@ export default function DeliveryAddress({
               id: `${userEmail}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
               nickname: data.nickname,
               address1: data.address1,
-              city: data.city,
-              thana: data.thana,
+              cityId: data.cityId,
+              thanaId: data.thanaId,
               postalCode: data.postalCode,
               isPrimary: isAddressListEmpty,
             },
@@ -129,8 +132,8 @@ export default function DeliveryAddress({
       if (
         address?.nickname === data.nickname &&
         address?.address1 === data.address1 &&
-        address?.city === data.city &&
-        address?.thana === data.thana &&
+        address?.cityId === data.cityId &&
+        address?.thanaId === data.thanaId &&
         address?.postalCode === data.postalCode
       ) {
         toast.error("Not saved as no changes were made.");
@@ -149,8 +152,8 @@ export default function DeliveryAddress({
                   ...availableAddress,
                   nickname: data.nickname,
                   address1: data.address1,
-                  city: data.city,
-                  thana: data.thana,
+                  cityId: data.cityId,
+                  thanaId: data.thanaId,
                   postalCode: data.postalCode,
                 }
                 : availableAddress,
@@ -376,7 +379,7 @@ export default function DeliveryAddress({
           {/* City Input with Label */}
           <div className="w-full space-y-2 font-semibold">
             <Controller
-              name="city"
+              name="cityId"
               control={control}
               rules={{ required: "City is required." }}
               render={({ field: { onChange, value } }) => (
@@ -392,56 +395,56 @@ export default function DeliveryAddress({
                   onSelectionChange={(key) => {
                     onChange(key);
                     if (key !== value) {
-                      setValue("thana", "", { shouldValidate: false });
+                      setValue("thanaId", "", { shouldValidate: false });
                     }
                   }}
                   className="select-with-search w-full [&:has(input:focus)_[data-slot='input-wrapper']]:border-[var(--color-secondary-500)] [&:has(input:focus)_[data-slot='input-wrapper']]:bg-white/75 [&>div]:opacity-100 [&_[data-slot='input-wrapper']]:rounded-[4px] [&_[data-slot='input-wrapper']]:bg-white/20 [&_[data-slot='input-wrapper']]:shadow-none [&_[data-slot='input-wrapper']]:backdrop-blur-2xl [&_[data-slot='input-wrapper']]:backdrop-opacity-100 [&_[data-slot='input-wrapper']]:hover:border-[var(--color-secondary-500)] [&_label]:!text-neutral-500"
                 >
                   {cities.map((city) => (
-                    <AutocompleteItem key={city}>{city}</AutocompleteItem>
+                    <AutocompleteItem key={city.id}>{city.name}</AutocompleteItem>
                   ))}
                 </Autocomplete>
               )}
             />
-            {errors.city && (
+            {errors.cityId && (
               <p className="text-xs font-semibold text-red-500">
-                {errors.city?.message}
+                {errors.cityId?.message}
               </p>
             )}
           </div>
           <div className="w-full space-y-2 font-semibold">
             <Controller
-              name="thana"
+              name="thanaId"
               control={control}
               rules={{
-                required: selectedCity ? "Thana is required." : false,
+                required: selectedCityId ? "Thana is required." : false,
               }}
               render={({ field: { onChange, value } }) => (
                 <Autocomplete
                   isReadOnly={type === "update" && !isEditingForm}
                   isDisabled={
-                    (type === "update" && !isEditingForm) || !selectedCity
+                    (type === "update" && !isEditingForm) || !selectedCityId
                   }
-                  isRequired={!!selectedCity}
+                  isRequired={!!selectedCityId}
                   labelPlacement="outside"
                   label="Thana"
-                  placeholder={selectedCity ? "Select thana" : "Select city first"}
+                  placeholder={selectedCityId ? "Select thana" : "Select city first"}
                   size="sm"
                   variant="bordered"
                   selectedKey={value}
                   onSelectionChange={onChange}
                   className={`select-with-search w-full [&:has(input:focus)_[data-slot='input-wrapper']]:border-[var(--color-secondary-500)] [&:has(input:focus)_[data-slot='input-wrapper']]:bg-white/75 [&>div]:opacity-100 [&_[data-slot='input-wrapper']]:rounded-[4px] [&_[data-slot='input-wrapper']]:bg-white/20 [&_[data-slot='input-wrapper']]:shadow-none [&_[data-slot='input-wrapper']]:backdrop-blur-2xl [&_[data-slot='input-wrapper']]:backdrop-opacity-100 [&_[data-slot='input-wrapper']]:hover:border-[var(--color-secondary-500)] [&_label]:!text-neutral-500 
-                    ${!selectedCity ? "pointer-events-none" : ""}`}
+                    ${!selectedCityId ? "pointer-events-none" : ""}`}
                 >
-                  {thanas.map((thana) => (
-                    <AutocompleteItem key={thana}>{thana}</AutocompleteItem>
+                  {thanasForSelectedCity.map((thana) => (
+                    <AutocompleteItem key={thana.id}>{thana.name}</AutocompleteItem>
                   ))}
                 </Autocomplete>
               )}
             />
-            {errors.thana && (
+            {errors.thanaId && (
               <p className="text-xs font-semibold text-red-500">
-                {errors.thana?.message}
+                {errors.thanaId?.message}
               </p>
             )}
           </div>

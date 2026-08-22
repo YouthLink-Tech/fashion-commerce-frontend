@@ -161,13 +161,12 @@ export default function StoryHero({
           {departments.map((dept, index) => {
             return (
               <div
-                key={dept._id}
+                key={dept.id}
                 onClick={() => handleSectionTransition(dept)}
                 className="hero-card relative shrink-0 transition-[transform] delay-150 duration-500 ease-in-out [&:has(img:hover)>div]:delay-[500ms] [&:has(img:hover)>h4]:opacity-100 [&:has(img:hover)>h4]:delay-[500ms] [&:has(img:hover)>img]:w-[calc(var(--small-card-width)*1.33334)] sm:[&:has(img:hover)>img]:w-[calc(var(--large-card-width)*1.66667)] [&:has(img:hover)]:z-[1] [&:has(img:hover)]:-translate-y-3 [&:has(img:hover)_div]:opacity-100"
               >
                 <Image
-                  // src={dept.coverImgUrl}
-                  src={getImage(dept.coverImgUrl.public_id, 400)}
+                  src={getImage(dept.cover.public_id, 400)}
                   alt={`Image ${index + 1}`}
                   width={0}
                   height={0}
@@ -176,7 +175,7 @@ export default function StoryHero({
                 />
                 <div className="absolute -top-5 left-1/2 h-3 w-3 -translate-x-1/2 -translate-y-full rotate-45 bg-[var(--color-secondary-400)] opacity-0 transition-opacity duration-300 ease-in-out"></div>
                 <h4 className="pointer-events-none absolute -top-6 left-0 w-[calc(var(--small-card-width)*1.33334)] -translate-y-full rounded-md bg-[var(--color-secondary-400)] p-2 text-center text-neutral-700 opacity-0 transition-opacity duration-300 ease-in-out sm:w-[calc(var(--large-card-width)*1.66667)]">
-                  {dept.workSummary}
+                  {dept.work_summary}
                 </h4>
               </div>
             );

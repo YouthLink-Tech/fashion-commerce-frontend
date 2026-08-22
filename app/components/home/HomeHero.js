@@ -16,13 +16,13 @@ export default async function HomeHero() {
     console.error("FetchError (home/sliderData):", error.message);
   }
 
-  const [
-    {
-      isEnabled,
-      slideInterval,
-      sliders: { leftSlides, centerSlides, rightSlides } = {},
-    } = {},
-  ] = sliderData || [];
+  const {
+    is_enabled: isEnabled,
+    slide_interval: slideInterval,
+    left_slides: leftSlides = [],
+    center_slides: centerSlides = [],
+    right_slides: rightSlides = [],
+  } = sliderData || {};
 
   return (
     <div className="relative">
@@ -36,9 +36,9 @@ export default async function HomeHero() {
       <HomeHeroSlides
         isEnabled={isEnabled}
         slideInterval={slideInterval}
-        leftSlides={leftSlides}
-        centerSlides={centerSlides}
-        rightSlides={rightSlides}
+        leftSlides={leftSlides.map((s) => s.public_id)}
+        centerSlides={centerSlides.map((s) => s.public_id)}
+        rightSlides={rightSlides.map((s) => s.public_id)}
       />
     </div>
   );

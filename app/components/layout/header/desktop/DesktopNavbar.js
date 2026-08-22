@@ -14,7 +14,6 @@ export default function DesktopNavbar({ logoWithTextSrc }) {
       <TransitionLink href="/">
         <Image
           className="h-9 w-auto"
-          // src={logoWithTextSrc}
           src={getImage(logoWithTextSrc, 400)}
           alt={`${COMPANY_NAME} logo`}
           height={0}

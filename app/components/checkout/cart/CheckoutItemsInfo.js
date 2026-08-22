@@ -4,6 +4,7 @@ import {
   calculateShippingCharge,
   calculateSubtotal,
   calculateTotalSpecialOfferDiscount,
+  isDeliveryFree,
 } from "@/app/utils/orderCalculations";
 import DiscountTooptip from "../../ui/DiscountTooltip";
 import DiscountModal from "../../ui/DiscountModal";
@@ -15,7 +16,7 @@ export default function CheckoutItemsInfo({
   shippingZones,
   userPromoCode,
   isPromoCodeValid,
-  selectedCity,
+  selectedCityId,
   selectedDeliveryType,
 }) {
   const [isPromoModalOpen, setIsPromoModalOpen] = useState(false);
@@ -32,17 +33,17 @@ export default function CheckoutItemsInfo({
     specialOffers,
   );
   const shippingCharge = calculateShippingCharge(
-    selectedCity,
+    selectedCityId,
     selectedDeliveryType,
     shippingZones,
   );
+  const free = isDeliveryFree(selectedCityId, selectedDeliveryType, shippingZones);
+  const isDeliverySectionFilledUp = !!selectedCityId && !!selectedDeliveryType;
   const total =
     subtotal -
     totalSpecialOfferDiscount -
     promoDiscount +
-    (selectedCity === "Dhaka City" && selectedDeliveryType === "STANDARD"
-      ? 0
-      : shippingCharge);
+    (free ? 0 : shippingCharge);
 
   return (
     <div className="space-y-2.5 [&>div>*]:z-[1] [&>div>span]:text-right [&>div]:flex [&>div]:justify-between">
@@ -107,30 +108,27 @@ export default function CheckoutItemsInfo({
           </span>
         </div>
       )}
-      {!!selectedCity &&
-        (selectedCity !== "Dhaka City" || !!selectedDeliveryType) && (
-          <div>
-            <h5 className="text-neutral-500">Shipping Charge</h5>
-            <span>
-              {selectedCity === "Dhaka City" &&
-                selectedDeliveryType === "STANDARD" ? (
-                <>
-                  <span className="relative h-fit before:absolute before:-left-0.5 before:top-1/2 before:h-0.5 before:w-[calc(100%+4px)] before:bg-neutral-400 before:content-['']">{`৳ ${shippingCharge?.toLocaleString()}`}</span>
-                  <span className="ml-1.5">FREE</span>
-                </>
-              ) : (
-                `৳ ${shippingCharge?.toLocaleString()}`
-              )}
-            </span>
-          </div>
-        )}
-      {!!selectedCity &&
-        (selectedCity !== "Dhaka City" || !!selectedDeliveryType) && (
-          <div className="text-sm text-neutral-700 md:text-base">
-            <h5>Payable Amount</h5>
-            <span>৳ {total.toLocaleString()}</span>
-          </div>
-        )}
+      {isDeliverySectionFilledUp && (
+        <div>
+          <h5 className="text-neutral-500">Shipping Charge</h5>
+          <span>
+            {free ? (
+              <>
+                <span className="relative h-fit before:absolute before:-left-0.5 before:top-1/2 before:h-0.5 before:w-[calc(100%+4px)] before:bg-neutral-400 before:content-['']">{`৳ ${shippingCharge?.toLocaleString()}`}</span>
+                <span className="ml-1.5">FREE</span>
+              </>
+            ) : (
+              `৳ ${shippingCharge?.toLocaleString()}`
+            )}
+          </span>
+        </div>
+      )}
+      {isDeliverySectionFilledUp && (
+        <div className="text-sm text-neutral-700 md:text-base">
+          <h5>Payable Amount</h5>
+          <span>৳ {total.toLocaleString()}</span>
+        </div>
+      )}
     </div>
   );
 }

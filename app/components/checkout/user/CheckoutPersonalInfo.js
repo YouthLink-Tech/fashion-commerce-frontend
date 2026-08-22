@@ -1,6 +1,5 @@
 import { Controller } from "react-hook-form";
 import { Autocomplete, AutocompleteItem } from "@nextui-org/react";
-import { cities } from "@/app/data/cities";
 
 export default function CheckoutPersonalInfo({
   register,
@@ -8,6 +7,7 @@ export default function CheckoutPersonalInfo({
   errors,
   isUserLoggedIn,
   userHometown,
+  cities,
 }) {
   return (
     <section className="w-full space-y-4 rounded-md border-2 border-neutral-50/20 bg-white/40 p-5 shadow-[0_0_20px_0_rgba(0,0,0,0.05)] backdrop-blur-2xl transition-[height] duration-300 ease-in-out">
@@ -119,7 +119,7 @@ export default function CheckoutPersonalInfo({
         {!userHometown && (
           <div className="w-full space-y-2 font-semibold sm:w-[calc(50%-0.5rem)]">
             <Controller
-              name="hometown"
+              name="hometownId"
               control={control}
               rules={{
                 required: "Hometown is required.",
@@ -139,17 +139,17 @@ export default function CheckoutPersonalInfo({
                 >
                   {cities.map((hometown) => {
                     return (
-                      <AutocompleteItem key={hometown}>
-                        {hometown}
+                      <AutocompleteItem key={hometown.id}>
+                        {hometown.name}
                       </AutocompleteItem>
                     );
                   })}
                 </Autocomplete>
               )}
             />
-            {errors.hometown && (
+            {errors.hometownId && (
               <p className="text-xs font-semibold text-red-500">
-                {errors.hometown?.message}
+                {errors.hometownId?.message}
               </p>
             )}
           </div>

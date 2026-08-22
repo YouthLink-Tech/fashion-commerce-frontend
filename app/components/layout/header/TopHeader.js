@@ -91,26 +91,26 @@ export default function OfferSlider({
         }}
       >
         {extendedSlides?.map((slide, index) =>
-          slide.optionalLink ? (
+          slide.optional_link ? (
             <Link
-              key={slide.slideText + slide.optionalLink + index}
-              href={slide.optionalLink}
+              key={slide.slide_text + slide.optional_link + index}
+              href={slide.optional_link}
               className="min-w-full text-center underline underline-offset-2 transition-[color] ease-in-out"
               style={{
                 transitionDuration: `${colorChangeDuration}ms`,
               }}
             >
-              {slide.slideText}
+              {slide.slide_text}
             </Link>
           ) : (
             <p
-              key={slide.slideText + slide.optionalLink + index}
+              key={slide.slide_text + slide.optional_link + index}
               className="min-w-full text-center transition-[color] ease-in-out"
               style={{
                 transitionDuration: `${colorChangeDuration}ms`,
               }}
             >
-              {slide.slideText}
+              {slide.slide_text}
             </p>
           ),
         )}

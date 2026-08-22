@@ -42,7 +42,13 @@ export default async function MobileNavbar({
         tags: ['primary-location']  // cleared when location changes
       }
     }),
-    rawFetch("/api/policy-pdf/all"),
+    rawFetch("/api/policy-pdf/all", {
+      next: {
+        revalidate: 604800, // 7 days — legal documents rarely change
+        tags: ['policy-pdf']
+      }
+    }
+    ),
   ];
 
   const [userDataRes, productsRes, offersRes, primaryLocationRes, legalPdfRes] =
@@ -57,9 +63,9 @@ export default async function MobileNavbar({
     "mobileNav/primaryLocation",
     "primaryLocation",
   );
-  const [legalPolicyPdfLinks] = extractData(
+  const legalPolicyPdfLinks = extractData(
     legalPdfRes,
-    [],
+    {},
     "mobileNav/legalPdfLinks",
   );
 
@@ -70,7 +76,6 @@ export default async function MobileNavbar({
         <TransitionLink href="/">
           <Image
             className="h-8 w-auto sm:hidden"
-            // src={logoWithoutTextSrc}
             src={getImage(logoWithoutTextSrc, 400)}
             alt={`${COMPANY_NAME} logo (no text)`}
             height={0}
@@ -79,7 +84,6 @@ export default async function MobileNavbar({
           />
           <Image
             className="h-8 w-auto max-sm:hidden"
-            // src={logoWithTextSrc}
             src={getImage(logoWithTextSrc, 400)}
             alt={`${COMPANY_NAME} logo`}
             height={0}

@@ -8,7 +8,7 @@ import TransitionLink from "@/app/components/ui/TransitionLink";
 import RichTextRenderer from "@/app/components/shared/RichTextRenderer";
 
 export default async function HelpCenter() {
-  let pageTitle, faqDescription, faqs;
+  let pageTitle, description, items;
 
   try {
     const result = await rawFetch("/api/faq/all", {
@@ -16,12 +16,13 @@ export default async function HelpCenter() {
         revalidate: 86400, // 24 hours — FAQs change occasionally
         tags: ['faqs']
       }
-    });
-    const [faqData] = result.data || [];
+    }
+    );
+    const faqData = result.data || {};
 
-    pageTitle = faqData?.pageTitle;
-    faqDescription = faqData?.faqDescription;
-    faqs = faqData?.faqs || [];
+    pageTitle = faqData?.page_title;
+    description = faqData?.description;
+    items = faqData?.items || [];
   } catch (error) {
     console.error("FetchError (faq):", error.message);
   }
@@ -82,9 +83,9 @@ export default async function HelpCenter() {
                 __html: faqDescription,
               }}
             ></div> */}
-            <RichTextRenderer content={faqDescription} />
+            <RichTextRenderer content={description} />
             {/* Accordions/FAQs */}
-            <FAQs faqs={faqs} />
+            <FAQs faqs={items} />
           </section>
         </div>
         <div className="z-[1] mx-5 rounded-md border-2 border-neutral-50/20 bg-white/40 backdrop-blur-2xl sm:mx-8 lg:mx-auto lg:max-w-[575px]">

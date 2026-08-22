@@ -16,7 +16,6 @@ import CheckoutDeliveryAddress from "@/app/components/checkout/user/CheckoutDeli
 import CheckoutPromoCode from "@/app/components/checkout/user/CheckoutPromoCode";
 import CheckoutPaymentMethod from "@/app/components/checkout/user/CheckoutPaymentMethod";
 import CheckoutCart from "@/app/components/checkout/cart/CheckoutCart";
-import { thanaByCity } from "@/app/data/cities";
 import { invalidateCheckoutIntent, resolveIdempotencyKey } from "@/app/utils/idempotency";
 
 export default function CheckoutForm({
@@ -27,6 +26,8 @@ export default function CheckoutForm({
   primaryLocation,
   cartItems,
   legalPolicyPdfLinks,
+  cities,
+  thanas,
 }) {
   const router = useRouter();
   const { setIsPageLoading } = useLoading();
@@ -52,12 +53,12 @@ export default function CheckoutForm({
     defaultValues: {
       name: userData?.userInfo?.personalInfo?.customerName || "",
       email: userData?.email || "",
-      hometown: userData?.userInfo?.personalInfo?.hometown || "",
+      hometownId: userData?.userInfo?.personalInfo?.hometownId || "",
       phoneNumber: userData?.userInfo?.personalInfo?.phoneNumber || "",
       altPhoneNumber: userData?.userInfo?.personalInfo?.phoneNumber2 || "",
       addressLineOne: userData?.userInfo?.savedDeliveryAddress?.address1 || "",
-      city: userData?.userInfo?.savedDeliveryAddress?.city || "",
-      thana: userData?.userInfo?.savedDeliveryAddress?.thana || "",
+      cityId: userData?.userInfo?.savedDeliveryAddress?.cityId || "",
+      thanaId: userData?.userInfo?.savedDeliveryAddress?.thanaId || "",
       postalCode: userData?.userInfo?.savedDeliveryAddress?.postalCode || "",
       note: "",
       deliveryType: "",
@@ -67,7 +68,7 @@ export default function CheckoutForm({
   });
 
   const formData = watch();
-  const selectedCity = watch("city");
+  const selectedCityId = watch("cityId");
   const selectedDeliveryType = watch("deliveryType");
   const isInitialCitySet = useRef(true);
 
@@ -215,14 +216,6 @@ export default function CheckoutForm({
     else toast.error("Something went wrong. Please try again.");
   };
 
-  useEffect(() => {
-    if (isInitialCitySet.current) {
-      isInitialCitySet.current = false;
-      return;
-    }
-    setValue("deliveryType", "");
-  }, [selectedCity, setValue]);
-
   // Save form data to localStorage on input change
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -232,7 +225,9 @@ export default function CheckoutForm({
     return () => clearTimeout(timeout);
   }, [formData]);
 
-  const thanas = selectedCity ? thanaByCity[selectedCity] || [] : [];
+  const thanasForSelectedCity = selectedCityId
+    ? thanas.filter((t) => t.city_id === selectedCityId)
+    : [];
 
   // Load draft from localStorage or update form on user session change
   useEffect(() => {
@@ -250,8 +245,8 @@ export default function CheckoutForm({
     const prevSavedAddress = userData?.userInfo?.savedDeliveryAddress || {};
     const wasDeliveryEdited =
       draft?.addressLineOne ||
-      draft?.city ||
-      draft?.thana ||
+      draft?.cityId ||
+      draft?.thanaId ||
       draft?.postalCode;
 
     isInitialCitySet.current = true;
@@ -259,15 +254,15 @@ export default function CheckoutForm({
     reset({
       name: personalInfo?.customerName || draft.name || "",
       email: userData?.email || draft.email || "",
-      hometown: personalInfo?.hometown || draft.hometown || "",
+      hometownId: personalInfo?.hometownId || draft.hometownId || "",
       phoneNumber: draft.phoneNumber || personalInfo?.phoneNumber || "",
       altPhoneNumber: draft.altPhoneNumber || personalInfo?.phoneNumber2 || "",
       addressLineOne:
         (wasDeliveryEdited
           ? draft.addressLineOne
           : prevSavedAddress?.address1) || "",
-      city: (wasDeliveryEdited ? draft.city : prevSavedAddress?.city) || "",
-      thana: (wasDeliveryEdited ? draft.thana : prevSavedAddress?.thana) || "",
+      cityId: (wasDeliveryEdited ? draft.cityId : prevSavedAddress?.cityId) || "",
+      thanaId: (wasDeliveryEdited ? draft.thanaId : prevSavedAddress?.thanaId) || "",
       postalCode:
         (wasDeliveryEdited ? draft.postalCode : prevSavedAddress?.postalCode) ||
         "",
@@ -332,17 +327,20 @@ export default function CheckoutForm({
             errors={errors}
             isUserLoggedIn={!!userData}
             userHometown={userData?.userInfo?.personalInfo?.hometown}
+            cities={cities}
           />
           <CheckoutDeliveryAddress
             register={register}
             control={control}
             reset={reset}
             errors={errors}
+            setValue={setValue}
             deliveryAddresses={userData?.userInfo?.deliveryAddresses}
-            selectedCity={selectedCity}
-            thanas={thanas}
+            selectedCityId={selectedCityId}
+            thanas={thanasForSelectedCity}
             selectedDeliveryType={selectedDeliveryType}
             shippingZones={shippingZones}
+            cities={cities}
           />
           {/* If none of the cart item has special offer, show promo code section */}
           {cartItems?.every(
@@ -375,7 +373,7 @@ export default function CheckoutForm({
         primaryLocation={primaryLocation}
         userPromoCode={userPromoCode}
         isPromoCodeValid={isPromoCodeValid}
-        selectedCity={selectedCity}
+        selectedCityId={selectedCityId}
         selectedDeliveryType={selectedDeliveryType}
         handleSubmit={handleSubmit}
         onSubmit={onSubmit}

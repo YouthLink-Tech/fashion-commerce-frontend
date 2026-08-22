@@ -22,7 +22,7 @@ export default async function HomeCategories() {
   }
 
   const featuredCategories = categories?.filter(
-    (category) => category.isFeatured === true,
+    (category) => category.is_featured === true,
   );
 
   if (featuredCategories?.length)
@@ -71,19 +71,19 @@ export default async function HomeCategories() {
             {featuredCategories?.map((featuredCategory) => {
               return (
                 <TransitionLink
-                  key={"featured-category-" + featuredCategory?._id}
-                  href={`/shop/${featuredCategory?.categorySlug}`}
+                  key={"featured-category-" + featuredCategory?.id}
+                  href={`/shop/${featuredCategory?.slug}`}
                   className="relative flex aspect-[4/5.5] w-full items-center justify-center overflow-hidden rounded-md text-2xl font-semibold text-white max-xl:aspect-[4/5] sm:max-lg:min-h-[250px]"
                 >
                   <div
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-300 ease-in-out after:absolute after:inset-0 after:h-full after:w-full after:bg-black after:bg-opacity-40 after:content-[''] hover:scale-[1.15]"
                     style={{
                       // backgroundImage: `url(${featuredCategory?.imageUrl})`,
-                      backgroundImage: `url(${getImage(featuredCategory?.imageUrl, 600)})`,
+                      backgroundImage: `url(${getImage(featuredCategory?.media?.public_id, 600)})`,
                     }}
                   />
                   <p className="pointer-events-none z-[2] p-1 text-center">
-                    {featuredCategory?.label}
+                    {featuredCategory?.name}
                   </p>
                 </TransitionLink>
               );

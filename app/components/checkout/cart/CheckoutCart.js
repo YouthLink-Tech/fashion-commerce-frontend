@@ -15,7 +15,7 @@ export default function CheckoutCart({
   primaryLocation,
   userPromoCode,
   isPromoCodeValid,
-  selectedCity,
+  selectedCityId,
   selectedDeliveryType,
   handleSubmit,
   onSubmit,
@@ -44,8 +44,8 @@ export default function CheckoutCart({
   });
 
   const isAnyDiscountApplied = isPromoCodeValid || isSpecialOfferApplied;
-  const isDeliverySectionFilledUp =
-    !!selectedCity && (selectedCity !== "Dhaka City" || !!selectedDeliveryType);
+
+  const isDeliverySectionFilledUp = !!selectedCityId && !!selectedDeliveryType;
 
   return (
     <section className="relative bottom-[var(--section-padding)] top-[var(--section-padding)] h-full min-h-full w-full rounded-md pt-5 font-semibold shadow-[0_0_20px_0_rgba(0,0,0,0.05)] before:pointer-events-none before:absolute before:top-0 before:h-full before:w-full before:rounded-md before:border-2 before:border-neutral-50/20 before:bg-white/40 before:backdrop-blur-2xl before:content-[''] lg:sticky lg:w-[calc(45%-16px/2)]">
@@ -62,7 +62,7 @@ export default function CheckoutCart({
               shippingZones={shippingZones}
               isPromoCodeValid={isPromoCodeValid}
               userPromoCode={userPromoCode}
-              selectedCity={selectedCity}
+              selectedCityId={selectedCityId}
               selectedDeliveryType={selectedDeliveryType}
             />
             <hr className="h-0.5 w-full bg-[#f1f1f1]" />

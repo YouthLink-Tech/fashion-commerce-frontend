@@ -328,7 +328,7 @@ export default function CheckoutRegister({
                     I agree to the{" "}
                     <Link
                       target="_blank"
-                      href={legalPolicyPdfLinks[0]?.terms?.url || "#"}
+                      href={legalPolicyPdfLinks?.terms?.url || "#"}
                       rel="noopener noreferrer"
                     >
                       Terms & Conditions
@@ -336,7 +336,7 @@ export default function CheckoutRegister({
                     {" and "}
                     <Link
                       target="_blank"
-                      href={legalPolicyPdfLinks[0]?.privacy?.url || "#"}
+                      href={legalPolicyPdfLinks?.privacy?.url || "#"}
                       rel="noopener noreferrer"
                     >
                       Privacy Policy

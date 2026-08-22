@@ -17,8 +17,8 @@ export async function generateMetadata({ params }) {
     next: { revalidate: 7200, tags: ["categories"] },
   });
   const categories = result?.data ?? [];
-  const matched = categories.find((c) => c.categorySlug === category);
-  const label = matched?.label ?? category.replace(/-/g, " ");
+  const matched = categories.find((c) => c.slug === category);
+  const name = matched?.name ?? category.replace(/-/g, " ");
 
   if (!matched) {
     return {
@@ -28,10 +28,10 @@ export async function generateMetadata({ params }) {
   }
 
   return {
-    title: `${label}`,
-    description: `Shop the latest ${label} collection at ${COMPANY_NAME}. Find the best styles, prices, and new arrivals in ${label}.`,
+    title: `${name}`,
+    description: `Shop the latest ${name} collection at ${COMPANY_NAME}. Find the best styles, prices, and new arrivals in ${name}.`,
     keywords: [
-      label,
+      name,
       COMPANY_NAME,
       "men's clothing Bangladesh",
       "polo shirts",
@@ -44,8 +44,8 @@ export async function generateMetadata({ params }) {
     robots: { index: true, follow: true },
     alternates: { canonical: `${FRONTEND_URL}/shop/${category}` },
     openGraph: {
-      title: `${label} | Shop at ${COMPANY_NAME}`,
-      description: `Shop the latest ${label} collection at ${COMPANY_NAME}.`,
+      title: `${name} | Shop at ${COMPANY_NAME}`,
+      description: `Shop the latest ${name} collection at ${COMPANY_NAME}.`,
       url: `${FRONTEND_URL}/shop/${category}`,
       siteName: `${COMPANY_NAME}`,
       type: "website",
@@ -54,7 +54,7 @@ export async function generateMetadata({ params }) {
           url: `${FRONTEND_URL}/logo/logo.png`,
           width: 1200,
           height: 630,
-          alt: `${label} collection at ${COMPANY_NAME}`,
+          alt: `${name} collection at ${COMPANY_NAME}`,
         },
       ],
     },
@@ -125,7 +125,7 @@ export default async function CategoryShop({ params }) {
   ];
 
   const resolvedCategory =
-    categories.find((c) => c.categorySlug === category)?.label ?? null;
+    categories.find((c) => c.slug === category)?.name ?? null;
 
   if (!resolvedCategory) redirect("/shop");
 

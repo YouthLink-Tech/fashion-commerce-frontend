@@ -6,10 +6,10 @@ import RichTextRenderer from "../shared/RichTextRenderer";
 export default function FAQs({ faqs }) {
   return (
     <Accordion>
-      {faqs.map((faq, index) => {
+      {faqs?.map((faq) => {
         return (
           <AccordionItem
-            key={faq.question + index}
+            key={faq.id}
             aria-label={faq.question}
             title={faq.question}
             className="[&_h2>button_span]:font-normal [&_h2]:!my-2"

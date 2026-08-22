@@ -137,9 +137,8 @@ export default function StoryDetails({
         />
         {/* Staff Image */}
         <Image
-          // src={selectedDept.staff.staffImgUrl}
-          src={getImage(selectedDept.staff.staffImgUrl.public_id, 400)}
-          alt={selectedDept.staff.staffName}
+          src={getImage(selectedDept.staffMedia.public_id, 400)}
+          alt={selectedDept.staff_name}
           height={0}
           width={0}
           sizes="750px"
@@ -151,9 +150,9 @@ export default function StoryDetails({
           id="dept-details"
           className="relative mx-5 sm:mx-8 md:mx-12 md:max-w-[calc(1200px*3/5-64px/2)] xl:ml-0 xl:mr-auto"
         >
-          {selectedDept.contents?.map((content, index) => (
+          {selectedDept.sections?.map((section, index) => (
             <div
-              key={"content-" + content.quote + index}
+              key={"section-" + section.quote + index}
               className={`relative flex flex-col justify-center ${index !== 0 ? "min-h-svh gap-y-44" : "min-h-svh gap-y-44 md:min-h-[calc(100svh-(var(--header-height-sm)+var(--section-padding-double)))] md:gap-y-32 lg:min-h-[calc(100svh-(var(--header-height-lg)+var(--section-padding-double)))]"}`}
             >
               {/* Quote Section */}
@@ -163,12 +162,12 @@ export default function StoryDetails({
                 {/* Quote */}
                 {/* <div
                   dangerouslySetInnerHTML={{
-                    __html: content.quote,
+                    __html: section.quote,
                   }}
                   className="text-xl font-semibold text-neutral-600 sm:text-3xl [&_strong]:bg-[linear-gradient(to_right,#804D3A,#D86F4D,#F3A761)] [&_strong]:bg-clip-text [&_strong]:text-transparent"
                 /> */}
                 <RichTextRenderer
-                  content={content.quote}
+                  content={section.quote}
                   className="text-xl font-semibold text-neutral-600 sm:text-3xl [&_strong]:bg-[linear-gradient(to_right,#804D3A,#D86F4D,#F3A761)] [&_strong]:bg-clip-text [&_strong]:text-transparent"
                 />
                 {/* Shape/SVG (swirly arrow) */}
@@ -189,7 +188,7 @@ export default function StoryDetails({
               <div
                 className={`media relative mb-[calc(12px+1.875rem*1.25)] aspect-video w-full sm:mb-[calc(12px+3.75rem*1.25)] sm:w-2/3 md:mb-[calc(12px+2.25rem*1.25)] md:max-lg:w-3/4 lg:mb-[calc(12px+3rem*1.25)] ${index % 2 === 0 ? "ml-auto" : "mr-auto"}`}
               >
-                {isSrcForVideo(content.mediaSrc.resource_type) ? (
+                {isSrcForVideo(section.media.resource_type) ? (
                   <div className="relative z-[1] h-full w-full">
                     {/* Skeleton Placeholder */}
                     {!videoLoaded[index] && (
@@ -206,14 +205,13 @@ export default function StoryDetails({
                         setVideoLoaded((prev) => ({ ...prev, [index]: true }))
                       }
                     >
-                      <source src={getVideo(content.mediaSrc.public_id)} type="video/mp4" />
+                      <source src={getVideo(section.media.public_id)} type="video/mp4" />
                     </video>
                   </div>
                 ) : (
                   // Image Element
                   <Image
-                    // src={content.mediaSrc}
-                    src={getImage(content.mediaSrc.public_id, 600)}
+                    src={getImage(section.media.public_id, 600)}
                     alt={`Department Image ${index + 1}`}
                     className="media-image relative z-[1] aspect-video w-full rounded-md object-cover"
                     height={0}
@@ -225,7 +223,7 @@ export default function StoryDetails({
                 <h4
                   className={`pointer-events-none absolute -bottom-3 z-[0] translate-y-full select-none bg-[linear-gradient(to_right,#804D3A,#D86F4D,#F3A761)] bg-clip-text text-3xl/[1.25] font-bold text-transparent sm:text-6xl/[1.25] md:text-4xl/[1.25] lg:text-5xl/[1.25] ${index % 2 === 0 ? "right-0" : "left-0"}`}
                 >
-                  {content.hashtag}
+                  {section.hashtag}
                 </h4>
                 {/* Shape/SVG (circle with star) */}
                 <Image

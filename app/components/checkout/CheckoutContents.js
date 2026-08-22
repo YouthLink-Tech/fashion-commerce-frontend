@@ -19,6 +19,8 @@ export default function CheckoutContents({
   shippingZones,
   primaryLocation,
   legalPolicyPdfLinks,
+  cities,
+  thanas,
 }) {
   const [cartItems, setCartItems] = useState(null);
   const searchParams = useSearchParams();
@@ -239,6 +241,8 @@ export default function CheckoutContents({
           primaryLocation={primaryLocation}
           cartItems={cartItems}
           legalPolicyPdfLinks={legalPolicyPdfLinks}
+          cities={cities}
+          thanas={thanas}
         />
       ) : (
         <CheckoutEmpty />

@@ -29,8 +29,14 @@ export default async function Orders({ searchParams }) {
   }
 
   try {
-    const result = await rawFetch("/api/policy-pdf/all");
-    [legalPolicyPdfLinks] = result.data || [];
+    const result = await rawFetch("/api/policy-pdf/all", {
+      next: {
+        revalidate: 604800, // 7 days — legal documents rarely change
+        tags: ['policy-pdf']
+      }
+    }
+    );
+    legalPolicyPdfLinks = result.data || {};
   } catch (error) {
     console.error("FetchError (orderHistory/legalPdfLinks):", error.message);
   }

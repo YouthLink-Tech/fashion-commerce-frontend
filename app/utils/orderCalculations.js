@@ -240,25 +240,55 @@ export const calculateTotalSpecialOfferDiscount = (
   return roundToTwo(totalDiscount);
 };
 
-export const calculateShippingCharge = (
-  selectedCity,
-  selectedDeliveryType,
-  shippingZones,
-) => {
-  if (!selectedCity || (selectedCity === "Dhaka City" && !selectedDeliveryType)) {
-    return 0;
-  }
-
-  const shippingZone = shippingZones?.find((shippingZone) =>
-    shippingZone?.selectedCity.includes(selectedCity),
-  );
-
-  const charge = Number(
-    shippingZone?.shippingCharges[selectedDeliveryType || "STANDARD"] || 0,
-  );
-
-  return roundToTwo(charge);
+const findShippingOption = (selectedCityId, selectedDeliveryType, shippingOptionsByCity) => {
+  if (!selectedCityId || !selectedDeliveryType) return null;
+  const cityEntry = shippingOptionsByCity?.[selectedCityId];
+  if (!cityEntry) return null;
+  return cityEntry.options.find((o) => o.delivery_type === selectedDeliveryType) || null;
 };
+
+export const getEstimatedDeliveryTime = (
+  selectedCityId,
+  selectedDeliveryType,
+  shippingOptionsByCity,
+) => {
+  const option = findShippingOption(selectedCityId, selectedDeliveryType, shippingOptionsByCity);
+  if (!option) return null;
+
+  return option.duration_max
+    ? `${option.duration_min}–${option.duration_max}`
+    : `${option.duration_min}`;
+};
+
+export const calculateShippingCharge = (
+  selectedCityId,
+  selectedDeliveryType,
+  shippingOptionsByCity,
+) => {
+  const option = findShippingOption(selectedCityId, selectedDeliveryType, shippingOptionsByCity);
+  if (!option) return 0;
+  return roundToTwo(Number(option.charge));
+};
+
+// export const calculateShippingCharge = (
+//   selectedCity,
+//   selectedDeliveryType,
+//   shippingZones,
+// ) => {
+//   if (!selectedCity || (selectedCity === "Dhaka City" && !selectedDeliveryType)) {
+//     return 0;
+//   }
+
+//   const shippingZone = shippingZones?.find((shippingZone) =>
+//     shippingZone?.selectedCity.includes(selectedCity),
+//   );
+
+//   const charge = Number(
+//     shippingZone?.shippingCharges[selectedDeliveryType || "STANDARD"] || 0,
+//   );
+
+//   return roundToTwo(charge);
+// };
 
 export const getTotalItemCount = (cartItems) => {
   if (!cartItems?.length) return 0;
@@ -269,23 +299,38 @@ export const getTotalItemCount = (cartItems) => {
   );
 };
 
-export const getEstimatedDeliveryTime = (
-  selectedCity,
-  selectedDeliveryType,
-  shippingZones,
-) => {
-  if (!selectedCity || (selectedCity === "Dhaka City" && !selectedDeliveryType)) {
-    return null;
-  } else {
-    const shippingZone = shippingZones?.find((shippingZone) =>
-      shippingZone?.selectedCity.includes(selectedCity),
-    );
+// export const getEstimatedDeliveryTime = (
+//   selectedCity,
+//   selectedDeliveryType,
+//   shippingZones,
+// ) => {
+//   if (!selectedCity || (selectedCity === "Dhaka City" && !selectedDeliveryType)) {
+//     return null;
+//   } else {
+//     const shippingZone = shippingZones?.find((shippingZone) =>
+//       shippingZone?.selectedCity.includes(selectedCity),
+//     );
 
-    return (
-      shippingZone?.shippingDurations[selectedDeliveryType || "STANDARD"] ||
-      null
-    );
-  }
+//     return (
+//       shippingZone?.shippingDurations[selectedDeliveryType || "STANDARD"] ||
+//       null
+//     );
+//   }
+// };
+
+export const getAvailableDeliveryTypes = (selectedCityId, shippingOptionsByCity) => {
+  const cityEntry = shippingOptionsByCity?.[selectedCityId];
+  return cityEntry?.options?.map((o) => o.delivery_type) ?? [];
+};
+
+export const isDeliveryTypeChoiceNeeded = (selectedCityId, shippingOptionsByCity) => {
+  return getAvailableDeliveryTypes(selectedCityId, shippingOptionsByCity).length > 1;
+};
+
+export const isDeliveryFree = (selectedCityId, selectedDeliveryType, shippingOptionsByCity) => {
+  const cityEntry = shippingOptionsByCity?.[selectedCityId];
+  const option = cityEntry?.options?.find((o) => o.delivery_type === selectedDeliveryType);
+  return option ? Number(option.charge) === 0 : false;
 };
 
 export const getExpectedDeliveryDate = (

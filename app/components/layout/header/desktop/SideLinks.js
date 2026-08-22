@@ -34,7 +34,13 @@ export default async function SideLinks() {
         tags: ['primary-location']  // cleared when location changes
       }
     }),
-    rawFetch("/api/policy-pdf/all"),
+    rawFetch("/api/policy-pdf/all", {
+      next: {
+        revalidate: 604800, // 7 days — legal documents rarely change
+        tags: ['policy-pdf']
+      }
+    }
+    ),
   ];
 
   const [
@@ -50,7 +56,7 @@ export default async function SideLinks() {
     productList,
     specialOffers,
     primaryLocation,
-    [legalPolicyPdfLinks],
+    legalPolicyPdfLinks,
   ] = [
       extractData(userDataRes, null, "desktopNav/userData"),
       extractData(productsRes, [], "desktopNav/productList"),
@@ -61,7 +67,7 @@ export default async function SideLinks() {
         "desktopNav/primaryLocation",
         "primaryLocation",
       ),
-      extractData(legalPolicyPdfLinksRes, [], "desktopNav/legalPdfLinks"),
+      extractData(legalPolicyPdfLinksRes, {}, "desktopNav/legalPdfLinks"),
     ];
 
   return (

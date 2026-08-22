@@ -8,9 +8,8 @@ import { Autocomplete, AutocompleteItem } from "@nextui-org/react";
 import { RiCloseLine, RiEditLine, RiSaveLine } from "react-icons/ri";
 import { useLoading } from "@/app/contexts/loading";
 import { routeFetch } from "@/app/lib/fetcher/routeFetch";
-import { cities } from "@/app/data/cities";
 
-export default function PersonalInfo({ serverUserData }) {
+export default function PersonalInfo({ serverUserData, cities }) {
   const router = useRouter();
   const [userData, setUserData] = useState(serverUserData || {});
   const { setIsPageLoading } = useLoading();
@@ -28,7 +27,7 @@ export default function PersonalInfo({ serverUserData }) {
       email: personalInfo?.email || "",
       phoneNumber: personalInfo?.phoneNumber || "--",
       altPhoneNumber: personalInfo?.phoneNumber2 || "--",
-      hometown: personalInfo?.hometown || "--",
+      hometownId: personalInfo?.hometownId || "--",
     },
     mode: "onBlur",
   });
@@ -39,13 +38,13 @@ export default function PersonalInfo({ serverUserData }) {
       email: personalInfo?.email || "",
       phoneNumber: personalInfo?.phoneNumber || (isEditingForm ? "" : "--"),
       altPhoneNumber: personalInfo?.phoneNumber2 || (isEditingForm ? "" : "--"),
-      hometown: personalInfo?.hometown || (isEditingForm ? "" : "--"),
+      hometownId: personalInfo?.hometownId || (isEditingForm ? "" : "--"),
     });
   }, [
     isEditingForm,
     personalInfo?.customerName,
     personalInfo?.email,
-    personalInfo?.hometown,
+    personalInfo?.hometownId,
     personalInfo?.phoneNumber,
     personalInfo?.phoneNumber2,
     reset,
@@ -56,12 +55,12 @@ export default function PersonalInfo({ serverUserData }) {
 
     if (data.phoneNumber === "--") data.phoneNumber = "";
     if (data.altPhoneNumber === "--") data.altPhoneNumber = "";
-    if (data.hometown === "--") data.hometown = "";
+    if (data.hometownId === "--") data.hometownId = "";
 
     if (
       personalInfo?.phoneNumber === data.phoneNumber &&
       personalInfo?.phoneNumber2 === data.altPhoneNumber &&
-      personalInfo?.hometown === data.hometown
+      personalInfo?.hometownId === data.hometownId
     ) {
       toast.error("Not saved as no changes were made.");
       setIsPageLoading(false);
@@ -76,7 +75,7 @@ export default function PersonalInfo({ serverUserData }) {
           ...userData.userInfo.personalInfo,
           phoneNumber: data.phoneNumber,
           phoneNumber2: data.altPhoneNumber,
-          hometown: data.hometown,
+          hometownId: data.hometownId,
         },
       },
     };
@@ -276,15 +275,15 @@ export default function PersonalInfo({ serverUserData }) {
           {/* Hometown Field */}
           <div className="relative w-full space-y-2 font-semibold lg:w-[calc(50%-1.5rem/2)] xl:w-[calc(50%-2.5rem/2)]">
             <Controller
-              name="hometown"
+              name="hometownId"
               control={control}
               rules={{
                 required: "Hometown is required.",
               }}
               render={({ field: { onChange, value } }) => (
                 <Autocomplete
-                  isReadOnly={!!personalInfo?.hometown || !isEditingForm}
-                  isDisabled={!!personalInfo?.hometown || !isEditingForm}
+                  isReadOnly={!!personalInfo?.hometownId || !isEditingForm}
+                  isDisabled={!!personalInfo?.hometownId || !isEditingForm}
                   isRequired
                   labelPlacement="outside"
                   label="Hometown"
@@ -293,12 +292,12 @@ export default function PersonalInfo({ serverUserData }) {
                   variant="bordered"
                   selectedKey={value}
                   onSelectionChange={onChange}
-                  className={`select-with-search w-full [&:has(input:focus)_[data-slot='input-wrapper']]:border-[var(--color-secondary-500)] [&:has(input:focus)_[data-slot='input-wrapper']]:bg-white/75 [&_[data-disabled='true']]:opacity-100 [&_[data-disabled='true']_[data-slot='inner-wrapper']]:opacity-50 [&_[data-slot='input-wrapper']]:rounded-[4px] [&_[data-slot='input-wrapper']]:bg-white/20 [&_[data-slot='input-wrapper']]:shadow-none [&_[data-slot='input-wrapper']]:backdrop-blur-2xl [&_[data-slot='input-wrapper']]:backdrop-opacity-100 [&_[data-slot='input-wrapper']]:hover:border-[var(--color-secondary-500)] [&_label]:!text-neutral-500 ${isEditingForm || personalInfo?.hometown ? "[&_[data-slot='inner-wrapper']]:!opacity-100" : "[&_[data-slot='inner-wrapper']]:!opacity-0"}`}
+                  className={`select-with-search w-full [&:has(input:focus)_[data-slot='input-wrapper']]:border-[var(--color-secondary-500)] [&:has(input:focus)_[data-slot='input-wrapper']]:bg-white/75 [&_[data-disabled='true']]:opacity-100 [&_[data-disabled='true']_[data-slot='inner-wrapper']]:opacity-50 [&_[data-slot='input-wrapper']]:rounded-[4px] [&_[data-slot='input-wrapper']]:bg-white/20 [&_[data-slot='input-wrapper']]:shadow-none [&_[data-slot='input-wrapper']]:backdrop-blur-2xl [&_[data-slot='input-wrapper']]:backdrop-opacity-100 [&_[data-slot='input-wrapper']]:hover:border-[var(--color-secondary-500)] [&_label]:!text-neutral-500 ${isEditingForm || personalInfo?.hometownId ? "[&_[data-slot='inner-wrapper']]:!opacity-100" : "[&_[data-slot='inner-wrapper']]:!opacity-0"}`}
                 >
                   {cities.map((hometown) => {
                     return (
-                      <AutocompleteItem key={hometown}>
-                        {hometown}
+                      <AutocompleteItem key={hometown.id}>
+                        {hometown.name}
                       </AutocompleteItem>
                     );
                   })}
@@ -306,13 +305,13 @@ export default function PersonalInfo({ serverUserData }) {
               )}
             />
             <p
-              className={`absolute left-0 top-9 -translate-y-1/2 font-semibold text-neutral-700 transition-opacity duration-100 ease-in-out ${!isEditingForm && !personalInfo?.hometown ? "opacity-100" : "opacity-0"}`}
+              className={`absolute left-0 top-9 -translate-y-1/2 font-semibold text-neutral-700 transition-opacity duration-100 ease-in-out ${!isEditingForm && !personalInfo?.hometownId ? "opacity-100" : "opacity-0"}`}
             >
               --
             </p>
-            {errors.hometown && (
+            {errors.hometownId && (
               <p className="text-xs font-semibold text-red-500">
-                {errors.hometown?.message}
+                {errors.hometownId?.message}
               </p>
             )}
           </div>

@@ -43,13 +43,13 @@ export default async function RootLayout({ children }) {
 
   const [topHeaderRes, logoRes] = await Promise.allSettled(promises);
 
-  const [topHeaderData] = extractData(topHeaderRes, [{}], "layout/topHeader");
-  const logos = extractData(logoRes, [{}], "layout/logo")[0];
+  const topHeaderData = extractData(topHeaderRes, {}, "layout/topHeader");
+  const logos = extractData(logoRes, {}, "layout/logo");
 
-  const logoWithoutTextSrc = logos?.mobileLogoUrl;
-  const logoWithTextSrc = logos?.desktopLogoUrl;
+  const logoWithoutTextSrc = logos?.mobile_public_id;
+  const logoWithTextSrc = logos?.desktop_public_id;
 
-  const topHeaderHeight = topHeaderData?.isSlideEnabled ? "28.5px" : "0px";
+  const topHeaderHeight = topHeaderData?.is_slide_enabled ? "28.5px" : "0px";
 
   return (
     <div>
@@ -104,14 +104,14 @@ export default async function RootLayout({ children }) {
         <Header
           logoWithoutTextSrc={logoWithoutTextSrc}
           logoWithTextSrc={logoWithTextSrc}
-          isTopHeaderEnabled={topHeaderData?.isSlideEnabled}
+          isTopHeaderEnabled={topHeaderData?.is_slide_enabled}
           slides={topHeaderData?.slides}
-          slideDuration={topHeaderData?.slideDuration}
-          isAutoSlideEnabled={topHeaderData?.isAutoSlideEnabled}
-          bgColor={topHeaderData?.topHeaderColor}
-          textColor={topHeaderData?.textColor}
-          isHighlightedColorEnabled={topHeaderData?.isHighlightedColorEnabled}
-          highlightedColor={topHeaderData?.highlightedTextColor}
+          slideDuration={topHeaderData?.slide_duration}
+          isAutoSlideEnabled={topHeaderData?.is_auto_slide_enabled}
+          bgColor={topHeaderData?.background_color}
+          textColor={topHeaderData?.text_color}
+          isHighlightedColorEnabled={topHeaderData?.is_highlighted_color_enabled}
+          highlightedColor={topHeaderData?.highlighted_text_color}
         />
         <div className="flex-1 [&_main]:min-h-svh">{children}</div>
       </div>

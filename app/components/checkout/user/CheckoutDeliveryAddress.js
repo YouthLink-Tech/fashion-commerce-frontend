@@ -4,21 +4,55 @@ import {
   AutocompleteItem,
   Tooltip,
 } from "@nextui-org/react";
-import { cities } from "@/app/data/cities";
-import { getEstimatedDeliveryTime } from "@/app/utils/orderCalculations";
+import { getAvailableDeliveryTypes, getEstimatedDeliveryTime, isDeliveryTypeChoiceNeeded } from "@/app/utils/orderCalculations";
 import CheckoutSelectDeliveryAddress from "../cart/CheckoutSelectDeliveryAddress";
+import { useEffect, useRef } from "react";
 
 export default function CheckoutDeliveryAddress({
   register,
   control,
   reset,
   errors,
+  setValue,
   deliveryAddresses,
-  selectedCity,
+  selectedCityId,
   thanas,
   selectedDeliveryType,
   shippingZones,
+  cities,
 }) {
+
+  const availableTypes = getAvailableDeliveryTypes(selectedCityId, shippingZones);
+  const needsChoice = isDeliveryTypeChoiceNeeded(selectedCityId, shippingZones);
+
+  const isFirstRun = useRef(true);
+
+  useEffect(() => {
+    if (isFirstRun.current) {
+      // On initial mount (e.g. restoring a draft with a city already set),
+      // don't blow away a deliveryType the user already had saved.
+      isFirstRun.current = false;
+      if (selectedCityId && availableTypes.length === 1 && !selectedDeliveryType) {
+        setValue('deliveryType', availableTypes[0]);
+      }
+      return;
+    }
+
+    if (!selectedCityId) {
+      setValue('deliveryType', '');
+      return;
+    }
+
+    if (availableTypes.length === 1) {
+      setValue('deliveryType', availableTypes[0]);
+    } else if (availableTypes.length > 1 && !availableTypes.includes(selectedDeliveryType)) {
+      setValue('deliveryType', '');
+    } else if (availableTypes.length === 0) {
+      setValue('deliveryType', '');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCityId, availableTypes.join(',')]);
+
   return (
     <section className="w-full space-y-4 rounded-md border-2 border-neutral-50/20 bg-white/40 p-5 shadow-[0_0_20px_0_rgba(0,0,0,0.05)] backdrop-blur-2xl">
       <div className="flex items-center justify-between">
@@ -55,7 +89,7 @@ export default function CheckoutDeliveryAddress({
           </div>
           <div className="w-full space-y-2 font-semibold">
             <Controller
-              name="city"
+              name="cityId"
               control={control}
               rules={{
                 required: "City is required.",
@@ -74,15 +108,15 @@ export default function CheckoutDeliveryAddress({
                 >
                   {cities.map((city) => {
                     return (
-                      <AutocompleteItem key={city}>{city}</AutocompleteItem>
+                      <AutocompleteItem key={city.id}>{city.name}</AutocompleteItem>
                     );
                   })}
                 </Autocomplete>
               )}
             />
-            {errors.city && (
+            {errors.cityId && (
               <p className="text-xs font-semibold text-red-500">
-                {errors.city?.message}
+                {errors.cityId?.message}
               </p>
             )}
           </div>
@@ -90,34 +124,34 @@ export default function CheckoutDeliveryAddress({
         <div className="max-sm:space-y-4 sm:flex sm:gap-x-4">
           <div className="w-full space-y-2 font-semibold">
             <Controller
-              name="thana"
+              name="thanaId"
               control={control}
               rules={{
-                required: selectedCity ? "Thana is required." : false,
+                required: selectedCityId ? "Thana is required." : false,
               }}
               render={({ field: { onChange, value } }) => (
                 <Autocomplete
-                  isDisabled={!selectedCity}
-                  isRequired={!!selectedCity}
+                  isDisabled={!selectedCityId}
+                  isRequired={!!selectedCityId}
                   labelPlacement="outside"
                   label="Thana"
-                  placeholder={selectedCity ? "Select thana" : "Select city first"}
+                  placeholder={selectedCityId ? "Select thana" : "Select city first"}
                   size="sm"
                   variant="bordered"
                   selectedKey={value}
                   onSelectionChange={onChange}
-                  className={`select-with-search-thana [&:has(input:focus)_[data-slot='input-wrapper']]:border-[var(--color-secondary-500)] [&_[data-slot='input-wrapper']]:rounded-[4px] [&_[data-slot='input-wrapper']]:bg-white/20 [&_[data-slot='input-wrapper']]:hover:border-[var(--color-secondary-500)] [&_label]:!text-neutral-500 ${!selectedCity ? "pointer-events-none" : ""}`}
+                  className={`select-with-search-thana [&:has(input:focus)_[data-slot='input-wrapper']]:border-[var(--color-secondary-500)] [&_[data-slot='input-wrapper']]:rounded-[4px] [&_[data-slot='input-wrapper']]:bg-white/20 [&_[data-slot='input-wrapper']]:hover:border-[var(--color-secondary-500)] [&_label]:!text-neutral-500 ${!selectedCityId ? "pointer-events-none" : ""}`}
                 >
                   {thanas.map((thana) => (
-                    <AutocompleteItem key={thana}>{thana}</AutocompleteItem>
+                    <AutocompleteItem key={thana.id}>{thana.name}</AutocompleteItem>
                   ))}
                 </Autocomplete>
               )}
             />
 
-            {errors.thana && (
+            {errors.thanaId && (
               <p className="text-xs font-semibold text-red-500">
-                {errors.thana.message}
+                {errors.thanaId.message}
               </p>
             )}
           </div>
@@ -161,7 +195,7 @@ export default function CheckoutDeliveryAddress({
             </p>
           )}
         </div>
-        {selectedCity === "Dhaka City" && (
+        {needsChoice && (
           <div className="w-full space-y-2 font-semibold">
             <p>Select Delivery Type</p>
             <div className="payment-methods max-sm:space-y-4 sm:flex sm:gap-x-4">
@@ -194,7 +228,7 @@ export default function CheckoutDeliveryAddress({
                 }}
                 shouldFlip
                 showArrow={true}
-                content={`After confirmation, you will get the delivery within ${getEstimatedDeliveryTime("Dhaka City", "STANDARD", shippingZones)} days with FREE of charge.`}
+                content={`After confirmation, you will get the delivery within ${getEstimatedDeliveryTime(selectedCityId, "standard", shippingZones)} days.`}
               >
                 <input
                   className="!h-12 before:border-2 before:!border-neutral-900 before:!bg-[#020202] before:grayscale before:invert before:backdrop-blur-2xl before:transition-all before:duration-300 before:ease-in-out checked:before:!bg-[#383804] checked:before:grayscale-0 hover:before:!border-transparent hover:before:!bg-[#383804] hover:before:grayscale-0"
@@ -209,8 +243,8 @@ export default function CheckoutDeliveryAddress({
                       message: "Select one of the delivery types.",
                     },
                   })}
-                  id="STANDARD"
-                  value="STANDARD"
+                  id="standard"
+                  value="standard"
                   required
                 />
               </Tooltip>
@@ -243,7 +277,7 @@ export default function CheckoutDeliveryAddress({
                 }}
                 shouldFlip
                 showArrow={true}
-                content={`After confirmation, you will get the delivery within ${getEstimatedDeliveryTime("Dhaka City", "EXPRESS", shippingZones)} hours.`}
+                content={`After confirmation, you will get the delivery within ${getEstimatedDeliveryTime(selectedCityId, "express", shippingZones)} hours.`}
               >
                 <input
                   className="!h-12 before:border-2 before:!border-neutral-900 before:!bg-[#020202] before:grayscale before:invert before:backdrop-blur-2xl before:transition-[background-color,filter] before:duration-300 before:ease-in-out checked:before:!bg-[#383804] checked:before:grayscale-0 hover:before:!border-transparent hover:before:!bg-[#383804] hover:before:grayscale-0"
@@ -258,8 +292,8 @@ export default function CheckoutDeliveryAddress({
                       message: "Select one of the delivery types.",
                     },
                   })}
-                  id="EXPRESS"
-                  value="EXPRESS"
+                  id="express"
+                  value="express"
                   required
                 />
               </Tooltip>
@@ -271,22 +305,17 @@ export default function CheckoutDeliveryAddress({
             )}
           </div>
         )}
-        {!!selectedCity &&
-          (selectedCity !== "Dhaka City" || !!selectedDeliveryType) && (
-            <p className="text-xs lg:text-sm">
-              After confirmation, you will get the delivery within{" "}
-              {getEstimatedDeliveryTime(
-                selectedCity,
-                selectedDeliveryType,
-                shippingZones,
-              )}{" "}
-              {selectedDeliveryType === "EXPRESS" ? "hours" : "days"}
-              {selectedCity === "Dhaka City" && selectedDeliveryType === "STANDARD"
-                ? " with FREE of charge"
-                : ""}
-              .
-            </p>
-          )}
+        {!!selectedCityId && !!selectedDeliveryType && (
+          <p className="text-xs lg:text-sm">
+            After confirmation, you will get the delivery within{" "}
+            {getEstimatedDeliveryTime(
+              selectedCityId,
+              selectedDeliveryType,
+              shippingZones,
+            )}{" "}
+            {selectedDeliveryType === "express" ? "hours" : "days"}.
+          </p>
+        )}
       </div>
     </section>
   );

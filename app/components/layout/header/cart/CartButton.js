@@ -188,7 +188,7 @@ export default function CartButton({
               method: "PUT",
               body: JSON.stringify(updatedUserData),
             });
-            console.log(result, "result from cart button");
+            // console.log(result, "result from cart button");
 
             if (result.ok) {
               // Display custom success toast notification, if server cart is updated

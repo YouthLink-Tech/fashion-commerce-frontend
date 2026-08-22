@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { RiAddLine, RiMapPinFill } from "react-icons/ri";
 import DeliveryAddress from "./DeliveryAddress";
 
-export default function DeliveryAddresses({ serverUserData, userEmail }) {
+export default function DeliveryAddresses({ serverUserData, userEmail, cities, thanas }) {
   const [userData, setUserData] = useState(serverUserData || {});
   const deliveryAddresses = userData?.userInfo?.deliveryAddresses || [];
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
@@ -60,6 +60,8 @@ export default function DeliveryAddresses({ serverUserData, userEmail }) {
               userEmail={userEmail}
               setUserData={setUserData}
               setIsAddingNewAddress={setIsAddingNewAddress}
+              cities={cities}
+              thanas={thanas}
             />
           );
         })
@@ -73,6 +75,8 @@ export default function DeliveryAddresses({ serverUserData, userEmail }) {
           setUserData={setUserData}
           setIsAddingNewAddress={setIsAddingNewAddress}
           isAddressListEmpty={!deliveryAddresses?.length}
+          cities={cities}
+          thanas={thanas}
         />
       )}
     </section>

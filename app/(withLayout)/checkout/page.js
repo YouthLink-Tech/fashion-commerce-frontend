@@ -15,9 +15,17 @@ export default async function Checkout() {
       : Promise.resolve(null),
     rawFetch("/api/products/all"),
     rawFetch("/api/special-offer/all"),
-    rawFetch("/api/shipping-zone/all"),
+    rawFetch("/api/shipping-zone/public-options"),
     rawFetch("/api/location/primary"),
-    rawFetch("/api/policy-pdf/all"),
+    rawFetch("/api/policy-pdf/all", {
+      next: {
+        revalidate: 604800, // 7 days — legal documents rarely change
+        tags: ['policy-pdf']
+      }
+    }
+    ),
+    rawFetch("/api/city/public-options"),
+    rawFetch("/api/thana/all", { next: { revalidate: 3600 } }),
   ];
 
   const [
@@ -27,6 +35,8 @@ export default async function Checkout() {
     shippingZonesRes,
     primaryLocationRes,
     legalPolicyPdfLinksRes,
+    cityRes,
+    thanaRes,
   ] = await Promise.allSettled(promises);
 
   const [
@@ -36,6 +46,8 @@ export default async function Checkout() {
     shippingZones,
     primaryLocation,
     legalPolicyPdfLinks,
+    cities,
+    thanas,
   ] = [
       extractData(userDataRes, null, "checkout/userData"),
       extractData(productsRes, [], "checkout/products"),
@@ -47,7 +59,9 @@ export default async function Checkout() {
         "checkout/primaryLocation",
         "primaryLocation",
       ),
-      extractData(legalPolicyPdfLinksRes, null, "checkout/legalPdfLinks"),
+      extractData(legalPolicyPdfLinksRes, {}, "checkout/legalPdfLinks"),
+      extractData(cityRes, [], "checkout/city"),
+      extractData(thanaRes, [], "checkout/thanas"),
     ];
 
   return (
@@ -59,6 +73,8 @@ export default async function Checkout() {
         shippingZones={shippingZones}
         primaryLocation={primaryLocation}
         legalPolicyPdfLinks={legalPolicyPdfLinks}
+        cities={cities}
+        thanas={thanas}
       />
     </Suspense>
   );
