@@ -8,14 +8,21 @@ import ShopContents from "@/app/components/shop/ShopContents";
 import LoadingSpinner from "@/app/components/shared/LoadingSpinner";
 import { FRONTEND_URL } from "@/app/config/site";
 import { COMPANY_NAME } from "@/app/config/company";
+import { buildFilterFacetsQueryFromSearchParams, buildListingQueryFromSearchParams, FILTER_MAP_REVERSE } from "@/app/lib/shop/filterUrl";
+import { cookies } from "next/headers";
 
 export async function generateMetadata({ searchParams }) {
-  const filterBy = searchParams?.filterBy;
+  const filterByParam = searchParams?.filterBy;
 
-  if (filterBy) {
+  if (filterByParam) {
+    const label = filterByParam
+      .split(",")
+      .map((v) => FILTER_MAP_REVERSE[v] ?? v)
+      .join(", ");
+
     return {
-      title: `${filterBy}`,
-      description: `Browse ${filterBy} products at ${COMPANY_NAME}. Find the best styles and latest trends.`,
+      title: label,
+      description: `Browse ${label} products at ${COMPANY_NAME}. Find the best styles and latest trends.`,
       alternates: { canonical: `${FRONTEND_URL}/shop` },
       robots: { index: false, follow: true },
     };
@@ -53,29 +60,30 @@ export async function generateMetadata({ searchParams }) {
   };
 }
 
-export default async function Shop() {
+export default async function Shop({ searchParams }) {
   const session = await getServerSession(authOptions);
+
+  const listingQuery = buildListingQueryFromSearchParams(new URLSearchParams(searchParams), null);
+
+  const facetsQuery = buildFilterFacetsQueryFromSearchParams(new URLSearchParams(searchParams), null);
 
   const promises = [
     session?.user?.email
       ? tokenizedFetch(`/api/customer/single/${session?.user?.email}`)
       : Promise.resolve(null),
-    rawFetch("/api/products/all", {
-      next: {
-        revalidate: 7200,
-        tags: ['all-products']
-      }
+    rawFetch(`/api/products/all?${listingQuery}`
+      , { next: { revalidate: 300, tags: ['all-products'] } }
+    ),
+    rawFetch(`/api/products/filters?${facetsQuery}`
+      , { next: { revalidate: 300, tags: ['all-products'] } }
+    ),
+    rawFetch("/api/category/all", {
+      next: { revalidate: 7200, tags: ['categories'] }
     }),
     rawFetch("/api/special-offer/all", {
       next: {
         revalidate: 3600, // 1 hour
         tags: ['special-offers']
-      }
-    }),
-    rawFetch("/api/location/primary", {
-      next: {
-        revalidate: 7200,           // 2 hours fallback
-        tags: ['primary-location']  // cleared when location changes
       }
     }),
     rawFetch("/api/notifications/all", {
@@ -89,23 +97,27 @@ export default async function Shop() {
   const [
     userDataRes,
     productsRes,
+    filtersRes,
+    categoriesRes,
     offersRes,
-    primaryLocationRes,
     notifyVariantsRes,
   ] = await Promise.allSettled(promises);
 
-  const [userData, products, specialOffers, primaryLocation, notifyVariants] = [
+  const productsFetchFailed = productsRes.status === "rejected";
+  const filtersFetchFailed = filtersRes.status === "rejected";
+  const ssrFailed = productsFetchFailed || filtersFetchFailed;
+
+  const [userData, productsData, filtersData, categories, specialOffers, notifyVariants] = [
     extractData(userDataRes, null, "checkout/userData"),
-    extractData(productsRes, [], "shop/products"),
+    extractData(productsRes, { items: [], total: 0 }, "shop/products"),
+    extractData(filtersRes, null, "shop/filters"),
+    extractData(categoriesRes, [], "shop/categories"),
     extractData(offersRes, [], "shop/specialOffers"),
-    extractData(
-      primaryLocationRes,
-      null,
-      "shop/primaryLocation",
-      "primaryLocation",
-    ),
     extractData(notifyVariantsRes, [], "shop/notifyVariants"),
   ];
+
+  const savedCols = cookies().get("shopCols")?.value;
+  const initialCols = savedCols ? parseInt(savedCols, 10) : null;
 
   return (
     <main>
@@ -119,10 +131,14 @@ export default async function Shop() {
         <Suspense fallback={<LoadingSpinner />}>
           <ShopContents
             userData={userData}
-            products={products}
+            categories={categories}
             specialOffers={specialOffers}
-            primaryLocation={primaryLocation}
             notifyVariants={notifyVariants}
+            initialProducts={productsData.items}
+            initialTotal={productsData.total}
+            initialFilters={filtersData}
+            ssrFailed={ssrFailed}
+            initialCols={initialCols}
           />
         </Suspense>
       </div>

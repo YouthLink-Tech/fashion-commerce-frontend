@@ -1,7 +1,5 @@
 "use client";
-
-import { useLoading } from "@/app/contexts/loading";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { FiSearch } from "react-icons/fi";
 import { IoClose } from "react-icons/io5";
@@ -10,10 +8,8 @@ export default function Search() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const keywordParam = searchParams.get("search");
-  const filterParam = searchParams.get("filterBy");
-  const categoryParam = searchParams.get("category");
-  const { setIsPageLoading } = useLoading();
   const closeBtnRef = useRef(null);
+  const pathname = usePathname();
 
   const handleSearchSubmission = (event) => {
     event.preventDefault();
@@ -22,17 +18,21 @@ export default function Search() {
 
     if (keyword === keywordParam || (!keyword && !keywordParam)) return;
 
-    const keywordQuery = !keyword ? "" : `?search=${keyword}`;
-    const filterQuery = !filterParam
-      ? ""
-      : `${!keyword ? "?" : "&"}filterBy=${filterParam}`;
-    const categoryQuery = !categoryParam
-      ? ""
-      : `${!keyword ? "?" : "&"}category=${categoryParam}`;
+    const isOnShop = pathname === "/shop" || pathname.startsWith("/shop/");
 
-    setIsPageLoading(true);
+    if (isOnShop) {
+      // Already in shop context — preserve category segment + existing filters
+      const params = new URLSearchParams(searchParams.toString());
+      if (keyword) params.set("search", keyword);
+      else params.delete("search");
 
-    router.push(`/shop${keywordQuery}${filterQuery}${categoryQuery}`);
+      const qs = params.toString();
+      router.push(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+    } else {
+      // Coming from outside shop — just navigate to /shop with the keyword
+      const qs = keyword ? `?search=${encodeURIComponent(keyword)}` : "";
+      router.push(`/shop${qs}`, { scroll: false });
+    }
   };
 
   const handleCloseButtonClick = (event) => {
@@ -44,10 +44,16 @@ export default function Search() {
     inputElement.value = "";
 
     if (!!keywordParam) {
-      const filterQuery = !filterParam ? "" : `?filterBy=${filterParam}`;
-      const categoryQuery = !categoryParam ? "" : `?category=${categoryParam}`;
+      const isOnShop = pathname === "/shop" || pathname.startsWith("/shop/");
 
-      router.push(`/shop${filterQuery}${categoryQuery}`);
+      if (isOnShop) {
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete("search");
+        const qs = params.toString();
+        router.push(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+      } else {
+        router.push("/shop", { scroll: false });
+      }
     }
   };
 

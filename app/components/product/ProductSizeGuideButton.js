@@ -12,7 +12,7 @@ import {
 import { CgRuler } from "react-icons/cg";
 import { getImage } from "@/app/lib/cloudinaryUtils";
 
-export default function ProductSizeGuideButton({ sizeGuideImageUrl }) {
+export default function ProductSizeGuideButton({ sizeGuidePublicId }) {
   const [isSizeGuideModalOpen, setIsSizeGuideModalOpen] = useState(false);
 
   return (
@@ -23,6 +23,7 @@ export default function ProductSizeGuideButton({ sizeGuideImageUrl }) {
         disableRipple
         className="bg-[var(--color-primary-500)] hover:bg-[var(--color-primary-700)]"
         onClick={() => setIsSizeGuideModalOpen(true)}
+        isDisabled={!sizeGuidePublicId}
       >
         Size Guide
       </Button>
@@ -46,8 +47,7 @@ export default function ProductSizeGuideButton({ sizeGuideImageUrl }) {
                 <div className="relative h-auto min-h-[20svh] w-full sm:min-h-[25svh] xl:min-h-[33.33svh]">
                   <Skeleton className="absolute inset-0 z-[0] h-full w-full rounded-md" />
                   <Image
-                    // src={sizeGuideImageUrl}
-                    src={getImage(sizeGuideImageUrl, 600)}
+                    src={getImage(sizeGuidePublicId, 600)}
                     alt="Size guide"
                     className="relative h-auto w-full object-contain"
                     width={0}

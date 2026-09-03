@@ -37,25 +37,25 @@ export async function generateMetadata({ params: { slug } }) {
 
   // Strip HTML from productDetails for clean description
   const stripHtml = (html) => html?.replace(/<[^>]*>/g, "").trim() ?? "";
-  const description = product.productDetails
-    ? stripHtml(product.productDetails).slice(0, 155)
-    : `Shop ${product.productTitle} at ${COMPANY_NAME}. Best price, fast delivery across Bangladesh.`;
+  const description = product.product_details
+    ? stripHtml(product.product_details).slice(0, 155)
+    : `Shop ${product.title} at ${COMPANY_NAME}. Best price, fast delivery across Bangladesh.`;
 
   // Getting image from thumbnail or variants
-  const firstVariantImage = product.productVariants?.[0]?.imageUrls?.[0];
-  const productImage = product.thumbnailImageUrl
-    ? getImage(product.thumbnailImageUrl, 1200)
-    : product.productVariants?.[0]?.imageUrls?.[0]
+  const firstVariantImage = product.variants?.[0]?.media?.[0]?.public_id;
+  const productImage = product.thumbnail?.public_id
+    ? getImage(product.thumbnail.public_id, 1200)
+    : firstVariantImage
       ? getImage(firstVariantImage, 1200)
       : `${FRONTEND_URL}/logo/logo.png`;
 
   return {
-    title: product.productTitle,
+    title: product.title,
     description,
     keywords: [
-      product.productTitle,
-      product.category,
-      ...(product.tags ?? []),
+      product.title,
+      product.category?.name,
+      ...(product.tags?.map((t) => t.name) ?? []),
       "buy online",
       "men's fashion",
       COMPANY_NAME,
@@ -64,7 +64,7 @@ export async function generateMetadata({ params: { slug } }) {
     robots: { index: true, follow: true },
     alternates: { canonical: `${FRONTEND_URL}/product/${slug}` },
     openGraph: {
-      title: `${product.productTitle} | ${COMPANY_NAME}`,
+      title: `${product.title} | ${COMPANY_NAME}`,
       description,
       url: `${FRONTEND_URL}/product/${slug}`,
       siteName: COMPANY_NAME,
@@ -74,7 +74,7 @@ export async function generateMetadata({ params: { slug } }) {
           url: productImage,
           width: 1200,
           height: 630,
-          alt: product.productTitle,
+          alt: product.title,
         },
       ],
     },
@@ -103,22 +103,10 @@ export default async function Product({ params: { slug } }) {
     session?.user?.email
       ? tokenizedFetch(`/api/customer/single/${session?.user?.email}`)
       : Promise.resolve(null),
-    rawFetch("/api/products/all", {
-      next: {
-        revalidate: 7200,
-        tags: ['all-products']
-      }
-    }),
     rawFetch("/api/special-offer/all", {
       next: {
         revalidate: 3600, // 1 hour
         tags: ['special-offers']
-      }
-    }),
-    rawFetch("/api/location/primary", {
-      next: {
-        revalidate: 7200,           // 2 hours fallback
-        tags: ['primary-location']  // cleared when location changes
       }
     }),
     rawFetch("/api/notifications/all", {
@@ -129,19 +117,12 @@ export default async function Product({ params: { slug } }) {
     }),
   ];
 
-  const [userDataRes, productsRes, offersRes, primaryLocationRes, notifyVariantsRes] =
+  const [userDataRes, offersRes, notifyVariantsRes] =
     await Promise.allSettled(promises);
 
-  const [userData, products, specialOffers, primaryLocation, notifyVariants] = [
+  const [userData, specialOffers, notifyVariants] = [
     extractData(userDataRes, null, "productDetails/userData"),
-    extractData(productsRes, [], "productDetails/products"),
     extractData(offersRes, [], "productDetails/specialOffers"),
-    extractData(
-      primaryLocationRes,
-      null,
-      "productDetails/primaryLocation",
-      "primaryLocation",
-    ),
     extractData(notifyVariantsRes, [], "productDetails/notifyVariants"),
   ];
 
@@ -222,16 +203,13 @@ export default async function Product({ params: { slug } }) {
             userData={userData}
             product={product}
             specialOffers={specialOffers}
-            primaryLocation={primaryLocation}
             notifyVariants={notifyVariants}
             randomViewers={randomViewers}
           />
           <ProductRelatedContents
             userData={userData}
-            products={products}
             product={product}
             specialOffers={specialOffers}
-            primaryLocation={primaryLocation}
             notifyVariants={notifyVariants}
           />
         </div>

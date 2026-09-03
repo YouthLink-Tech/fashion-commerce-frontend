@@ -6,17 +6,18 @@ import {
   checkIfSpecialOfferIsAvailable,
   getProductSpecialOffer,
 } from "@/app/utils/orderCalculations";
-import getImageSetsBasedOnColors from "@/app/utils/getImageSetsBasedOnColors";
+import { getImageSetsByColor } from "@/app/utils/getImageSetsBasedOnColors";
 import ProductImageGallery from "./ProductImageGallery";
 import ExpandedImagesModal from "../shared/ExpandedImageModal";
 import ProductInfo from "./ProductInfo";
 import * as fbq from "@/app/lib/fpixel";
+import { getColors } from "@/app/utils/productSkuCalculation";
+import { getDiscountInfo } from "./ProductDiscountInfos";
 
 export default function ProductContents({
   userData,
   product,
   specialOffers,
-  primaryLocation,
   notifyVariants,
   randomViewers,
 }) {
@@ -31,9 +32,9 @@ export default function ProductContents({
   const specialOffer = !isSpecialOfferIsAvailable
     ? null
     : getProductSpecialOffer(product, specialOffers, "NA");
-  const imageSets = getImageSetsBasedOnColors(product?.productVariants);
+  const imageSets = getImageSetsByColor(product?.variants);
   const activeImageSet = imageSets?.find(
-    (imageSet) => imageSet?.color?._id === selectedOptions?.color?._id,
+    (imageSet) => imageSet?.color?.id === selectedOptions?.color?.id,
   );
   const activeImageUrl = activeImageSet?.images[activeImageIndex];
   const hasTrackedViewContent = useRef(false);
@@ -46,7 +47,7 @@ export default function ProductContents({
 
     fbq.event("ViewContent", {
       content_type: "product",
-      content_ids: [product._id],
+      content_ids: [product.id],
       value: finalPrice,
       currency: "BDT",
     });
@@ -55,45 +56,41 @@ export default function ProductContents({
   }, [product, specialOffers]);
 
   useEffect(() => {
-    if (!!product)
+    if (product?.variants?.length) {
       setSelectedOptions({
-        color:
-          product?.availableColors[Object.keys(product?.availableColors)[0]],
+        color: getColors(product.variants)[0],
         size: undefined,
         quantity: 1,
       });
+    }
   }, [product, setSelectedOptions]);
+
+  const { hasDiscount, discount } = getDiscountInfo(product);
 
   return (
     <div className="px-5 pb-[var(--section-padding)] sm:px-8 lg:px-12 xl:mx-auto xl:max-w-[1200px] xl:px-0">
       <div className="relative md:flex md:gap-x-7">
         <ProductImageGallery
-          productTitle={product?.productTitle}
+          productTitle={product?.title}
           activeImageSet={activeImageSet}
           activeImageUrl={activeImageUrl}
-          selectedColorLabel={selectedOptions?.color?.label}
+          selectedColorLabel={selectedOptions?.color?.name}
           activeImageIndex={activeImageIndex}
           setActiveImageIndex={setActiveImageIndex}
           setIsImageExpanded={setIsImageExpanded}
           numOfTimesThumbnailsMoved={numOfTimesThumbnailsMoved}
           setNumOfTimesThumbnailsMoved={setNumOfTimesThumbnailsMoved}
-          isTrending={product?.trending === "Yes"}
-          isNewArrival={product?.newArrival === "Yes"}
-          hasDiscount={!!Number(product?.discountValue)}
-          discount={{
-            type: product?.discountType,
-            text:
-              product?.discountType === "Percentage"
-                ? `${product?.discountValue}%`
-                : `৳ ${product?.discountValue}`,
-          }}
+          isTrending={!!product?.is_trending}
+          isNewArrival={!!product?.is_new_arrival}
+          hasDiscount={hasDiscount}
+          discount={discount}
           hasSpecialOffer={isSpecialOfferIsAvailable}
           specialOffer={specialOffer}
         />
         <ExpandedImagesModal
           modalFor="products"
-          productTitle={product?.productTitle}
-          selectedColorLabel={selectedOptions?.color?.label}
+          productTitle={product?.title}
+          selectedColorLabel={selectedOptions?.color?.name}
           expandedImgUrl={activeImageUrl}
           totalImages={activeImageSet?.images?.length}
           activeImageIndex={activeImageIndex}
@@ -105,7 +102,6 @@ export default function ProductContents({
           userData={userData}
           product={product}
           specialOffers={specialOffers}
-          primaryLocation={primaryLocation}
           selectedOptions={selectedOptions}
           setSelectedOptions={setSelectedOptions}
           setActiveImageIndex={setActiveImageIndex}

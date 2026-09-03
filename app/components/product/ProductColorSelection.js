@@ -14,7 +14,7 @@ export default function ProductColorSelection({
         {productColors?.map((color) => {
           return (
             <ColorButtonWithTooltip
-              key={"product-color-" + color._id}
+              key={"product-color-" + color.id}
               color={color}
               toolLocation="page"
               selectedOptions={selectedOptions}

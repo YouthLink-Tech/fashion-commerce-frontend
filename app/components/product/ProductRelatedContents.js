@@ -1,76 +1,70 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { routeFetch } from "@/app/lib/fetcher/routeFetch";
 import SimilarProducts from "@/app/components/product/SimilarProducts";
 import CompleteOutfitProducts from "@/app/components/product/CompleteOutfitProducts";
 import RecentlyViewedProducts from "@/app/components/product/RecentlyViewedProducts";
 import AddToCartModal from "../shop/cart/AddToCartModal";
 
+const RECENTLY_VIEWED_KEY = "recentlyViewedProductIds";
+const RECENTLY_VIEWED_MAX = 10;
+
 export default function ProductRelatedContents({
   userData,
-  products,
   product,
   specialOffers,
-  primaryLocation,
   notifyVariants,
 }) {
   const [isAddToCartModalOpen, setIsAddToCartModalOpen] = useState(false);
   const [selectedAddToCartProduct, setSelectedAddToCartProduct] =
     useState(null);
+  const [similarProducts, setSimilarProducts] = useState([]);
   const [recentlyViewedProducts, setRecentlyViewedProducts] = useState([]);
+  const [completeOutfitProducts, setCompleteOutfitProducts] = useState([]);
 
-  // Load recently viewed products
   useEffect(() => {
-    if (products?.length && !!product) {
-      let recentlyViewedProductIds =
-        JSON.parse(localStorage.getItem("recentlyViewedProducts")) || [];
+    if (!product?.id) return;
+    let ids = JSON.parse(localStorage.getItem(RECENTLY_VIEWED_KEY) || "[]");
+    ids = ids.filter((id) => id !== product.id);
+    ids.unshift(product.id);
+    ids = ids.slice(0, RECENTLY_VIEWED_MAX);
+    localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(ids));
+  }, [product?.id]);
 
-      recentlyViewedProductIds = !recentlyViewedProductIds?.includes(
-        product?._id,
-      )
-        ? recentlyViewedProductIds
-        : recentlyViewedProductIds?.filter(
-          (recentlyViewedProductId) =>
-            recentlyViewedProductId !== product?._id,
-        );
+  useEffect(() => {
+    if (!product?.category?.id) return;
+    const params = new URLSearchParams({
+      category_id: product.category.id,
+      exclude_id: product.id,
+      limit: "8",
+      sort: "newest",
+    });
+    routeFetch(`/api/products/all?${params.toString()}`).then((result) => {
+      setSimilarProducts(result.items ?? result.data?.items ?? []);
+    });
+  }, [product?.category?.id, product?.id]);
 
-      setRecentlyViewedProducts(
-        products
-          ?.filter(
-            (availableProduct) =>
-              availableProduct.status === "active" &&
-              recentlyViewedProductIds?.some(
-                (recentlyViewedProductId) =>
-                  availableProduct._id === recentlyViewedProductId,
-              ),
-          )
-          .slice(0, 8),
-      );
-      recentlyViewedProductIds?.unshift(product?._id);
-      if (recentlyViewedProductIds?.length === 10)
-        recentlyViewedProductIds?.pop();
-      localStorage.setItem(
-        "recentlyViewedProducts",
-        JSON.stringify(recentlyViewedProductIds),
-      );
+  useEffect(() => {
+    if (!product?.outfit_product_ids?.length) return;
+    const params = new URLSearchParams({ ids: product.outfit_product_ids.join(",") });
+    routeFetch(`/api/products/by-ids?${params.toString()}`).then((result) => {
+      setCompleteOutfitProducts(result.items ?? result.data?.items ?? []);
+    });
+  }, [product?.outfit_product_ids]);
+
+  useEffect(() => {
+    if (!product?.id) return;
+    const ids = (JSON.parse(localStorage.getItem(RECENTLY_VIEWED_KEY) || "[]")).filter((id) => id !== product.id);
+    if (!ids.length) {
+      setRecentlyViewedProducts([]);
+      return;
     }
-  }, [product, products]);
-
-  const completeOutfitProducts = products
-    ?.filter((availableProduct) =>
-      product?.restOfOutfit.includes(availableProduct._id) &&
-      availableProduct.status === "active"
-    )
-    .slice(0, 8);
-
-  const similarProducts = products
-    ?.filter(
-      (availableProduct) =>
-        availableProduct.category === product?.category &&
-        availableProduct._id !== product?._id &&
-        availableProduct.status === "active",
-    )
-    .slice(0, 8);
+    const params = new URLSearchParams({ ids: ids.join(",") });
+    routeFetch(`/api/products/by-ids?${params.toString()}`).then((result) => {
+      setRecentlyViewedProducts(result.items ?? result.data?.items ?? []);
+    });
+  }, [product?.id]);
 
   return (
     <>
@@ -80,7 +74,6 @@ export default function ProductRelatedContents({
           userData={userData}
           completeOutfitProducts={completeOutfitProducts}
           specialOffers={specialOffers}
-          primaryLocation={primaryLocation}
           isAddToCartModalOpen={isAddToCartModalOpen}
           setIsAddToCartModalOpen={setIsAddToCartModalOpen}
           setSelectedAddToCartProduct={setSelectedAddToCartProduct}
@@ -94,7 +87,6 @@ export default function ProductRelatedContents({
           hasCompleteOutfitSection={!!completeOutfitProducts?.length}
           hasRecentlyViewedSection={!!recentlyViewedProducts?.length}
           specialOffers={specialOffers}
-          primaryLocation={primaryLocation}
           isAddToCartModalOpen={isAddToCartModalOpen}
           setIsAddToCartModalOpen={setIsAddToCartModalOpen}
           setSelectedAddToCartProduct={setSelectedAddToCartProduct}
@@ -108,7 +100,6 @@ export default function ProductRelatedContents({
           hasCompleteOutfitSection={!!completeOutfitProducts?.length}
           hasSimilarSection={!!similarProducts?.length}
           specialOffers={specialOffers}
-          primaryLocation={primaryLocation}
           isAddToCartModalOpen={isAddToCartModalOpen}
           setIsAddToCartModalOpen={setIsAddToCartModalOpen}
           setSelectedAddToCartProduct={setSelectedAddToCartProduct}
@@ -120,7 +111,6 @@ export default function ProductRelatedContents({
         setIsAddToCartModalOpen={setIsAddToCartModalOpen}
         product={selectedAddToCartProduct}
         specialOffers={specialOffers}
-        primaryLocation={primaryLocation}
         notifyVariants={notifyVariants}
       />
     </>

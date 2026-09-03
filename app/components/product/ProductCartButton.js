@@ -28,8 +28,8 @@ export default function ProductCartButton({
 
   const isExistingItem = (item) =>
     item._id === productId &&
-    item.selectedSize === selectedOptions?.size &&
-    item.selectedColor?._id === selectedOptions?.color?._id;
+    item.selectedSize?.id === selectedOptions?.size?.id &&
+    item.selectedColor?.id === selectedOptions?.color?.id;
 
   const handleAddToCart = async () => {
     if (!selectedOptions?.size)
@@ -98,7 +98,7 @@ export default function ProductCartButton({
                 message="Item added to cart"
                 productImg={productImg}
                 productTitle={productTitle}
-                variantSize={selectedOptions?.size}
+                variantSize={selectedOptions?.size?.name}
                 variantColor={selectedOptions?.color}
               />
             ),
@@ -131,7 +131,7 @@ export default function ProductCartButton({
             message="Item added to cart"
             productImg={productImg}
             productTitle={productTitle}
-            variantSize={selectedOptions?.size}
+            variantSize={selectedOptions?.size?.name}
             variantColor={selectedOptions?.color}
           />
         ),

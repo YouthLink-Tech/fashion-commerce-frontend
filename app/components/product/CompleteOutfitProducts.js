@@ -1,14 +1,12 @@
 import { useState } from "react";
 import { Button } from "@nextui-org/react";
 import { CgChevronRight, CgChevronLeft } from "react-icons/cg";
-import getImageSetsBasedOnColors from "@/app/utils/getImageSetsBasedOnColors";
 import ProductCard from "../product-card/ProductCard";
 
 export default function CompleteOutfitProducts({
   userData,
   completeOutfitProducts,
   specialOffers,
-  primaryLocation,
   isAddToCartModalOpen,
   setIsAddToCartModalOpen,
   setSelectedAddToCartProduct,
@@ -47,15 +45,13 @@ export default function CompleteOutfitProducts({
         >
           {completeOutfitProducts.map((completeOutfitProduct, index) => (
             <ProductCard
-              key={"product-complete-outfit-" + completeOutfitProduct._id}
+              key={"product-complete-outfit-" + completeOutfitProduct.id}
               userData={userData}
               product={completeOutfitProduct}
               specialOffers={specialOffers}
-              primaryLocation={primaryLocation}
               isAddToCartModalOpen={isAddToCartModalOpen}
               setIsAddToCartModalOpen={setIsAddToCartModalOpen}
               setSelectedAddToCartProduct={setSelectedAddToCartProduct}
-              getImageSetsBasedOnColors={getImageSetsBasedOnColors}
               shouldBeHidden={index > 5}
             />
           ))}

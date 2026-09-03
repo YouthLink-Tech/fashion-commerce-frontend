@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { getProductVariantSku } from "@/app/utils/productSkuCalculation";
-import getImageSetsBasedOnColors from "@/app/utils/getImageSetsBasedOnColors";
+import { getColors, getVariantAvailableSku } from "@/app/utils/productSkuCalculation";
+import { getImageSetsByColor } from "@/app/utils/getImageSetsBasedOnColors";
 import CartModalContents from "./CartModalContents";
 import CartModalButtons from "./CartModalButtons";
 
@@ -10,43 +10,30 @@ export default function AddToCartModal({
   setIsAddToCartModalOpen,
   product,
   specialOffers,
-  primaryLocation,
   notifyVariants,
 }) {
   const [selectedOptions, setSelectedOptions] = useState(null);
-  const [productVariantSku, setProductVariantSku] = useState(null);
   const [isNotifyMeModalOpen, setIsNotifyMeModalOpen] = useState(false);
 
   useEffect(() => {
-    if (!!product)
+    if (product?.variants?.length) {
       setSelectedOptions({
-        color: product.availableColors[Object.keys(product.availableColors)[0]],
+        color: getColors(product.variants)[0],
         size: undefined,
         quantity: 1,
       });
+    }
   }, [product]);
-
-  useEffect(() => {
-    setProductVariantSku(
-      !product || !selectedOptions?.size
-        ? null
-        : getProductVariantSku(
-          product?.productVariants,
-          primaryLocation,
-          selectedOptions.color._id,
-          selectedOptions.size,
-        ),
-    );
-  }, [
-    primaryLocation,
-    product,
-    selectedOptions?.color?._id,
-    selectedOptions?.size,
-  ]);
 
   useEffect(() => {
     document.body.style.overflow = isAddToCartModalOpen ? "hidden" : "unset";
   }, [isAddToCartModalOpen]);
+
+  const productVariantSku = !product || !selectedOptions?.size
+    ? 0
+    : getVariantAvailableSku(product.variants, selectedOptions.color?.id, selectedOptions.size.id);
+
+  const imageSets = getImageSetsByColor(product?.variants);
 
   return (
     <div
@@ -56,8 +43,7 @@ export default function AddToCartModal({
         if (event.target.id === "add-to-cart-bg") {
           setIsAddToCartModalOpen(false);
           setSelectedOptions({
-            color:
-              product.availableColors[Object.keys(product.availableColors)[0]],
+            color: getColors(product?.variants)[0],
             size: undefined,
             quantity: 1,
           });
@@ -72,7 +58,7 @@ export default function AddToCartModal({
           product={product}
           specialOffers={specialOffers}
           productVariantSku={productVariantSku}
-          imageSets={getImageSetsBasedOnColors(product?.productVariants)}
+          imageSets={imageSets}
           setIsAddToCartModalOpen={setIsAddToCartModalOpen}
           selectedOptions={selectedOptions}
           setSelectedOptions={setSelectedOptions}
@@ -83,17 +69,12 @@ export default function AddToCartModal({
         <hr className="mb-5 mt-10 h-0.5 bg-neutral-100 md:my-5" />
         <CartModalButtons
           userData={userData}
-          productId={product?._id}
-          productTitle={product?.productTitle}
+          productId={product?.id}
+          productTitle={product?.title}
           productImg={
-            getImageSetsBasedOnColors(product?.productVariants)?.find(
-              (imgSet) =>
-                imgSet?.color?.label === selectedOptions?.color?.label,
-            )?.images[0]
+            imageSets?.find((imgSet) => imgSet?.color?.id === selectedOptions?.color?.id)?.images[0]
           }
-          defaultColor={
-            product?.availableColors[Object.keys(product?.availableColors)[0]]
-          }
+          defaultColor={getColors(product?.variants)[0]}
           productVariantSku={productVariantSku}
           productPageLink={`/product/${product?.slug}`}
           selectedOptions={selectedOptions}

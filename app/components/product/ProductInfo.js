@@ -9,7 +9,6 @@ export default function ProductInfo({
   userData,
   product,
   specialOffers,
-  primaryLocation,
   selectedOptions,
   setSelectedOptions,
   setActiveImageIndex,
@@ -22,7 +21,7 @@ export default function ProductInfo({
   const [parsedSizeFit, setParsedSizeFit] = useState(null);
 
   useEffect(() => {
-    if (!product?.sizeFit) return;
+    if (!product?.product_measurement) return;
 
     const splitSizeFitIntoColumns = (htmlString) => {
       const parser = new DOMParser();
@@ -40,9 +39,9 @@ export default function ProductInfo({
       `;
     };
 
-    const result = splitSizeFitIntoColumns(product.sizeFit);
+    const result = splitSizeFitIntoColumns(product.product_measurement);
     setParsedSizeFit(result);
-  }, [product?.sizeFit]);
+  }, [product?.product_measurement]);
 
   return (
     <div className="relative mt-4 flex flex-col xl:mt-0 xl:h-[calc(100svh-(var(--header-height-lg)+var(--section-padding-double)))] xl:grow">
@@ -62,7 +61,6 @@ export default function ProductInfo({
         userData={userData}
         product={product}
         specialOffers={specialOffers}
-        primaryLocation={primaryLocation}
         selectedOptions={selectedOptions}
         setSelectedOptions={setSelectedOptions}
         setActiveImageIndex={setActiveImageIndex}
@@ -77,17 +75,17 @@ export default function ProductInfo({
       {/* Details Section */}
       <ProductInfoDetails
         productInfoDetails={{
-          productDetails: product?.productDetails,
+          productDetails: product?.product_details,
           sizeFit: parsedSizeFit,
-          materialCare: product?.materialCare,
+          materialCare: product?.product_material,
         }}
       />
       {/* Divider */}
       <hr className="mb-3 mt-auto h-0.5 bg-neutral-100" />
       {/* Product Info Footer */}
       <ProductInfoFooter
-        productId={product?.productId}
-        productTitle={product?.productTitle}
+        productId={product?.product_code}
+        productTitle={product?.title}
       />
     </div>
   );

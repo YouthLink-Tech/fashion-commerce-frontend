@@ -17,7 +17,7 @@ export default function ColorButtonWithTooltip({
   const isActiveColor =
     toolLocation === "card"
       ? activeColorIndex === colorIndex
-      : selectedOptions?.color._id === color._id;
+      : selectedOptions?.color.id === color.id;
 
   const [openTooltipId, setOpenTooltipId] = useState(null);
   const isTouchDevice =
@@ -45,8 +45,8 @@ export default function ColorButtonWithTooltip({
 
     if (isTouchDevice) {
       // Toggle tooltip
-      const isSame = openTooltipId === color._id;
-      setOpenTooltipId(isSame ? null : color._id);
+      const isSame = openTooltipId === color.id;
+      setOpenTooltipId(isSame ? null : color.id);
 
       // Clear existing timeout if any
       if (timeoutRef.current) {
@@ -72,17 +72,17 @@ export default function ColorButtonWithTooltip({
 
   return (
     <Tooltip
-      content={color.label}
+      content={color.name}
       shouldFlip
       classNames={{
         content: [
           "px-3 rounded-[4px] py-2 shadow-[1px_1px_20px_0_rgba(0,0,0,0.15)]",
         ],
       }}
-      isOpen={isTouchDevice ? openTooltipId === color._id : undefined}
+      isOpen={isTouchDevice ? openTooltipId === color.id : undefined}
       onOpenChange={(open) => {
         if (!isTouchDevice) {
-          setOpenTooltipId(open ? color._id : null);
+          setOpenTooltipId(open ? color.id : null);
         }
       }}
     >
@@ -96,8 +96,8 @@ export default function ColorButtonWithTooltip({
           className={`rounded-full ring-1 ring-neutral-300 ${toolLocation === "card" ? "size-4" : "size-[22px]"}`}
           style={{
             background:
-              color.label !== "Multicolor"
-                ? color.color
+              color.name !== "Multicolor"
+                ? color.hex
                 : "linear-gradient(90deg, blue 0%, red 40%, green 80%)",
           }}
         ></button>

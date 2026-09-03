@@ -1,317 +1,263 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { HiOutlineAdjustmentsHorizontal } from "react-icons/hi2";
 import { useLoading } from "@/app/contexts/loading";
-import {
-  calculateFinalPrice,
-  checkIfOnlyRegularDiscountIsAvailable,
-  checkIfSpecialOfferIsAvailable,
-} from "@/app/utils/orderCalculations";
-import { CheckIfProductIsOutOfStock } from "@/app/utils/productSkuCalculation";
+import { routeFetch } from "@/app/lib/fetcher/routeFetch";
+import { parseFiltersFromSearchParams, filtersToParams, buildListingQueryFromSearchParams, PAGE_SIZE } from "@/app/lib/shop/filterUrl";
 import Filter from "@/app/components/shop/Filter";
 import EmptyShopProducts from "@/app/components/shop/EmptyShopProducts";
 import ShopCards from "@/app/components/shop/cards/ShopCards";
-import { generateSlug } from "./generateSlug";
+import LoadingSpinner from "@/app/components/shared/LoadingSpinner";
 
 export default function ShopContents({
   userData,
-  products,
+  categories,
   specialOffers,
-  primaryLocation,
   notifyVariants,
-  initialCategory
+  initialCategory,
+  initialProducts,
+  initialTotal,
+  initialFilters,
+  ssrFailed,
+  initialCols,
 }) {
   const { setIsPageLoading } = useLoading();
   const [isFilterButtonClicked, setIsFilterButtonClicked] = useState(false);
-  const [selectedFilterOptions, setSelectedFilterOptions] = useState({
-    sortBy: new Set([]),
-    filterBy: new Set([]),
-    category: new Set([]),
-    sizes: new Set([]),
-    colors: new Set([]),
-    price: {
-      min: undefined,
-      max: undefined,
-    },
-  });
-  const [filteredProducts, setFilteredProducts] = useState(null);
-  const [keyword, setKeyword] = useState("");
+  const [products, setProducts] = useState(initialProducts ?? []);
+  const [total, setTotal] = useState(initialTotal ?? 0);
+  const [page, setPage] = useState(1);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [filters, setFilters] = useState(initialFilters ?? null);
+
   const searchParams = useSearchParams();
-  const isLoading = !products || !specialOffers || !primaryLocation;
   const router = useRouter();
   const pathname = usePathname();
+  const [, startTransition] = useTransition();
 
-  const isProductWithinPriceRange = (product) =>
-    (!selectedFilterOptions.price.min ||
-      selectedFilterOptions.price.min <=
-      calculateFinalPrice(product, specialOffers)) &&
-    (!selectedFilterOptions.price.max ||
-      selectedFilterOptions.price.max >=
-      calculateFinalPrice(product, specialOffers));
+  const isFirstRun = useRef(true);
+  // The exact query string SSR fetched with — used to decide whether client
+  // trust of SSR data is still valid on mount.
+  const initialQueryKeyRef = useRef(buildListingQueryFromSearchParams(searchParams, initialCategory, { page: 1, limit: PAGE_SIZE }));
 
-  const isNoFilterOptionSelected = Object.values(selectedFilterOptions).every(
-    (value) => {
-      if (Array.isArray(value)) {
-        return value.length === 0;
-      } else {
-        return !value.min || !value.max;
-      }
+  // ---- URL is the single source of truth for filters/keyword ----
+  const selectedFilterOptions = useMemo(
+    () => parseFiltersFromSearchParams(searchParams, initialCategory),
+    [searchParams, initialCategory],
+  );
+  const keyword = searchParams.get("search") || "";
+
+  // Drop-in shim: Filter.jsx and EmptyShopProducts call this exactly like
+  // useState's setter (supports both object patches and updater functions),
+  // but under the hood it rewrites the URL instead of local state.
+  const setSelectedFilterOptions = useCallback(
+    (update) => {
+      const next =
+        typeof update === "function" ? update(selectedFilterOptions) : { ...selectedFilterOptions, ...update };
+      const params = filtersToParams(next, searchParams.toString());
+      startTransition(() => {
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      });
     },
+    [selectedFilterOptions, searchParams, pathname, router],
   );
 
-  const filteredProductCount = filteredProducts?.reduce(
-    (accumulator, product) =>
-      accumulator + (isProductWithinPriceRange(product) ? 1 : 0),
-    0,
+  const sortParam = (() => {
+    const s = Array.from(selectedFilterOptions.sortBy)[0];
+    if (s === "Price (Low to High)") return "price_asc";
+    if (s === "Price (High to Low)") return "price_desc";
+    return "newest";
+  })();
+
+  const buildQuery = useCallback(
+    (pageNum) => {
+      const filterByArr = Array.from(selectedFilterOptions.filterBy);
+      const params = new URLSearchParams();
+      params.set("page", pageNum);
+      params.set("limit", PAGE_SIZE);
+      params.set("sort", sortParam);
+      if (initialCategory) params.set("category_slug", initialCategory);
+      if (keyword) params.set("search", keyword);
+      if (filterByArr.includes("Popular")) params.set("is_trending", "true");
+      if (filterByArr.includes("New Arrivals")) params.set("new_arrivals_only", "true");
+      if (filterByArr.includes("In Stock")) params.set("in_stock", "true");
+      if (filterByArr.includes("On Sale")) params.set("on_sale", "true");
+      if (selectedFilterOptions.sizes.size) params.set("size_ids", Array.from(selectedFilterOptions.sizes).join(","));
+      if (selectedFilterOptions.colors.size) params.set("color_ids", Array.from(selectedFilterOptions.colors).join(","));
+      if (selectedFilterOptions.price.min != null) params.set("price_min", selectedFilterOptions.price.min);
+      if (selectedFilterOptions.price.max != null) params.set("price_max", selectedFilterOptions.price.max);
+      return params.toString();
+    },
+    [initialCategory, keyword, selectedFilterOptions, sortParam],
   );
+
+  const buildFilterQuery = useCallback(() => {
+    const filterByArr = Array.from(selectedFilterOptions.filterBy);
+    const params = new URLSearchParams();
+    if (initialCategory) params.set("category_slug", initialCategory);
+    if (keyword) params.set("search", keyword);
+    if (filterByArr.includes("Popular")) params.set("is_trending", "true");
+    if (filterByArr.includes("New Arrivals")) params.set("new_arrivals_only", "true");
+    if (filterByArr.includes("In Stock")) params.set("in_stock", "true");
+    if (filterByArr.includes("On Sale")) params.set("on_sale", "true");
+    if (selectedFilterOptions.sizes.size) params.set("size_ids", Array.from(selectedFilterOptions.sizes).join(","));
+    if (selectedFilterOptions.colors.size) params.set("color_ids", Array.from(selectedFilterOptions.colors).join(","));
+    if (selectedFilterOptions.price.min != null) params.set("price_min", selectedFilterOptions.price.min);
+    if (selectedFilterOptions.price.max != null) params.set("price_max", selectedFilterOptions.price.max);
+    return params.toString();
+  }, [initialCategory, keyword, selectedFilterOptions]);
+
+  // ---- Fetch on URL change; trust SSR only on true first mount w/ matching query ----
+  useEffect(() => {
+    const currentKey = buildListingQueryFromSearchParams(searchParams, initialCategory, { page: 1, limit: PAGE_SIZE });
+
+    if (isFirstRun.current) {
+      isFirstRun.current = false;
+      if (currentKey === initialQueryKeyRef.current && !ssrFailed) {
+        setIsPageLoading(false);
+        return;
+      }
+      // URL doesn't match what SSR fetched (e.g. stale filterState changed it)
+      // or SSR itself failed — fall through and do a real client fetch.
+    }
+
+    const controller = new AbortController();
+
+    const fetchData = async () => {
+      setIsLoadingProducts(true);
+      try {
+        const [productsResult, filtersResult] = await Promise.all([
+          routeFetch(`/api/products/all?${buildQuery(1)}`, { signal: controller.signal }),
+          routeFetch(`/api/products/filters?${buildFilterQuery()}`, { signal: controller.signal }),
+        ]);
+        if (productsResult.ok !== false) {
+          setProducts(productsResult.items ?? productsResult.data?.items ?? []);
+          setTotal(productsResult.total ?? productsResult.data?.total ?? 0);
+          setPage(1);
+        }
+        if (filtersResult.ok !== false) {
+          setFilters(filtersResult.data ?? filtersResult);
+        }
+      } catch (err) {
+        if (err.name !== "AbortError") console.error("Shop fetch failed:", err);
+      } finally {
+        setIsLoadingProducts(false);
+        setIsPageLoading(false);
+      }
+    };
+
+    fetchData();
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.toString(), buildQuery, buildFilterQuery, ssrFailed]);
+
+  const loadMore = useCallback(async () => {
+    if (isLoadingMore || products.length >= total) return;
+    setIsLoadingMore(true);
+    const nextPage = page + 1;
+    try {
+      const result = await routeFetch(`/api/products/all?${buildQuery(nextPage)}`);
+      const items = result.items ?? result.data?.items ?? [];
+      setProducts((prev) => [...prev, ...items]);
+      setPage(nextPage);
+    } catch (err) {
+      console.error("Load more failed:", err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [buildQuery, isLoadingMore, page, products.length, total]);
+
+  // ---- Filter panel open/closed — pure UI state, sessionStorage is fine here ----
+  useEffect(() => {
+    if (sessionStorage.getItem("filterOpen") === "true") setIsFilterButtonClicked(true);
+  }, []);
+
+  useEffect(() => {
+    if (isFilterButtonClicked) sessionStorage.setItem("filterOpen", "true");
+    else sessionStorage.removeItem("filterOpen");
+  }, [isFilterButtonClicked]);
 
   const handleClearAll = () => {
-    setSelectedFilterOptions({
-      sortBy: new Set([]),
-      filterBy: new Set([]),
-      category: new Set([]),
-      sizes: new Set([]),
-      colors: new Set([]),
-      price: {
-        min: undefined,
-        max: undefined,
-      },
-    });
     setIsFilterButtonClicked(false);
-    sessionStorage.removeItem("filterState");
-    if (pathname !== "/shop") router.push("/shop");
+    startTransition(() => {
+      router.replace("/shop", { scroll: false });
+    });
   };
 
+  // category is a route segment (/shop/[slug]), not a query param — navigate,
+  // carrying over any other active filters in the query string.
   const handleCategoryChange = (newKeys) => {
     const keysArray = Array.from(newKeys);
     const cleared = keysArray.includes("Clear") || keysArray.length === 0;
+    const qs = searchParams.toString();
+    const suffix = qs ? `?${qs}` : "";
 
-    if (cleared) {
-      setSelectedFilterOptions((prev) => ({ ...prev, category: new Set([]) }));
-
-      // Save other filter state before navigating to /shop
-      const stateToSave = {
-        sortBy: Array.from(selectedFilterOptions.sortBy),
-        filterBy: Array.from(selectedFilterOptions.filterBy),
-        sizes: Array.from(selectedFilterOptions.sizes),
-        colors: Array.from(selectedFilterOptions.colors),
-        price: selectedFilterOptions.price,
-      };
-      sessionStorage.setItem("filterState", JSON.stringify(stateToSave));
-
-      if (pathname !== "/shop") router.push("/shop");
-      return;
-    }
-
-    const selectedLabel = keysArray[0];
-    const selectedSlug = generateSlug(selectedLabel);
-
-    const stateToSave = {
-      sortBy: Array.from(selectedFilterOptions.sortBy),
-      filterBy: Array.from(selectedFilterOptions.filterBy),
-      sizes: Array.from(selectedFilterOptions.sizes),
-      colors: Array.from(selectedFilterOptions.colors),
-      price: selectedFilterOptions.price,
-    };
-    sessionStorage.setItem("filterState", JSON.stringify(stateToSave));
     sessionStorage.setItem("filterOpen", "true");
-
-    router.push(`/shop/${selectedSlug}`);
+    startTransition(() => {
+      router.push(cleared ? `/shop${suffix}` : `/shop/${keysArray[0]}${suffix}`);
+    });
   };
 
-  useEffect(() => {
-    setKeyword(searchParams.get("search"));
-    const filterByFromParam = searchParams.get("filterBy");
+  const isNoFilterOptionSelected = useMemo(
+    () =>
+      Object.entries(selectedFilterOptions).every(([key, value]) => {
+        if (key === "price") return value.min == null && value.max == null;
+        if (value instanceof Set) return value.size === 0;
+        if (Array.isArray(value)) return value.length === 0;
+        return true;
+      }),
+    [selectedFilterOptions],
+  );
 
-    // Restore saved filter state from sessionStorage (only on mount)
-    let restoredState = null;
-    const savedFilter = sessionStorage.getItem("filterState");
-    if (savedFilter) {
-      try {
-        restoredState = JSON.parse(savedFilter);
-      } catch (e) {
-        // ignore
-      }
-      sessionStorage.removeItem("filterState");
-    }
+  return (
+    <div className="flex min-h-full grow flex-col gap-y-7 px-5 sm:px-8 lg:px-12 xl:mx-auto xl:max-w-[1200px] xl:px-0">
+      <button
+        className={`relative z-[1] flex w-fit items-center gap-x-3 rounded-[4px] bg-[var(--color-secondary-500)] px-[18px] py-3 transition-colors duration-300 ease-in-out hover:bg-[var(--color-secondary-600)] ${isFilterButtonClicked ? "hidden" : "block"}`}
+        onClick={() => setIsFilterButtonClicked(true)}
+      >
+        <p className="font-semibold">Filter</p>
+        <HiOutlineAdjustmentsHorizontal size={20} />
+      </button>
 
-    setSelectedFilterOptions((prev) => ({
-      ...prev,
-      // filterBy: param takes priority, then restored state, then keep existing
-      filterBy: filterByFromParam
-        ? [filterByFromParam]
-        : restoredState?.filterBy?.length
-          ? restoredState.filterBy
-          : new Set([]),
-      // sortBy, sizes, colors, price: restore if available
-      sortBy: restoredState?.sortBy?.length ? restoredState.sortBy : prev.sortBy,
-      sizes: restoredState?.sizes?.length ? restoredState.sizes : prev.sizes,
-      colors: restoredState?.colors?.length ? restoredState.colors : prev.colors,
-      price: restoredState?.price?.min || restoredState?.price?.max
-        ? restoredState.price
-        : prev.price,
-      // category: always from route, never from restored state
-      category: !initialCategory ? new Set([]) : [initialCategory],
-    }));
+      <Filter
+        isFilterButtonClicked={isFilterButtonClicked}
+        categories={categories}
+        filters={filters}
+        selectedFilterOptions={selectedFilterOptions}
+        setSelectedFilterOptions={setSelectedFilterOptions}
+        isNoFilterOptionSelected={isNoFilterOptionSelected}
+        onClearAll={handleClearAll}
+        onCategoryChange={handleCategoryChange}
+      />
 
-    setIsPageLoading(false);
-  }, [searchParams, setIsPageLoading, initialCategory]);
-
-  // Keep only filterOpen restore in mount effect
-  useEffect(() => {
-    if (sessionStorage.getItem("filterOpen") === "true") {
-      setIsFilterButtonClicked(true);
-    }
-  }, []);
-
-  // Sync filter state to sessionStorage whenever it changes
-  useEffect(() => {
-    if (isFilterButtonClicked) {
-      sessionStorage.setItem("filterOpen", "true");
-    } else {
-      sessionStorage.removeItem("filterOpen");
-    }
-  }, [isFilterButtonClicked]);
-
-  // Cleanup when leaving shop entirely
-  useEffect(() => {
-    return () => {
-      if (!window.location.pathname.startsWith("/shop")) {
-        sessionStorage.removeItem("filterOpen");
-        sessionStorage.removeItem("filterState");
-        sessionStorage.removeItem("shopCols");
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!isLoading)
-      setFilteredProducts(
-        products
-          .filter((product) => {
-            return (
-              product.status === "active" &&
-              (!keyword ||
-                product.productTitle
-                  .toLowerCase()
-                  .includes(keyword.toLowerCase())) &&
-              (!selectedFilterOptions.filterBy.length ||
-                (selectedFilterOptions.filterBy.includes("Popular") &&
-                  product.trending === "Yes") ||
-                (selectedFilterOptions.filterBy.includes("New Arrivals") &&
-                  product.newArrival === "Yes") ||
-                (selectedFilterOptions.filterBy.includes("Special Offers") &&
-                  checkIfSpecialOfferIsAvailable(product, specialOffers)) ||
-                (selectedFilterOptions.filterBy.includes("In Stock") &&
-                  !CheckIfProductIsOutOfStock(
-                    product?.productVariants,
-                    primaryLocation,
-                  )) ||
-                (selectedFilterOptions.filterBy.includes("On Sale") &&
-                  checkIfOnlyRegularDiscountIsAvailable(
-                    product,
-                    specialOffers,
-                  ))) &&
-              (!selectedFilterOptions.category.length ||
-                product.category ===
-                selectedFilterOptions.category.toString()) &&
-              (!selectedFilterOptions.sizes.length ||
-                selectedFilterOptions.sizes.some((selectedSize) =>
-                  product.allSizes.some(
-                    (productSize) => productSize == selectedSize,
-                  ),
-                )) &&
-              (!selectedFilterOptions.colors.length ||
-                selectedFilterOptions.colors.some((selectedColor) =>
-                  product.availableColors.some(
-                    (productColor) => productColor.label === selectedColor,
-                  ),
-                ))
-            );
-          })
-          .sort((productA, productB) => {
-            const selectedSortByOption =
-              selectedFilterOptions.sortBy.toString();
-
-            if (selectedSortByOption === "Price (Low to High)")
-              return (
-                calculateFinalPrice(productA, specialOffers) -
-                calculateFinalPrice(productB, specialOffers)
-              );
-            else if (selectedSortByOption === "Price (High to Low)")
-              return (
-                calculateFinalPrice(productB, specialOffers) -
-                calculateFinalPrice(productA, specialOffers)
-              );
-            else if (selectedSortByOption === "Newest")
-              return (
-                new Date(productB.publishDate) - new Date(productA.publishDate)
-              );
-            else return 0;
-          }),
-      );
-  }, [
-    isLoading,
-    specialOffers,
-    products,
-    primaryLocation,
-    keyword,
-    selectedFilterOptions.category,
-    selectedFilterOptions.colors,
-    selectedFilterOptions.filterBy,
-    selectedFilterOptions.sizes,
-    selectedFilterOptions.sortBy,
-  ]);
-
-  if (!isLoading)
-    return (
-      <div className="flex min-h-full grow flex-col gap-y-7 px-5 sm:px-8 lg:px-12 xl:mx-auto xl:max-w-[1200px] xl:px-0">
-        {/* Filter Button */}
-        <button
-          className={`relative z-[1] flex w-fit items-center gap-x-3 rounded-[4px] bg-[var(--color-secondary-500)] px-[18px] py-3 transition-colors duration-300 ease-in-out hover:bg-[var(--color-secondary-600)] ${isFilterButtonClicked ? "hidden" : "block"}`}
-          onClick={() => setIsFilterButtonClicked(true)}
-        >
-          <p className="font-semibold">Filter</p>
-          <HiOutlineAdjustmentsHorizontal size={20} />
-        </button>
-        <Filter
-          isFilterButtonClicked={isFilterButtonClicked}
-          unfilteredProducts={products}
-          filteredProducts={filteredProducts}
-          selectedFilterOptions={selectedFilterOptions}
-          setSelectedFilterOptions={setSelectedFilterOptions}
-          isNoFilterOptionSelected={isNoFilterOptionSelected}
-          calculateFinalPrice={calculateFinalPrice}
-          specialOffers={specialOffers}
-          onClearAll={handleClearAll}
-          onCategoryChange={handleCategoryChange}
-        />
-        {!filteredProductCount ? (
+      <section
+        className={`flex grow flex-col gap-y-7 ${isLoadingProducts ? "opacity-60 transition-opacity pointer-events-none" : ""
+          }`}
+      >
+        {!products.length && !isLoadingProducts ? (
           <EmptyShopProducts
             keyword={keyword}
             isNoFilterOptionSelected={isNoFilterOptionSelected}
             setSelectedFilterOptions={setSelectedFilterOptions}
           />
+        ) : !products.length && isLoadingProducts ? (
+          <LoadingSpinner />
         ) : (
           <ShopCards
             userData={userData}
-            isSearchedOrFiltered={
-              keyword?.length ||
-              Object.values(selectedFilterOptions).some(
-                (selectedValue) => selectedValue.length,
-              )
-            }
-            filteredProducts={filteredProducts}
-            filteredProductCount={filteredProductCount}
-            selectedFilterOptions={selectedFilterOptions}
-            calculateFinalPrice={calculateFinalPrice}
+            isSearchedOrFiltered={!isNoFilterOptionSelected || !!keyword?.length}
+            products={products}
+            total={total}
+            isLoadingMore={isLoadingMore}
+            onLoadMore={loadMore}
             specialOffers={specialOffers}
-            primaryLocation={primaryLocation}
             notifyVariants={notifyVariants}
+            initialCols={initialCols}
           />
         )}
-      </div>
-    );
+      </section>
+    </div>
+  );
 }

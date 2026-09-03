@@ -7,9 +7,8 @@ import {
   calculateFinalPrice,
   checkIfOnlyRegularDiscountIsAvailable,
 } from "@/app/utils/orderCalculations";
-import { getProductVariantSku } from "@/app/utils/productSkuCalculation";
+import { getColors, getSizesForColor, getVariantAvailableSku } from "@/app/utils/productSkuCalculation";
 import thunderShape from "@/public/shapes/thunder-with-stroke.svg";
-import getImageSetsBasedOnColors from "@/app/utils/getImageSetsBasedOnColors";
 import ProductSizeSelection from "./ProductSizeSelection";
 import ProductColorSelection from "./ProductColorSelection";
 import ProductQuantitySelection from "./ProductQuantitySelection";
@@ -24,7 +23,6 @@ export default function ProductInfoOverview({
   userData,
   product,
   specialOffers,
-  primaryLocation,
   selectedOptions,
   setSelectedOptions,
   setActiveImageIndex,
@@ -35,22 +33,29 @@ export default function ProductInfoOverview({
   randomViewers,
 }) {
   const [isNotifyMeModalOpen, setIsNotifyMeModalOpen] = useState(false);
-  const productVariantSku = getProductVariantSku(
-    product?.productVariants,
-    primaryLocation,
-    selectedOptions?.color?._id,
-    selectedOptions?.size,
+  const productVariantSku = getVariantAvailableSku(
+    product?.variants,
+    selectedOptions?.color?.id,
+    selectedOptions?.size?.id,
   );
   const isOnlyRegularDiscountAvailable = checkIfOnlyRegularDiscountIsAvailable(
     product,
     specialOffers,
   );
 
+  const availableColors = getColors(product?.variants);
+  // Includes OOS sizes on purpose — "show disabled + Notify Me", not hide.
+  const sizesForSelectedColor = selectedOptions?.color
+    ? getSizesForColor(product?.variants, selectedOptions.color.id)
+    : [];
+
+  const regularPrice = Number(product?.regular_price) || 0;
+
   return (
     <section>
       {/* Product Title (with a shape/SVG) */}
       <h1 className="relative mb-2.5 w-fit text-2xl font-bold sm:text-3xl">
-        {product?.productTitle}
+        {product?.title}
         {/* Shape/SVG (thunder) */}
         <div className="absolute -right-1.5 bottom-1/4 aspect-square w-8 translate-x-full rotate-[26deg] lg:w-9">
           <Image
@@ -73,7 +78,7 @@ export default function ProductInfoOverview({
               : "text-neutral-600"
           }
         >
-          ৳ {Number(product?.regularPrice).toLocaleString()}
+          ৳ {regularPrice.toLocaleString()}
         </p>
         {/* Discounted Price (if available) */}
         {isOnlyRegularDiscountAvailable && (
@@ -119,16 +124,15 @@ export default function ProductInfoOverview({
         )}
       </div>
       <ProductSizeSelection
-        productSizes={product?.allSizes}
+        productSizes={sizesForSelectedColor}
         selectedOptions={selectedOptions}
         setSelectedOptions={setSelectedOptions}
         productVariantSku={productVariantSku}
-        showSku={!!selectedOptions?.size && product?.isInventoryShown}
+        showSku={!!selectedOptions?.size && product?.is_inventory_shown}
       />
       <ProductColorSelection
-        productColors={getImageSetsBasedOnColors(product?.productVariants)?.map(
-          (imgSet) => imgSet.color,
-        )}
+        productColors={availableColors}
+        productVariants={product?.variants}
         selectedOptions={selectedOptions}
         setSelectedOptions={setSelectedOptions}
         setActiveImageIndex={setActiveImageIndex}
@@ -153,17 +157,14 @@ export default function ProductInfoOverview({
       <div className="flex gap-2 max-lg:flex-wrap [&>button>svg]:text-lg [&>button]:rounded-[4px] [&>button]:px-5 [&>button]:py-6 [&>button]:text-sm [&>button]:font-semibold [&>button]:text-neutral-600 [&>button]:duration-300 hover:[&>button]:opacity-100">
         <ProductCartButton
           userData={userData}
-          productId={product?._id}
-          productTitle={product?.productTitle}
+          productId={product?.id}
+          productTitle={product?.title}
           productImg={
-            getImageSetsBasedOnColors(product?.productVariants)?.find(
-              (imgSet) =>
-                imgSet?.color?.label === selectedOptions?.color?.label,
-            )?.images[0]
+            product?.variants?.find(
+              (v) => v.color?.id === selectedOptions?.color?.id,
+            )?.media?.[0]?.public_id
           }
-          defaultColor={
-            product?.availableColors[Object.keys(product?.availableColors)[0]]
-          }
+          defaultColor={availableColors[0]}
           productVariantSku={productVariantSku}
           selectedOptions={selectedOptions}
           setSelectedOptions={setSelectedOptions}
@@ -172,26 +173,28 @@ export default function ProductInfoOverview({
         />
         <ProductWishlistButton
           userData={userData}
-          productId={product?._id}
-          productTitle={product?.productTitle}
-          productImg={product?.productVariants[0]?.imageUrls[0]}
+          productId={product?.id}
+          productTitle={product?.title}
+          productImg={product?.variants?.[0]?.media?.[0]?.public_id}
           variantSizes={[
-            ...new Set(product.productVariants.map((variant) => variant.size)),
+            ...new Map(
+              (product?.variants ?? []).map((v) => [v.size.id, v.size]),
+            ).values(),
           ]}
-          variantColors={product.availableColors}
+          variantColors={availableColors}
         />
         <ProductSizeGuideButton
-          sizeGuideImageUrl={product?.sizeGuideImageUrl}
+          sizeGuidePublicId={product?.size_guide_public_id}
         />
       </div>
       {/* Stock Message */}
-      {!!selectedOptions?.size && !productVariantSku && (
+      {!!selectedOptions?.size && productVariantSku <= 0 && (
         <div className="mt-3.5 flex items-center gap-4">
           <p className="font-semibold text-red-600">Out of Stock*</p>
           <NotifyMeButton
             userEmail={userData?.email}
             notifyVariants={notifyVariants}
-            productId={product?._id}
+            productId={product?.id}
             productVariantSku={productVariantSku}
             selectedOptions={selectedOptions}
             isNotifyMeModalOpen={isNotifyMeModalOpen}

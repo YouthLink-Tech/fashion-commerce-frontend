@@ -1,21 +1,18 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useLayoutEffect, useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import thunderShape from "@/public/shapes/thunder-with-stroke.svg";
 import Shapes from "./Shapes";
 import ProductCard from "../../product-card/ProductCard";
 import AddToCartModal from "../cart/AddToCartModal";
 
-// Define allowed column options per breakpoint
 const MOBILE_OPTIONS = [1, 2];
 const TABLET_OPTIONS = [2, 3];
 const DESKTOP_OPTIONS = [2, 3, 4];
 
-// Define column numbers per breakpoint
 const MOBILE_DEFAULT_COL = 1;
 const TABLET_DEFAULT_COL = 2;
 const DESKTOP_DEFAULT_COL = 3;
 
-// Column options used in buttons for user to click
 const colOptions = [
   { number: 1, svg: "/shop/grid-cols-1.svg" },
   { number: 2, svg: "/shop/grid-cols-2.svg" },
@@ -38,105 +35,83 @@ const getDefaultColByWidth = (width) => {
 export default function ShopCards({
   userData,
   isSearchedOrFiltered,
-  filteredProducts,
-  filteredProductCount,
-  selectedFilterOptions,
-  calculateFinalPrice,
+  products,
+  total,
+  isLoadingMore,
+  onLoadMore,
   specialOffers,
-  primaryLocation,
   notifyVariants,
+  initialCols,
 }) {
   const [isAddToCartModalOpen, setIsAddToCartModalOpen] = useState(false);
-  const [selectedAddToCartProduct, setSelectedAddToCartProduct] =
-    useState(null);
+  const [selectedAddToCartProduct, setSelectedAddToCartProduct] = useState(null);
   const [cardHeight, setCardHeight] = useState(null);
-  const [rows, setRows] = useState(null);
-  const [cols, setCols] = useState(null);
-  const [visibleCount, setVisibleCount] = useState(10);
-  const [userSelectedCols, setUserSelectedCols] = useState(null);
+  // Seeded from the cookie value the server read (initialCols) — this is
+  // now the single source of truth, not sessionStorage.
+  const [userSelectedCols, setUserSelectedCols] = useState(initialCols ?? null);
   const observerRef = useRef();
 
-  const isProductWithinPriceRange = (product) =>
-    (!selectedFilterOptions.price.min ||
-      selectedFilterOptions.price.min <=
-      calculateFinalPrice(product, specialOffers)) &&
-    (!selectedFilterOptions.price.max ||
-      selectedFilterOptions.price.max >=
-      calculateFinalPrice(product, specialOffers))
+  const cols =
+    userSelectedCols ??
+    getDefaultColByWidth(typeof window !== "undefined" ? window.innerWidth : 1024);
+  const rows = Math.max(0, Math.ceil(products.length / cols));
 
   const handleColChange = (number) => {
     setUserSelectedCols(number);
-    setCols(number);
-    setRows(Math.max(0, Math.ceil(filteredProductCount / number)));
-    sessionStorage.setItem("shopCols", String(number));
+    document.cookie = `shopCols=${number}; path=/; max-age=31536000; SameSite=Lax`;
   };
+
+  // Only validates the SSR-provided initialCols against the *actual*
+  // viewport width (unknown to the server) — does NOT re-read any storage,
+  // since initialCols/cookie is already the source of truth. This was
+  // previously reading sessionStorage here, which no longer gets written
+  // to (handleColChange only sets the cookie now), so it was always
+  // overwriting the correct SSR value with the breakpoint default.
+  useLayoutEffect(() => {
+    const width = window.innerWidth;
+    const allowedCols = getAllowedColsByWidth(width);
+
+    setUserSelectedCols((prev) =>
+      prev && allowedCols.includes(prev) ? prev : getDefaultColByWidth(width),
+    );
+    setCardHeight(document.querySelector(".product-card")?.clientHeight);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
       const allowedCols = getAllowedColsByWidth(window.innerWidth);
-
-      let updatedCols;
-
-      if (userSelectedCols && allowedCols.includes(userSelectedCols)) {
-        updatedCols = userSelectedCols;
-      } else {
-        // Use the defined default number for this screen if current selection is invalid
-        updatedCols = getDefaultColByWidth(window.innerWidth);
-        setUserSelectedCols(updatedCols);
-      }
-
-      setCols(updatedCols);
-      setRows(Math.max(0, Math.ceil(filteredProductCount / updatedCols)));
-
+      setUserSelectedCols((prev) => {
+        if (prev && allowedCols.includes(prev)) return prev;
+        return getDefaultColByWidth(window.innerWidth);
+      });
       setCardHeight(document.querySelector(".product-card")?.clientHeight);
     };
 
-    handleResize(); // Call once on mount
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [filteredProductCount, userSelectedCols]);
-
-  // Restore userSelectedCols from sessionStorage after mount
-  useEffect(() => {
-    const saved = sessionStorage.getItem("shopCols");
-    if (saved) {
-      const parsed = parseInt(saved, 10);
-      if (!isNaN(parsed)) {
-        setUserSelectedCols(parsed);
-      }
-    }
-  }, []);
+  }, [products.length]);
 
   const loadMoreRef = useCallback(
     (node) => {
       if (observerRef.current) observerRef.current.disconnect();
 
       observerRef.current = new IntersectionObserver((entries) => {
-        // Check if the element is intersecting AND if there are more items to load
-        if (
-          entries[0].isIntersecting &&
-          visibleCount < filteredProducts.length
-        ) {
-          setVisibleCount((prev) =>
-            Math.min(prev + cols * 2, filteredProducts.length),
-          );
-        }
+        if (entries[0].isIntersecting) onLoadMore();
       });
 
       if (node) observerRef.current.observe(node);
     },
-    [filteredProducts, visibleCount, cols],
+    [onLoadMore],
   );
 
   return (
     <>
       <div className="flex">
-        {/* Product Count Text */}
-        {isSearchedOrFiltered && (
+        {isSearchedOrFiltered && total > 0 && (
           <p className="relative w-fit">
-            {filteredProductCount || "No"} thread
-            {filteredProductCount > 1 && "z"} found
-            {/* Shape (Thunder) */}
+            {total} thread
+            {total > 1 && "z"} found
             <span className="absolute -right-1 bottom-1/4 block aspect-square w-7 translate-x-full rotate-[26deg] max-sm:hidden">
               <Image
                 src={thunderShape}
@@ -150,7 +125,6 @@ export default function ShopCards({
             </span>
           </p>
         )}
-        {/* Column selection buttons */}
         <div className="ml-auto flex gap-2">
           {colOptions.map((option) => (
             <button
@@ -170,38 +144,27 @@ export default function ShopCards({
         </div>
       </div>
       <section
-        className="relative grid gap-x-4 gap-y-12 pb-7"
-        style={{
-          gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-        }}
+        className={`relative grid gap-x-4 gap-y-12 pb-7 ${!userSelectedCols ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : ""
+          }`}
+        style={userSelectedCols ? { gridTemplateColumns: `repeat(${userSelectedCols}, minmax(0, 1fr))` } : undefined}
       >
         <Shapes cardHeight={cardHeight} rows={rows} />
-        {filteredProducts
-          ?.slice(0, visibleCount)
-          .map(
-            (filteredProduct) =>
-              isProductWithinPriceRange(filteredProduct) && (
-                <ProductCard
-                  key={"filtered-product-" + filteredProduct._id}
-                  userData={userData}
-                  product={filteredProduct}
-                  specialOffers={specialOffers}
-                  primaryLocation={primaryLocation}
-                  isAddToCartModalOpen={isAddToCartModalOpen}
-                  setIsAddToCartModalOpen={setIsAddToCartModalOpen}
-                  setSelectedAddToCartProduct={setSelectedAddToCartProduct}
-                  isAllowedToShowLimitedStock={true}
-                />
-              ),
-          )}
-        {/* Load More trigger if there are more items to load */}
-        {visibleCount < filteredProducts?.length && (
-          <div
-            ref={loadMoreRef}
-            className="col-span-full flex justify-center py-8"
-          >
+        {products.map((product) => (
+          <ProductCard
+            key={"filtered-product-" + product.id}
+            userData={userData}
+            product={product}
+            specialOffers={specialOffers}
+            isAddToCartModalOpen={isAddToCartModalOpen}
+            setIsAddToCartModalOpen={setIsAddToCartModalOpen}
+            setSelectedAddToCartProduct={setSelectedAddToCartProduct}
+            isAllowedToShowLimitedStock={true}
+          />
+        ))}
+        {products.length < total && (
+          <div ref={loadMoreRef} className="col-span-full flex justify-center py-8">
             <span className="animate-pulse text-gray-500">
-              Loading products...
+              {isLoadingMore ? "Loading products..." : ""}
             </span>
           </div>
         )}
@@ -211,7 +174,6 @@ export default function ShopCards({
           setIsAddToCartModalOpen={setIsAddToCartModalOpen}
           product={selectedAddToCartProduct}
           specialOffers={specialOffers}
-          primaryLocation={primaryLocation}
           notifyVariants={notifyVariants}
         />
       </section>

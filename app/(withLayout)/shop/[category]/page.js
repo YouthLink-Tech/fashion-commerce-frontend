@@ -9,6 +9,8 @@ import LoadingSpinner from "@/app/components/shared/LoadingSpinner";
 import { FRONTEND_URL } from "@/app/config/site";
 import { redirect } from "next/navigation";
 import { COMPANY_NAME } from "@/app/config/company";
+import { buildFilterFacetsQueryFromSearchParams, buildListingQueryFromSearchParams, toURLSearchParams } from "@/app/lib/shop/filterUrl";
+import { cookies } from "next/headers";
 
 export async function generateMetadata({ params }) {
   const { category } = params;
@@ -61,30 +63,57 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function CategoryShop({ params }) {
+export default async function CategoryShop({ params, searchParams }) {
   const { category } = params;
-  const session = await getServerSession(authOptions);
+
+  const sessionPromise = getServerSession(authOptions).catch((err) => {
+    console.error("Session fetch failed:", err);
+    return null;
+  });
+
+  let categories;
+  try {
+    const categoriesRes = await rawFetch("/api/category/all", {
+      next: { revalidate: 7200, tags: ["categories"] },
+    });
+
+    if (!categoriesRes?.ok) {
+      console.error("Categories fetch failed:", categoriesRes?.message || "Request failed");
+      redirect("/shop");
+    }
+
+    categories = categoriesRes.data ?? [];
+  } catch (err) {
+    console.error("Categories fetch failed:", err?.message || err);
+    redirect("/shop");
+  }
+
+  const categoryExists = categories.some((c) => c.slug === category);
+  if (!categoryExists) redirect("/shop");
+
+  const session = await sessionPromise;
+
+  const searchParamsObj = toURLSearchParams(searchParams);
+  const listingQuery = buildListingQueryFromSearchParams(searchParamsObj, category);
+  const facetsQuery = buildFilterFacetsQueryFromSearchParams(searchParamsObj, category);
 
   const promises = [
     session?.user?.email
       ? tokenizedFetch(`/api/customer/single/${session?.user?.email}`)
       : Promise.resolve(null),
-    rawFetch("/api/products/all", {
-      next: {
-        revalidate: 7200,
-        tags: ['all-products']
-      }
+    rawFetch(`/api/products/all?${listingQuery}`
+      , { next: { revalidate: 300, tags: ['all-products', `category-${category}`] } }
+    ),
+    rawFetch(`/api/products/filters?${facetsQuery}`
+      , { next: { revalidate: 300, tags: ['all-products'] } }
+    ),
+    rawFetch("/api/category/all", {
+      next: { revalidate: 7200, tags: ['categories'] }
     }),
     rawFetch("/api/special-offer/all", {
       next: {
         revalidate: 3600, // 1 hour
         tags: ['special-offers']
-      }
-    }),
-    rawFetch("/api/location/primary", {
-      next: {
-        revalidate: 7200,           // 2 hours fallback
-        tags: ['primary-location']  // cleared when location changes
       }
     }),
     rawFetch("/api/notifications/all", {
@@ -93,41 +122,30 @@ export default async function CategoryShop({ params }) {
         tags: ['notifications']
       },
     }),
-    rawFetch("/api/category/all", {
-      next: {
-        revalidate: 7200,
-        tags: ['categories']
-      }
-    }),
   ];
 
   const [
     userDataRes,
     productsRes,
+    filtersRes,
     offersRes,
-    primaryLocationRes,
     notifyVariantsRes,
-    categoriesRes
   ] = await Promise.allSettled(promises);
 
-  const [userData, products, specialOffers, primaryLocation, notifyVariants, categories] = [
+  const productsFetchFailed = productsRes.status === "rejected";
+  const filtersFetchFailed = filtersRes.status === "rejected";
+  const ssrFailed = productsFetchFailed || filtersFetchFailed;
+
+  const [userData, productsData, filtersData, specialOffers, notifyVariants,] = [
     extractData(userDataRes, null, "checkout/userData"),
-    extractData(productsRes, [], "shop/products"),
+    extractData(productsRes, { items: [], total: 0 }, "shop/products"),
+    extractData(filtersRes, null, "shop/filters"),
     extractData(offersRes, [], "shop/specialOffers"),
-    extractData(
-      primaryLocationRes,
-      null,
-      "shop/primaryLocation",
-      "primaryLocation",
-    ),
     extractData(notifyVariantsRes, [], "shop/notifyVariants"),
-    extractData(categoriesRes, [], "shop/categories"),
   ];
 
-  const resolvedCategory =
-    categories.find((c) => c.slug === category)?.name ?? null;
-
-  if (!resolvedCategory) redirect("/shop");
+  const savedCols = cookies().get("shopCols")?.value;
+  const initialCols = savedCols ? parseInt(savedCols, 10) : null;
 
   return (
     <main>
@@ -141,11 +159,15 @@ export default async function CategoryShop({ params }) {
         <Suspense fallback={<LoadingSpinner />}>
           <ShopContents
             userData={userData}
-            products={products}
+            categories={categories}
             specialOffers={specialOffers}
-            primaryLocation={primaryLocation}
             notifyVariants={notifyVariants}
-            initialCategory={resolvedCategory}
+            initialCategory={category}
+            initialProducts={productsData.items}
+            initialTotal={productsData.total}
+            initialFilters={filtersData}
+            ssrFailed={ssrFailed}
+            initialCols={initialCols}
           />
         </Suspense>
       </div>

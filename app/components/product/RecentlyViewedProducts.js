@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Button } from "@nextui-org/react";
 import { CgChevronRight, CgChevronLeft } from "react-icons/cg";
-import getImageSetsBasedOnColors from "@/app/utils/getImageSetsBasedOnColors";
 import ProductCard from "../product-card/ProductCard";
 
 export default function RecentlyViewedProducts({
@@ -10,7 +9,6 @@ export default function RecentlyViewedProducts({
   hasCompleteOutfitSection,
   hasSimilarSection,
   specialOffers,
-  primaryLocation,
   isAddToCartModalOpen,
   setIsAddToCartModalOpen,
   setSelectedAddToCartProduct,
@@ -20,12 +18,11 @@ export default function RecentlyViewedProducts({
 
   return (
     <section
-      className={`relative ${
-        (hasCompleteOutfitSection && hasSimilarSection) ||
+      className={`relative ${(hasCompleteOutfitSection && hasSimilarSection) ||
         (!hasCompleteOutfitSection && !hasSimilarSection)
-          ? "mt-8 bg-[var(--color-secondary-100)] py-8"
-          : "pb-10 pt-8"
-      }`}
+        ? "mt-8 bg-[var(--color-secondary-100)] py-8"
+        : "pb-10 pt-8"
+        }`}
     >
       <div
         className={`absolute inset-0 h-full w-full items-center justify-between space-y-5 px-5 sm:px-8 lg:px-12 xl:mx-auto xl:max-w-[1200px] xl:px-0 ${recentlyViewedProducts?.length > 3 ? "sm:max-lg:flex" : "sm:max-lg:hidden"} ${recentlyViewedProducts?.length > 4 ? "lg:flex" : "lg:hidden"}`}
@@ -56,15 +53,13 @@ export default function RecentlyViewedProducts({
         >
           {recentlyViewedProducts.map((recentlyViewedProduct, index) => (
             <ProductCard
-              key={"product-recently-viewed-" + recentlyViewedProduct._id}
+              key={"product-recently-viewed-" + recentlyViewedProduct.id}
               userData={userData}
               product={recentlyViewedProduct}
               specialOffers={specialOffers}
-              primaryLocation={primaryLocation}
               isAddToCartModalOpen={isAddToCartModalOpen}
               setIsAddToCartModalOpen={setIsAddToCartModalOpen}
               setSelectedAddToCartProduct={setSelectedAddToCartProduct}
-              getImageSetsBasedOnColors={getImageSetsBasedOnColors}
               shouldBeHidden={index > 5}
             />
           ))}

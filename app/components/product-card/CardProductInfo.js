@@ -6,13 +6,14 @@ import TransitionLink from "../ui/TransitionLink";
 
 export default function CardProductInfo({
   product,
-  specialOffers,
+  // specialOffers,
   isProductOutOfStock,
   isProductLimitedStock,
 }) {
+  // needs to pass special offer after offer migration
   const isOnlyRegularDiscountAvailable = checkIfOnlyRegularDiscountIsAvailable(
     product,
-    specialOffers,
+    [],
   );
 
   return (
@@ -25,11 +26,12 @@ export default function CardProductInfo({
           <p
             className={`relative w-fit text-nowrap font-semibold ${isOnlyRegularDiscountAvailable ? "text-neutral-400 before:absolute before:left-0 before:right-0 before:top-1/2 before:h-0.5 before:w-full before:-translate-y-1/2 before:bg-neutral-400 before:content-['']" : "text-neutral-800"}`}
           >
-            ৳ {Number(product.regularPrice || 0).toLocaleString()}
+            ৳ {Number(product.regular_price || 0).toLocaleString()}
           </p>
           {isOnlyRegularDiscountAvailable && (
+            // needs to pass special offer after offer migration
             <p className="font-semibold text-neutral-800">
-              ৳ {(calculateFinalPrice(product, specialOffers) || 0).toLocaleString()}
+              ৳ {(calculateFinalPrice(product, []) || 0).toLocaleString()}
             </p>
           )}
         </div>
@@ -40,10 +42,10 @@ export default function CardProductInfo({
         )}
       </div>
       <h3 className="line-clamp-1 w-fit text-sm font-semibold text-neutral-800 xl:text-base">
-        {product.productTitle}
+        {product.title}
       </h3>
       <p className="mt-1.5 line-clamp-1 w-fit text-[11px] text-neutral-700 xl:text-[13px]">
-        {product.category}
+        {product.category?.name}
       </p>
     </TransitionLink>
   );

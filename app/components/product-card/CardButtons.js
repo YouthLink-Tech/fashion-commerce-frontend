@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { CgHeart, CgShoppingCart } from "react-icons/cg";
 import { routeFetch } from "@/app/lib/fetcher/routeFetch";
 import ProductToast from "../toast/ProductToast";
+import { getColors } from "@/app/utils/productSkuCalculation";
 
 export default function CardButtons({
   userData,
@@ -17,11 +18,17 @@ export default function CardButtons({
     const currentWishlist =
       JSON.parse(localStorage.getItem("wishlistItems")) || [];
 
-    if (!currentWishlist.some((item) => item._id === product._id)) {
-      const updatedWishlist = [...currentWishlist, { _id: product._id }];
+    if (!currentWishlist.some((item) => item._id === product.id)) {
+      const updatedWishlist = [...currentWishlist, { _id: product.id }];
 
       // Save item in local wishlist
       localStorage.setItem("wishlistItems", JSON.stringify(updatedWishlist));
+
+      const variantSizes = [
+        ...new Map((product.variants ?? []).map((v) => [v.size.id, v.size])).values(),
+      ];
+      const variantColors = getColors(product.variants);
+      const productImg = product.variants?.[0]?.media?.[0]?.public_id;
 
       // Save item in server wishlist, if user is logged in
       if (userData) {
@@ -44,14 +51,10 @@ export default function CardButtons({
                   defaultToast={t}
                   isSuccess={true}
                   message="Item added to wishlist"
-                  productTitle={product?.productTitle}
-                  productImg={product?.productVariants[0]?.imageUrls[0]}
-                  variantSizes={[
-                    ...new Set(
-                      product.productVariants.map((variant) => variant.size),
-                    ),
-                  ]}
-                  variantColors={product.availableColors}
+                  productTitle={product?.title}
+                  productImg={productImg}
+                  variantColors={variantColors}
+                  variantSizes={variantSizes}
                 />
               ),
               {
@@ -83,14 +86,10 @@ export default function CardButtons({
               defaultToast={t}
               isSuccess={true}
               message="Item added to wishlist"
-              productTitle={product?.productTitle}
-              productImg={product?.productVariants[0]?.imageUrls[0]}
-              variantSizes={[
-                ...new Set(
-                  product.productVariants.map((variant) => variant.size),
-                ),
-              ]}
-              variantColors={product.availableColors}
+              productTitle={product?.title}
+              productImg={productImg}
+              variantColors={variantColors}
+              variantSizes={variantSizes}
             />
           ),
           {

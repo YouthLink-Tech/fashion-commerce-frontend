@@ -18,7 +18,7 @@ export default function CardColorSelectionTool({
         {productColors.map((color, colorIndex) => {
           return (
             <ColorButtonWithTooltip
-              key={productTitle + color._id}
+              key={productTitle + color.id}
               color={color}
               colorIndex={colorIndex}
               toolLocation="card"

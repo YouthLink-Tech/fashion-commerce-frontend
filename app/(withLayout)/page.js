@@ -41,22 +41,16 @@ export default async function Home() {
     session?.user?.email
       ? tokenizedFetch(`/api/customer/single/${session.user.email}`)
       : Promise.resolve(null),
-    rawFetch("/api/products/all", {
-      next: {
-        revalidate: 7200,
-        tags: ['all-products']
-      }
+    rawFetch("/api/products/all?is_trending=true&limit=4", {
+      next: { revalidate: 7200, tags: ['all-products'] }
+    }),
+    rawFetch("/api/products/all?new_arrivals_only=true&limit=4", {
+      next: { revalidate: 7200, tags: ['all-products'] }
     }),
     rawFetch("/api/special-offer/all", {
       next: {
         revalidate: 3600, // 1 hour
         tags: ['special-offers']
-      }
-    }),
-    rawFetch("/api/location/primary", {
-      next: {
-        revalidate: 7200,           // 2 hours fallback
-        tags: ['primary-location']  // cleared when location changes
       }
     }),
     rawFetch("/api/notifications/all", {
@@ -69,41 +63,19 @@ export default async function Home() {
 
   const [
     userDataRes,
-    productsRes,
+    trendingRes,
+    newArrivalRes,
     offersRes,
-    primaryLocationRes,
     notifyVariantsRes,
   ] = await Promise.allSettled(promises);
 
-  const [userData, products, specialOffers, primaryLocation, notifyVariants] = [
+  const [userData, trendingProducts, newlyArrivedProducts, specialOffers, notifyVariants] = [
     extractData(userDataRes, null, "home/userData"),
-    extractData(productsRes, [], "home/products"),
+    extractData(trendingRes, { items: [] }, "home/trending")?.items ?? [],
+    extractData(newArrivalRes, { items: [] }, "home/newArrivals")?.items ?? [],
     extractData(offersRes, [], "home/specialOffers"),
-    extractData(
-      primaryLocationRes,
-      null,
-      "home/primaryLocation",
-      "primaryLocation",
-    ),
     extractData(notifyVariantsRes, [], "home/notifyVariants"),
   ];
-
-  const trendingProducts = products
-    ?.filter(
-      (product) =>
-        product?.status === "active" &&
-        product?.trending === "Yes" &&
-        !CheckIfProductIsOutOfStock(product?.productVariants, primaryLocation),
-    )
-    ?.slice(0, 4);
-  const newlyArrivedProducts = products
-    ?.filter(
-      (product) =>
-        product?.status === "active" &&
-        product?.newArrival === "Yes" &&
-        !CheckIfProductIsOutOfStock(product?.productVariants, primaryLocation),
-    )
-    ?.slice(0, 4);
 
   const orgJsonLd = {
     "@context": "https://schema.org",
@@ -132,7 +104,6 @@ export default async function Home() {
           userData={userData}
           trendingProducts={trendingProducts}
           specialOffers={specialOffers}
-          primaryLocation={primaryLocation}
           notifyVariants={notifyVariants}
         />
         <HomeNewArrival
@@ -140,7 +111,6 @@ export default async function Home() {
           isAnyTrendingProductAvailable={trendingProducts?.length}
           newlyArrivedProducts={newlyArrivedProducts}
           specialOffers={specialOffers}
-          primaryLocation={primaryLocation}
           notifyVariants={notifyVariants}
         />
         <HomeFeatures

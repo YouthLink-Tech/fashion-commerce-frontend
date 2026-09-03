@@ -8,20 +8,59 @@ import {
   Input,
   Slider,
 } from "@nextui-org/react";
+import { useEffect, useRef, useState } from "react";
 import { HiChevronDown } from "react-icons/hi2";
 
 export default function Filter({
   isFilterButtonClicked,
-  unfilteredProducts,
-  filteredProducts,
+  categories,
+  filters,
   selectedFilterOptions,
   setSelectedFilterOptions,
   isNoFilterOptionSelected,
-  calculateFinalPrice,
-  specialOffers,
   onClearAll,
   onCategoryChange,
 }) {
+  const priceMin = filters?.price?.min ?? 0;
+  const priceMax = filters?.price?.max ?? 0;
+
+  const sizeOf = (v) => (v instanceof Set ? v.size : 0);
+  const firstOf = (v) => Array.from(v ?? [])[0];
+
+  // Local state initialized with searchParams or default min/max limits
+  const [localPrice, setLocalPrice] = useState({
+    min: selectedFilterOptions.price?.min ?? priceMin,
+    max: selectedFilterOptions.price?.max ?? priceMax,
+  });
+
+  const debounceRef = useRef(null);
+
+  // Sync local price whenever incoming filters object change from URL (e.g. Clear All)
+  useEffect(() => {
+    setLocalPrice({
+      min: selectedFilterOptions.price?.min ?? priceMin,
+      max: selectedFilterOptions.price?.max ?? priceMax,
+    });
+  }, [selectedFilterOptions.price?.min, selectedFilterOptions.price?.max, priceMin, priceMax]);
+
+  useEffect(() => {
+    return () => clearTimeout(debounceRef.current);
+  }, []);
+
+  const commitPriceDebounced = (next) => {
+    setLocalPrice(next);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setSelectedFilterOptions((prevOptions) => ({
+        ...prevOptions,
+        price: {
+          min: next.min === priceMin ? undefined : next.min,
+          max: next.max === priceMax ? undefined : next.max,
+        },
+      }));
+    }, 450);
+  };
+
   const filterOptions = [
     {
       label: "Sort by",
@@ -54,66 +93,30 @@ export default function Filter({
       arrayKey: "category",
       selectionMode: "single",
       type: "select",
-      options: [
-        ...new Set(unfilteredProducts?.flatMap((product) => product.category)),
-        "Clear",
-      ],
+      options: [...(categories ?? []).map((c) => c.slug), "Clear"],
+      displayMap: Object.fromEntries((categories ?? []).map((c) => [c.slug, c.name])),
     },
     {
       label: "Sizes",
       arrayKey: "sizes",
       selectionMode: "multiple",
       type: "select",
-      options: !filteredProducts?.length
-        ? []
-        : [
-          ...new Set(
-            filteredProducts?.flatMap((product) => product.allSizes),
-          ),
-          "Clear",
-        ],
+      options: !filters?.sizes?.length ? [] : [...filters.sizes.map((s) => s.id), "Clear"],
+      displayMap: Object.fromEntries((filters?.sizes ?? []).map((s) => [s.id, s.name])),
     },
     {
       label: "Colors",
       arrayKey: "colors",
       selectionMode: "multiple",
       type: "select",
-      options: !filteredProducts?.length
-        ? []
-        : [
-          ...[
-            ...new Set(
-              filteredProducts
-                ?.flatMap((product) => product.availableColors)
-                .map(JSON.stringify),
-            ),
-          ].map(JSON.parse),
-          "Clear",
-        ],
+      options: !filters?.colors?.length ? [] : [...filters.colors, "Clear"],
     },
     {
       label: "Price",
       arrayKey: "price",
       selectionMode: "single",
       type: "range",
-      options: [
-        {
-          min: !filteredProducts?.length
-            ? 0
-            : Math.min(
-              ...filteredProducts?.map((product) =>
-                calculateFinalPrice(product, specialOffers),
-              ),
-            ),
-          max: !filteredProducts?.length
-            ? 0
-            : Math.max(
-              ...filteredProducts?.map((product) =>
-                calculateFinalPrice(product, specialOffers),
-              ),
-            ),
-        },
-      ],
+      options: [{ min: priceMin, max: priceMax }],
     },
   ];
 
@@ -127,18 +130,21 @@ export default function Filter({
         filterOption.type === "select" ? (
           <Select
             key={"filter-option-" + filterOption.label + filterOptionIndex}
-            className={`w-fit [&_[data-slot="content"]]:rounded-[4px] ${selectedFilterOptions[filterOption.arrayKey].length ? "order-first" : "order-last"}`}
+            className={`w-fit [&_[data-slot="content"]]:rounded-[4px] ${sizeOf(selectedFilterOptions[filterOption.arrayKey]) ? "order-first" : "order-last"}`}
             label={
               <>
                 {filterOption.label}
-                {!!selectedFilterOptions[filterOption.arrayKey].length && (
+                {!!sizeOf(selectedFilterOptions[filterOption.arrayKey]) && (
                   <span
                     className={`text-black ${filterOption.selectionMode === "multiple" ? "ml-2 rounded-[3px] bg-[var(--color-secondary-900)] px-2 py-1 text-[10px] text-white" : ""}`}
                   >
                     {filterOption.selectionMode === "single"
                       ? ": " +
-                      selectedFilterOptions[filterOption.arrayKey].toString()
-                      : selectedFilterOptions[filterOption.arrayKey].length}
+                      (filterOption.displayMap
+                        ? (filterOption.displayMap[firstOf(selectedFilterOptions[filterOption.arrayKey])] ??
+                          firstOf(selectedFilterOptions[filterOption.arrayKey]))
+                        : firstOf(selectedFilterOptions[filterOption.arrayKey]))
+                      : sizeOf(selectedFilterOptions[filterOption.arrayKey])}
                   </span>
                 )}
               </>
@@ -149,21 +155,20 @@ export default function Filter({
             selectedKeys={selectedFilterOptions[filterOption.arrayKey]}
             onSelectionChange={(newSelectedKeys) => {
               if (filterOption.arrayKey === "category") {
-                // Use callback from ShopContents — router lives there
                 onCategoryChange(newSelectedKeys);
               } else {
                 setSelectedFilterOptions((prevSelectedValues) => ({
                   ...prevSelectedValues,
                   [filterOption.arrayKey]: Array.from(newSelectedKeys).includes("Clear")
                     ? new Set([])
-                    : Array.from(newSelectedKeys),
+                    : new Set(Array.from(newSelectedKeys)),
                 }));
               }
             }}
             disabled={!filterOption.options.length}
             classNames={{
               mainWrapper: [
-                `z-[1] text-neutral-700 [&>button]:px-4 [&>button]:rounded-[4px] [&>button]:duration-300 ${!selectedFilterOptions[filterOption.arrayKey].length ? "[&>button]:bg-[var(--color-secondary-500)] hover:[&>button]:bg-[var(--color-secondary-600)]" : "[&>button]:bg-[var(--color-secondary-600)] hover:[&>button]:bg-[var(--color-secondary-600)]"} ${!filterOption.options.length ? (!selectedFilterOptions[filterOption.arrayKey].length ? "[&>button]:opacity-50 hover:[&>button]:bg-[var(--color-secondary-500)]" : "[&>button]:opacity-40 hover:[&>button]:bg-[var(--color-secondary-600)]") : ""}`,
+                `z-[1] text-neutral-700 [&>button]:px-4 [&>button]:rounded-[4px] [&>button]:duration-300 ${!sizeOf(selectedFilterOptions[filterOption.arrayKey]) ? "[&>button]:bg-[var(--color-secondary-500)] hover:[&>button]:bg-[var(--color-secondary-600)]" : "[&>button]:bg-[var(--color-secondary-600)] hover:[&>button]:bg-[var(--color-secondary-600)]"} ${!filterOption.options.length ? (!sizeOf(selectedFilterOptions[filterOption.arrayKey]) ? "[&>button]:opacity-50 hover:[&>button]:bg-[var(--color-secondary-500)]" : "[&>button]:opacity-40 hover:[&>button]:bg-[var(--color-secondary-600)]") : ""}`,
               ],
               base: ["rounded-[4px]"],
               label: [
@@ -181,13 +186,15 @@ export default function Filter({
                 className="rounded-[4px]"
                 key={
                   filterOption.label === "Colors" && option !== "Clear"
-                    ? option.label
+                    ? option.id
                     : option
                 }
                 textValue={
                   filterOption.label === "Colors" && option !== "Clear"
-                    ? option.label
-                    : option
+                    ? option.name
+                    : filterOption.displayMap && option !== "Clear"
+                      ? filterOption.displayMap[option]
+                      : option
                 }
                 startContent={
                   filterOption.label === "Colors" &&
@@ -195,18 +202,17 @@ export default function Filter({
                     <div
                       className="pointer-events-none size-5 rounded-[3px] ring-1 ring-neutral-300"
                       style={{
-                        background:
-                          option.label !== "Multicolor"
-                            ? option.color
-                            : "linear-gradient(90deg, blue 0%, red 40%, green 80%)",
+                        background: option.name !== "Multicolor" ? option.hex : "linear-gradient(90deg, blue 0%, red 40%, green 80%)",
                       }}
                     />
                   )
                 }
               >
                 {filterOption.label === "Colors" && option !== "Clear"
-                  ? option.label
-                  : option}
+                  ? option.name
+                  : filterOption.displayMap && option !== "Clear"
+                    ? filterOption.displayMap[option]
+                    : option}
               </SelectItem>
             ))}
           </Select>
@@ -221,8 +227,9 @@ export default function Filter({
               const popoverButtonIcon = document.querySelector(
                 ".popover-button svg",
               );
-
-              popoverButtonIcon.style.transform = `rotate(${isOpen ? 180 : 0}deg)`;
+              if (popoverButtonIcon) {
+                popoverButtonIcon.style.transform = `rotate(${isOpen ? 180 : 0}deg)`;
+              }
             }}
           >
             <PopoverTrigger>
@@ -239,7 +246,7 @@ export default function Filter({
                       ? "inline text-black"
                       : "hidden"
                   }
-                >{`: ৳ ${selectedFilterOptions.price.min?.toLocaleString()} - ৳ ${selectedFilterOptions.price.max?.toLocaleString()}`}</span>
+                >{`: ৳ ${(selectedFilterOptions.price.min ?? priceMin).toLocaleString()} - ৳ ${(selectedFilterOptions.price.max ?? priceMax).toLocaleString()}`}</span>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="min-w-56 items-start gap-y-8 p-4">
@@ -254,28 +261,16 @@ export default function Filter({
                       <span className="text-small text-default-400">৳</span>
                     </div>
                   }
-                  min={filterOption.options[0].min / 100}
-                  max={filterOption.options[0].max * 100}
-                  isInvalid={
-                    selectedFilterOptions.price?.min <
-                    filterOption.options[0].min ||
-                    selectedFilterOptions.price?.min >
-                    selectedFilterOptions.price?.max
-                  }
-                  value={
-                    selectedFilterOptions.price?.min ||
-                    filterOption.options[0].min
-                  }
-                  onValueChange={(value) => {
-                    setSelectedFilterOptions((prevOptions) => ({
-                      ...prevOptions,
-                      price: {
-                        min: Number(value),
-                        max: Number(
-                          prevOptions.price?.max || filterOption.options[0].max,
-                        ),
-                      },
-                    }));
+                  min={priceMin}
+                  max={priceMax}
+                  isInvalid={localPrice.min < priceMin || localPrice.min > localPrice.max}
+                  value={String(localPrice.min)}
+                  onValueChange={(val) => {
+                    const numVal = val === "" ? priceMin : Number(val);
+                    commitPriceDebounced({
+                      min: numVal,
+                      max: localPrice.max,
+                    });
                   }}
                 />
                 <Input
@@ -288,49 +283,33 @@ export default function Filter({
                       <span className="text-small text-default-400">৳</span>
                     </div>
                   }
-                  min={filterOption.options[0].min / 100}
-                  max={filterOption.options[0].max * 100}
-                  isInvalid={
-                    selectedFilterOptions.price?.max >
-                    filterOption.options[0].max ||
-                    selectedFilterOptions.price?.max <
-                    selectedFilterOptions.price?.min
-                  }
-                  value={
-                    selectedFilterOptions.price?.max ||
-                    filterOption.options[0].max
-                  }
-                  onValueChange={(value) => {
-                    setSelectedFilterOptions((prevOptions) => ({
-                      ...prevOptions,
-                      price: {
-                        min: Number(
-                          prevOptions.price?.min || filterOption.options[0].min,
-                        ),
-                        max: Number(value),
-                      },
-                    }));
+                  min={priceMin}
+                  max={priceMax}
+                  isInvalid={localPrice.max > priceMax || localPrice.max < localPrice.min}
+                  value={String(localPrice.max)}
+                  onValueChange={(val) => {
+                    const numVal = val === "" ? priceMax : Number(val);
+                    commitPriceDebounced({
+                      min: localPrice.min,
+                      max: numVal,
+                    });
                   }}
                 />
               </div>
               <Slider
                 label="Price Range"
                 aria-label="Price Range"
-                step={100}
-                minValue={filterOption.options[0].min}
-                maxValue={filterOption.options[0].max}
-                value={[
-                  selectedFilterOptions.price?.min ||
-                  filterOption.options[0].min,
-                  selectedFilterOptions.price?.max ||
-                  filterOption.options[0].max,
-                ]}
-                onChange={([min, max] = values) => {
+                step={1} // Step of 1 allows dragging precisely to exact max numbers like 4985
+                minValue={priceMin}
+                maxValue={priceMax}
+                value={[localPrice.min, localPrice.max]}
+                onChange={([min, max]) => setLocalPrice({ min, max })}
+                onChangeEnd={([min, max]) => {
                   setSelectedFilterOptions((prevOptions) => ({
                     ...prevOptions,
                     price: {
-                      min: min,
-                      max: max,
+                      min: min === priceMin ? undefined : min,
+                      max: max === priceMax ? undefined : max,
                     },
                   }));
                 }}
@@ -354,15 +333,13 @@ export default function Filter({
               <Button
                 disableRipple
                 className="mt-3.5 w-full !scale-100 rounded-[4px] bg-[var(--color-secondary-500)] p-2.5 font-semibold !opacity-100 hover:bg-neutral-700 hover:text-neutral-100"
-                onClick={() =>
+                onClick={() => {
+                  setLocalPrice({ min: priceMin, max: priceMax });
                   setSelectedFilterOptions((prevOptions) => ({
                     ...prevOptions,
-                    price: {
-                      min: undefined,
-                      max: undefined,
-                    },
-                  }))
-                }
+                    price: { min: undefined, max: undefined },
+                  }));
+                }}
               >
                 Clear
               </Button>

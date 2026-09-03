@@ -100,25 +100,21 @@ export const getProductSpecialOffer = (
   });
 };
 
-export const calculateFinalPrice = (product, specialOffers) => {
+export const calculateFinalPrice = (product, specialOffers = []) => {
+  const regularPrice = Number(product?.regular_price ?? product?.regularPrice) || 0;
+  const discountValue = Number(product?.discount_value ?? product?.discountValue) || 0;
+  const discountType = (product?.discount_type ?? product?.discountType)?.toLowerCase();
 
-  const regularPrice = Number(product?.regularPrice) || 0;
-  const discountValue = Number(product?.discountValue) || 0;
-  const discountType = product?.discountType;
-
-  const isSpecialOfferAvailable = checkIfSpecialOfferIsAvailable(
-    product,
-    specialOffers,
-  );
+  const isSpecialOfferAvailable = checkIfSpecialOfferIsAvailable(product, specialOffers);
 
   if (isSpecialOfferAvailable || discountValue <= 0) {
     return roundToTwo(regularPrice);
   }
 
   let finalPrice = regularPrice;
-  if (discountType === "Percentage") {
+  if (discountType === "percentage") {
     finalPrice = regularPrice - (regularPrice * discountValue) / 100;
-  } else if (discountType === "Flat") {
+  } else if (discountType === "flat") {
     finalPrice = regularPrice - discountValue;
   }
 

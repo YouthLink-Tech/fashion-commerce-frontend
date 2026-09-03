@@ -88,7 +88,7 @@ export default function ProductToast({
           {/* Cart Item Size */}
           <div className="flex gap-x-1.5 text-[11px]/[1] sm:text-xs/[1]">
             <h5>{variantSize ? "Size" : "Sizes"}:</h5>
-            <span>{variantSize || variantSizes.join(", ")}</span>
+            <span>{variantSize || variantSizes.map((s) => s.name).join(", ")}</span>
           </div>
           {/* Cart Item Color */}
           <div className="flex gap-x-1.5 text-[11px]/[1] sm:text-xs/[1]">
@@ -98,23 +98,23 @@ export default function ProductToast({
                 <div
                   style={{
                     background:
-                      variantColor?.label !== "Multicolor"
-                        ? variantColor?.color
+                      variantColor?.name !== "Multicolor"
+                        ? variantColor?.hex
                         : "linear-gradient(90deg, blue 0%, red 40%, green 80%)",
                   }}
                   className="size-2.5 rounded-full ring-1 ring-neutral-300"
                 />
-                {variantColor?.label}
+                {variantColor?.name}
               </div>
             ) : (
               <div className="flex items-center gap-1">
                 {variantColors.map((variantColor) => (
                   <div
-                    key={`wishlist-toast-color-${variantColor}`}
+                    key={`wishlist-toast-color-${variantColor.id}`}
                     style={{
                       background:
-                        variantColor?.label !== "Multicolor"
-                          ? variantColor?.color
+                        variantColor?.name !== "Multicolor"
+                          ? variantColor?.hex
                           : "linear-gradient(90deg, blue 0%, red 40%, green 80%)",
                     }}
                     className="size-2.5 rounded-full ring-1 ring-neutral-300"

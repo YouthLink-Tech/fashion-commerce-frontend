@@ -21,3 +21,22 @@ export default function getImageSetsBasedOnColors(productVariants) {
     images: Array.from(images),
   }));
 }
+
+export const getImageSetsByColor = (variants) => {
+  if (!variants?.length) return [];
+
+  const colorImageMap = new Map();
+
+  variants.forEach(({ color, media }) => {
+    if (!colorImageMap.has(color.id)) {
+      colorImageMap.set(color.id, { color, images: new Map() });
+    }
+    const entry = colorImageMap.get(color.id);
+    (media ?? []).forEach((m) => entry.images.set(m.id, m.public_id));
+  });
+
+  return [...colorImageMap.values()].map(({ color, images }) => ({
+    color,
+    images: [...images.values()],
+  }));
+};
