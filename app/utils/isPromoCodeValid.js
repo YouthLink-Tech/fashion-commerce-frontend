@@ -1,22 +1,24 @@
-export default function checkIfPromoCodeIsValid(userPromoCode, cartSubtotal) {
-  const now = new Date(
-    new Intl.DateTimeFormat("en-US", {
-      timeZone: "Asia/Dhaka",
-      hour12: false,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    }).format(new Date()),
-  );
+export const getTodayDateString = () =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Dhaka" }).format(new Date());
 
-  const expiryDate = new Date(`${userPromoCode?.expiryDate}T23:59:59+06:00`);
-  const minAmount = userPromoCode?.minAmount || 0;
+export const isExpired = (expiryDate) => {
+  if (!expiryDate) return false;
+  const d =
+    expiryDate instanceof Date
+      ? expiryDate.toISOString().slice(0, 10)
+      : String(expiryDate).slice(0, 10);
+  return d < getTodayDateString();
+};
+
+export default function checkIfPromoCodeIsValid(userPromoCode, cartSubtotal) {
+  if (!userPromoCode) return false;
+
+  const minAmount = Number(userPromoCode.min_amount) || 0;
+  const isNotExpired = !isExpired(userPromoCode.expiry_date);
+
   return (
-    userPromoCode?.promoStatus == true &&
-    now <= expiryDate &&
+    userPromoCode.is_active === true &&
+    isNotExpired &&
     cartSubtotal >= minAmount
   );
 }

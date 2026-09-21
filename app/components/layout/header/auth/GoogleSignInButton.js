@@ -58,11 +58,19 @@ export default function GoogleSignInButton({
         clearInterval(interval);
 
         if (window.isLoginSuccessful) {
-          toast.success("Successfully logged in.");
+          toast.success(
+            ctaText.toLowerCase().includes("connect")
+              ? "Successfully connected to Google."
+              : "Successfully logged in."
+          );
           if (isAuthModalOpen) setIsAuthModalOpen(false);
           router.refresh();
         } else {
-          toast.error(`Failed to ${ctaText.toLowerCase()}. Please try again.`);
+          toast.error(
+            ctaText.toLowerCase().includes("connect")
+              ? "Failed to connect Google account. Please try again."
+              : `Failed to ${ctaText.toLowerCase()}. Please try again.`
+          );
         }
 
         delete window.isLoginSuccessful;

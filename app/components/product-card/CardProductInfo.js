@@ -6,14 +6,14 @@ import TransitionLink from "../ui/TransitionLink";
 
 export default function CardProductInfo({
   product,
-  // specialOffers,
+  specialOffers = [],
   isProductOutOfStock,
   isProductLimitedStock,
 }) {
   // needs to pass special offer after offer migration
   const isOnlyRegularDiscountAvailable = checkIfOnlyRegularDiscountIsAvailable(
     product,
-    [],
+    specialOffers,
   );
 
   return (
@@ -31,7 +31,7 @@ export default function CardProductInfo({
           {isOnlyRegularDiscountAvailable && (
             // needs to pass special offer after offer migration
             <p className="font-semibold text-neutral-800">
-              ৳ {(calculateFinalPrice(product, []) || 0).toLocaleString()}
+              ৳ {(calculateFinalPrice(product, specialOffers) || 0).toLocaleString()}
             </p>
           )}
         </div>

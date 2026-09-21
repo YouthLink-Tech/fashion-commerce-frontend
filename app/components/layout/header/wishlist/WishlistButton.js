@@ -8,7 +8,6 @@ import {
   DropdownMenu,
   DropdownTrigger,
 } from "@nextui-org/react";
-import toast from "react-hot-toast";
 import { routeFetch } from "@/app/lib/fetcher/routeFetch";
 import WishlistHeader from "./WishlistHeader";
 import WishlistItems from "./WishlistItems";
@@ -24,8 +23,10 @@ export default function WishlistButton({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
-    const handleStorageUpdate = () =>
-      setWishlistItems(JSON.parse(localStorage.getItem("wishlistItems")));
+    const handleStorageUpdate = () => {
+      const updatedWishlist = JSON.parse(localStorage.getItem("wishlistItems"));
+      setWishlistItems(updatedWishlist);
+    };
 
     window.addEventListener("storageWishlist", handleStorageUpdate);
     handleStorageUpdate();
@@ -35,64 +36,90 @@ export default function WishlistButton({
     };
   }, []);
 
+  // One-time sync on login only (never on page refresh)
   useEffect(() => {
-    if (productList?.length) {
-      const localWishlist = JSON.parse(localStorage.getItem("wishlistItems"));
-      const storedWishlistItems = localWishlist?.length
-        ? localWishlist
-        : userData?.wishlistItems?.length
-          ? userData.wishlistItems
-          : [];
-      const activeItemsInWishlist = storedWishlistItems.filter((storedItem) =>
-        productList?.some(
-          (product) =>
-            product?._id === storedItem?._id && product?.status === "active",
-        ),
-      );
+    if (!userData?.id) {
+      sessionStorage.removeItem("wishlist_synced_user");
+      return;
+    }
 
-      const updateServerWishlist = async () => {
-        const updatedUserData = {
-          ...userData,
-          wishlistItems: activeItemsInWishlist,
-        };
+    // Check if this user session was already synced in this tab
+    const alreadySynced = sessionStorage.getItem("wishlist_synced_user") === userData.id;
 
-        try {
-          const result = await routeFetch(`/api/user-data/${userData?._id}`, {
-            method: "PUT",
-            body: JSON.stringify(updatedUserData),
+    if (alreadySynced) {
+      // PAGE REFRESH: User was already logged in. Do NOT sync!
+      const localWishlist = JSON.parse(localStorage.getItem("wishlistItems")) || [];
+      if (!localWishlist.length) {
+        routeFetch("/api/wishlist")
+          .then((res) => {
+            if (res.ok && res.data?.items?.length) {
+              const formattedWishlist = res.data.items.map((i) => ({
+                id: i.product_id,
+              }));
+              localStorage.setItem("wishlistItems", JSON.stringify(formattedWishlist));
+              window.dispatchEvent(new Event("storageWishlist"));
+            }
+          })
+          .catch((err) => console.error("WishlistHydrateError:", err));
+      }
+      return;
+    }
+
+    // FRESH LOGIN DETECTED: Mark this user as synced immediately
+    sessionStorage.setItem("wishlist_synced_user", userData.id);
+
+    const localWishlist = JSON.parse(localStorage.getItem("wishlistItems")) || [];
+    const productIdsToSync = localWishlist
+      .map((item) => item.id)
+      .filter(Boolean);
+
+    const syncOrHydrateWishlist = async () => {
+      try {
+        if (productIdsToSync.length > 0) {
+          // Items were added as guest: clear old account wishlist so guest items REPLACE the account wishlist
+          await routeFetch("/api/wishlist", { method: "DELETE" });
+
+          const res = await routeFetch("/api/wishlist/sync", {
+            method: "POST",
+            body: JSON.stringify({ product_ids: productIdsToSync }),
           });
 
-          if (!result.ok) {
-            console.error(
-              "UpdateError (wishlistButton):",
-              result.message || "Failed to update the wishlist on server.",
+          if (res.ok && res.data?.items) {
+            // Preserve original guest serial/order
+            const orderMap = new Map(
+              productIdsToSync.map((id, idx) => [id, idx]),
             );
-            toast.error(
-              result.message || "Failed to update the wishlist on server.",
-            );
+
+            const formattedWishlist = res.data.items
+              .map((i) => ({
+                id: i.product_id,
+              }))
+              .sort(
+                (a, b) =>
+                  (orderMap.get(a.id) ?? 999) - (orderMap.get(b.id) ?? 999),
+              );
+
+            localStorage.setItem("wishlistItems", JSON.stringify(formattedWishlist));
+            window.dispatchEvent(new Event("storageWishlist"));
           }
-        } catch (error) {
-          console.error(
-            "UpdateError (wishlistButton):",
-            error.message || error,
-          );
-          toast.error("Failed to update the wishlist on server.");
+        } else {
+          // No guest items: restore user's saved server wishlist
+          const res = await routeFetch("/api/wishlist");
+          if (res.ok && res.data?.items?.length) {
+            const formattedWishlist = res.data.items.map((i) => ({
+              id: i.product_id,
+            }));
+            localStorage.setItem("wishlistItems", JSON.stringify(formattedWishlist));
+            window.dispatchEvent(new Event("storageWishlist"));
+          }
         }
-      };
+      } catch (err) {
+        console.error("WishlistSyncError:", err);
+      }
+    };
 
-      // If there are wishlist items in local storage and user just logged in,
-      // update the server wishlist with the newly added items
-      // if (localWishlist?.length && userData) updateServerWishlist();
-      if (localWishlist?.length && userData && !localStorage.getItem("checkout_payment_pending")) updateServerWishlist();
-
-      setWishlistItems(activeItemsInWishlist);
-      localStorage.setItem(
-        "wishlistItems",
-        JSON.stringify(activeItemsInWishlist),
-      );
-      window.dispatchEvent(new Event("storageWishlist"));
-    }
-  }, [productList, userData]);
+    syncOrHydrateWishlist();
+  }, [userData?.id]);
 
   return (
     <Dropdown
@@ -135,7 +162,7 @@ export default function WishlistButton({
           <span
             className={`absolute right-0 top-0 flex size-3.5 -translate-y-1/2 translate-x-1/2 select-none items-center justify-center rounded-full bg-red-500 text-[8px] font-semibold text-white ${!wishlistItems?.length ? "hidden" : ""}`}
           >
-            {wishlistItems?.reduce((accumulator, item) => accumulator + 1, 0)}
+            {wishlistItems?.length || 0}
           </span>
         </li>
       </DropdownTrigger>

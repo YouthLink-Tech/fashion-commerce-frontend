@@ -45,6 +45,9 @@ export default function CheckoutItemsInfo({
     promoDiscount +
     (free ? 0 : shippingCharge);
 
+  const isPercentage =
+    (userPromoCode?.discount_type || "").toLowerCase() === "percentage";
+
   return (
     <div className="space-y-2.5 [&>div>*]:z-[1] [&>div>span]:text-right [&>div]:flex [&>div]:justify-between">
       <div>
@@ -65,45 +68,45 @@ export default function CheckoutItemsInfo({
               className="cursor-default text-[#45963a] underline underline-offset-2"
               onClick={() => setIsPromoModalOpen(true)}
             >
-              {userPromoCode?.promoCode}*
+              {userPromoCode?.code}*
             </span>
             )
           </h5>
           <DiscountModal
             isDiscountModalOpen={isPromoModalOpen}
             setIsDiscountModalOpen={setIsPromoModalOpen}
-            discountTitle={userPromoCode?.promoCode}
+            discountTitle={userPromoCode?.code}
             discountAmount={
-              userPromoCode?.promoDiscountType === "Percentage"
-                ? userPromoCode?.promoDiscountValue + "%"
-                : "৳ " + userPromoCode?.promoDiscountValue
+              isPercentage
+                ? userPromoCode?.discount_value + "%"
+                : "৳ " + userPromoCode?.discount_value
             }
-            discountMinAmount={Number(userPromoCode?.minAmount)}
-            discountMaxAmount={Number(userPromoCode?.maxAmount)}
+            discountMinAmount={Number(userPromoCode?.min_amount)}
+            discountMaxAmount={Number(userPromoCode?.max_amount)}
           />
           <h5 className="text-neutral-500 max-xl:hidden">
             Promo (
             <DiscountTooptip
-              discountTitle={userPromoCode?.promoCode}
+              discountTitle={userPromoCode?.code}
               discountAmount={
-                userPromoCode?.promoDiscountType === "Percentage"
-                  ? userPromoCode?.promoDiscountValue + "%"
-                  : "৳ " + userPromoCode?.promoDiscountValue
+                isPercentage
+                  ? userPromoCode?.discount_value + "%"
+                  : "৳ " + userPromoCode?.discount_value
               }
-              discountMinAmount={Number(userPromoCode?.minAmount)}
-              discountMaxAmount={Number(userPromoCode?.maxAmount)}
+              discountMinAmount={Number(userPromoCode?.min_amount)}
+              discountMaxAmount={Number(userPromoCode?.max_amount)}
             >
               <span className="cursor-default text-[#45963a] underline underline-offset-2">
-                {userPromoCode?.promoCode}*
+                {userPromoCode?.code}*
               </span>
             </DiscountTooptip>
             )
           </h5>
           <span className="text-red-600">
             - ৳{" "}
-            {`${Number(promoDiscount).toLocaleString()}${userPromoCode?.promoDiscountType === "Percentage"
-              ? ` (${Number(userPromoCode?.promoDiscountValue)?.toLocaleString()}%)`
-              : ""
+            {`${Number(promoDiscount).toLocaleString()}${isPercentage
+                ? ` (${Number(userPromoCode?.discount_value)?.toLocaleString()}%)`
+                : ""
               }`}
           </span>
         </div>

@@ -11,11 +11,8 @@ export default function DeliveryAddress({
   type,
   address,
   addressNumber,
-  userData,
-  userEmail,
   setUserData,
   setIsAddingNewAddress,
-  isAddressListEmpty,
   cities,
   thanas,
 }) {
@@ -56,26 +53,27 @@ export default function DeliveryAddress({
         postalCode: "",
       });
     } else {
+      const isPrimary = address?.is_primary ?? false; // Reads is_primary
       reset({
         nickname:
           (address?.nickname || "") +
-          (address?.isPrimary
+          (isPrimary
             ? (!isEditingForm && !!address?.nickname ? " " : "") +
             (isEditingForm ? "" : "(Primary)")
             : ""),
         address1: address?.address1,
-        cityId: address?.cityId,
-        thanaId: address?.thanaId,
-        postalCode: address?.postalCode,
+        cityId: address?.thana?.city_id || "",
+        thanaId: address?.thana_id || "",
+        postalCode: address?.postal_code || "",
       });
     }
   }, [
     address?.address1,
-    address?.cityId,
-    address?.thanaId,
-    address?.isPrimary,
+    address?.thana?.city_id,
+    address?.thana_id,
+    address?.is_primary,
     address?.nickname,
-    address?.postalCode,
+    address?.postal_code,
     isEditingForm,
     reset,
     type,
@@ -106,71 +104,65 @@ export default function DeliveryAddress({
   }, [type, isEditingForm]);
 
   const onSubmit = async (data) => {
-    let updatedUserData;
+    let payload;
     setIsPageLoading(true);
 
     if (type === "new") {
-      updatedUserData = {
-        ...userData,
-        userInfo: {
-          ...userData.userInfo,
-          deliveryAddresses: [
-            ...userData.userInfo.deliveryAddresses,
-            {
-              id: `${userEmail}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-              nickname: data.nickname,
-              address1: data.address1,
-              cityId: data.cityId,
-              thanaId: data.thanaId,
-              postalCode: data.postalCode,
-              isPrimary: isAddressListEmpty,
-            },
-          ],
-        },
+      // Payload for creating a new address
+      payload = {
+        nickname: data.nickname ? data.nickname.trim() : null,
+        address1: data.address1.trim(),
+        thana_id: data.thanaId,
+        postal_code: data.postalCode.trim(),
+        is_primary: false,
       };
     } else {
       if (
-        address?.nickname === data.nickname &&
-        address?.address1 === data.address1 &&
-        address?.cityId === data.cityId &&
-        address?.thanaId === data.thanaId &&
-        address?.postalCode === data.postalCode
+        (address?.nickname || "") === (data.nickname?.trim() || "") &&
+        address?.address1 === data.address1?.trim() &&
+        address?.thana?.city_id === data.cityId &&
+        address?.thana_id === data.thanaId &&
+        address?.postal_code === data.postalCode?.trim()
       ) {
         toast.error("Not saved as no changes were made.");
         setIsPageLoading(false);
         return setIsEditingForm(false);
       }
 
-      updatedUserData = {
-        ...userData,
-        userInfo: {
-          ...userData.userInfo,
-          deliveryAddresses: userData.userInfo.deliveryAddresses.map(
-            (availableAddress) =>
-              availableAddress.id === address?.id
-                ? {
-                  ...availableAddress,
-                  nickname: data.nickname,
-                  address1: data.address1,
-                  cityId: data.cityId,
-                  thanaId: data.thanaId,
-                  postalCode: data.postalCode,
-                }
-                : availableAddress,
-          ),
-        },
+      // Payload for updating an existing address
+      payload = {
+        nickname: data.nickname ? data.nickname.trim() : null,
+        address1: data.address1.trim(),
+        thana_id: data.thanaId,
+        postal_code: data.postalCode.trim(),
       };
     }
 
-    setUserData(updatedUserData);
-
     try {
-      const result = await routeFetch(`/api/user-data/${userData?._id}`, {
-        method: "PUT",
-        body: JSON.stringify(updatedUserData),
-      });
+      // Atomic address endpoint (POST for new, PATCH for update)
+      const result = await routeFetch(
+        type === "new"
+          ? "/api/customer/addresses"
+          : `/api/customer/addresses/${address.id}`,
+        {
+          method: type === "new" ? "POST" : "PATCH",
+          body: JSON.stringify(payload),
+        },
+      );
 
-      if (result.ok) {
+      if (result.ok || result.id) {
+        const savedAddress = result.data || result;
+        // Updates local userData.addresses array
+        setUserData((prev) => ({
+          ...prev,
+          addresses:
+            type === "new"
+              ? [...(prev.addresses || []), savedAddress]
+              : (prev.addresses || []).map((a) =>
+                a.id === address.id ? { ...a, ...savedAddress } : a,
+              ),
+        }));
+
         toast.success(
           type === "new"
             ? "New delivery address added successfully."
@@ -190,11 +182,11 @@ export default function DeliveryAddress({
         error.message || error,
       );
       toast.error("Failed to update data on server.");
+    } finally {
+      if (type === "new") setIsAddingNewAddress(false);
+      setIsEditingForm(false);
+      setIsPageLoading(false);
     }
-
-    if (type === "new") setIsAddingNewAddress(false);
-    setIsEditingForm(false);
-    setIsPageLoading(false);
   };
 
   const onError = (errors) => {
@@ -210,28 +202,22 @@ export default function DeliveryAddress({
   const handlePrimarySelection = async () => {
     setIsPageLoading(true);
 
-    const updatedUserData = {
-      ...userData,
-      userInfo: {
-        ...userData.userInfo,
-        deliveryAddresses: userData.userInfo.deliveryAddresses.map(
-          (availableAddress) => ({
-            ...availableAddress,
-            isPrimary: availableAddress.id === address?.id ? true : false,
-          }),
-        ),
-      },
-    };
-
-    setUserData(updatedUserData);
-
     try {
-      const result = await routeFetch(`/api/user-data/${userData?._id}`, {
-        method: "PUT",
-        body: JSON.stringify(updatedUserData),
+      // Calls dedicated atomic PATCH primary route instead of PUT /api/user-data/:id
+      const result = await routeFetch(`/api/customer/addresses/${address?.id}/primary`, {
+        method: "PATCH",
       });
 
-      if (result.ok) {
+      if (result.ok || result.id) {
+        // Updates local userData.addresses array: marks this address true, all others false
+        setUserData((prev) => ({
+          ...prev,
+          addresses: (prev.addresses || []).map((a) => ({
+            ...a,
+            is_primary: a.id === address?.id,
+          })),
+        }));
+
         toast.success("Primary address updated.");
         router.refresh();
       } else {
@@ -247,33 +233,27 @@ export default function DeliveryAddress({
         error.message || error || "Failed to update data on server.",
       );
       toast.error("Failed to update data on server.");
+    } finally {
+      setIsPageLoading(false);
     }
-
-    setIsPageLoading(false);
   };
 
   const handleAddressDelete = async () => {
     setIsPageLoading(true);
 
-    const updatedUserData = {
-      ...userData,
-      userInfo: {
-        ...userData.userInfo,
-        deliveryAddresses: userData.userInfo.deliveryAddresses.filter(
-          (availableAddress) => availableAddress.id !== address?.id,
-        ),
-      },
-    };
-
-    setUserData(updatedUserData);
-
     try {
-      const result = await routeFetch(`/api/user-data/${userData?._id}`, {
-        method: "PUT",
-        body: JSON.stringify(updatedUserData),
+      // Calls dedicated atomic DELETE route instead of PUT /api/user-data/:id
+      const result = await routeFetch(`/api/customer/addresses/${address?.id}`, {
+        method: "DELETE",
       });
 
-      if (result.ok) {
+      if (result.ok || result.success) {
+        // Filters out the deleted address from local userData.addresses array
+        setUserData((prev) => ({
+          ...prev,
+          addresses: (prev.addresses || []).filter((a) => a.id !== address?.id),
+        }));
+
         toast.success("Delivery address deleted successfully.");
         router.refresh();
       } else {
@@ -289,9 +269,9 @@ export default function DeliveryAddress({
         error.message || error || "Failed to update data on server.",
       );
       toast.error("Failed to update data on server.");
+    } finally {
+      setIsPageLoading(false);
     }
-
-    setIsPageLoading(false);
   };
 
   return (
@@ -319,7 +299,7 @@ export default function DeliveryAddress({
                 isEditingForm={isEditingForm}
                 setIsEditingForm={setIsEditingForm}
                 setIsAddingNewAddress={setIsAddingNewAddress}
-                isPrimary={address?.isPrimary}
+                isPrimary={address?.is_primary}
                 handlePrimarySelection={handlePrimarySelection}
                 handleAddressDelete={handleAddressDelete}
               />
@@ -345,7 +325,7 @@ export default function DeliveryAddress({
             isEditingForm={isEditingForm}
             setIsEditingForm={setIsEditingForm}
             setIsAddingNewAddress={setIsAddingNewAddress}
-            isPrimary={address?.isPrimary}
+            isPrimary={address?.is_primary}
             handlePrimarySelection={handlePrimarySelection}
             handleAddressDelete={handleAddressDelete}
           />

@@ -52,9 +52,9 @@ export default function ResetPasswordForm({ token, email }) {
       } else {
         console.error(
           "SubmissionError (resetPasswordForm):",
-          result.message.message || "Failed to reset password.",
+          result.message || "Failed to reset password.",
         );
-        toast.error(result.message.message);
+        toast.error(result.message);
       }
     } catch (error) {
       console.error(

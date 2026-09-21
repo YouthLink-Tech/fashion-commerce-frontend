@@ -10,8 +10,8 @@ import { routeFetch } from "@/app/lib/fetcher/routeFetch";
 import GoogleSignInButton from "@/app/components/layout/header/auth/GoogleSignInButton";
 
 export default function SecurityForm({
-  email,
   name,
+  googleName,
   isLinkedWithCredentials,
   isLinkedWithGoogle,
 }) {
@@ -47,7 +47,6 @@ export default function SecurityForm({
     try {
       const method = isLinkedWithCredentials ? "PUT" : "POST";
       const payload = {
-        email,
         ...(isLinkedWithCredentials && {
           oldPassword: data.oldPassword,
         }),
@@ -259,7 +258,11 @@ export default function SecurityForm({
         </p>
         <GoogleSignInButton
           isLinkedWithGoogle={isLinkedWithGoogle}
-          ctaText={isLinkedWithGoogle ? name : "Connect to Google"}
+          ctaText={
+            isLinkedWithGoogle
+              ? (googleName || name || "Connected")
+              : "Connect to Google"
+          }
         />
       </section>
     </form>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -7,6 +7,7 @@ import { routeFetch } from "@/app/lib/fetcher/routeFetch";
 import {
   calculateSubtotal,
   checkIfSpecialOfferIsAvailable,
+  getAvailableDeliveryTypes,
 } from "@/app/utils/orderCalculations";
 import checkIfPromoCodeIsValid from "@/app/utils/isPromoCodeValid";
 import CheckoutLogin from "@/app/components/checkout/user/CheckoutLogin";
@@ -23,7 +24,6 @@ export default function CheckoutForm({
   productList,
   specialOffers,
   shippingZones,
-  primaryLocation,
   cartItems,
   legalPolicyPdfLinks,
   cities,
@@ -31,15 +31,29 @@ export default function CheckoutForm({
 }) {
   const router = useRouter();
   const { setIsPageLoading } = useLoading();
-  const [userPromoCode, setUserPromoCode] = useState("");
-  const isPromoCodeValid = checkIfPromoCodeIsValid(
-    userPromoCode,
-    calculateSubtotal(productList, cartItems, specialOffers),
-  );
+  const [userPromoCode, setUserPromoCode] = useState(null);
+
+  // Check if ANY item in cart matches an active special offer
+  const hasSpecialOfferInCart = cartItems?.some((cartItem) => {
+    const product = Array.isArray(productList)
+      ? productList.find((p) => p.id === cartItem.productId)
+      : null;
+    return checkIfSpecialOfferIsAvailable(product, specialOffers);
+  });
+  const isPromoCodeValid =
+    !hasSpecialOfferInCart &&
+    checkIfPromoCodeIsValid(
+      userPromoCode,
+      calculateSubtotal(productList, cartItems),
+    );
   const [isAgreementCheckboxSelected, setIsAgreementCheckboxSelected] =
     useState(true);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const primaryAddress = userData?.addresses?.[0] || {};
+  const defaultCityId = primaryAddress?.thana?.city_id || "";
+  const defaultAvailableTypes = getAvailableDeliveryTypes(defaultCityId, shippingZones);
+  const defaultDeliveryType = defaultAvailableTypes.length === 1 ? defaultAvailableTypes[0] : "";
 
   const {
     register,
@@ -51,17 +65,17 @@ export default function CheckoutForm({
     formState: { errors },
   } = useForm({
     defaultValues: {
-      name: userData?.userInfo?.personalInfo?.customerName || "",
+      name: userData?.name || "",
       email: userData?.email || "",
-      hometownId: userData?.userInfo?.personalInfo?.hometownId || "",
-      phoneNumber: userData?.userInfo?.personalInfo?.phoneNumber || "",
-      altPhoneNumber: userData?.userInfo?.personalInfo?.phoneNumber2 || "",
-      addressLineOne: userData?.userInfo?.savedDeliveryAddress?.address1 || "",
-      cityId: userData?.userInfo?.savedDeliveryAddress?.cityId || "",
-      thanaId: userData?.userInfo?.savedDeliveryAddress?.thanaId || "",
-      postalCode: userData?.userInfo?.savedDeliveryAddress?.postalCode || "",
+      hometownId: userData?.hometown || "",
+      phoneNumber: userData?.phone_number || "",
+      altPhoneNumber: userData?.phone_number_2 || "",
+      addressLineOne: primaryAddress?.address1 || "",
+      cityId: defaultCityId,
+      thanaId: primaryAddress?.thana_id || "",
+      postalCode: primaryAddress?.postal_code || "",
       note: "",
-      deliveryType: "",
+      deliveryType: defaultDeliveryType,
       paymentMethod: "",
     },
     mode: "onBlur",
@@ -70,7 +84,6 @@ export default function CheckoutForm({
   const formData = watch();
   const selectedCityId = watch("cityId");
   const selectedDeliveryType = watch("deliveryType");
-  const isInitialCitySet = useRef(true);
 
   function getCookie(name) {
     const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
@@ -107,10 +120,10 @@ export default function CheckoutForm({
     // - The SAME key if cart unchanged, session active, same user (retry/reload/re-click)
     // - A NEW key if cart changed, session expired, or previous payment completed
     const idempotencyKey = resolveIdempotencyKey(
-      userData._id,
+      userData.id,
       cartItems,
       data,
-      userPromoCode?.promoCode || "",
+      userPromoCode?.code || "",
     );
 
     try {
@@ -119,7 +132,7 @@ export default function CheckoutForm({
         body: JSON.stringify({
           ...data,
           idempotencyKey,
-          promoCode: userPromoCode?.promoCode || null,
+          promoCode: userPromoCode?.code || null,
           cartItems,
           userDevice,
           fbp: fbp || null,
@@ -241,40 +254,48 @@ export default function CheckoutForm({
       }
     })();
 
-    const personalInfo = userData?.userInfo?.personalInfo || {};
-    const prevSavedAddress = userData?.userInfo?.savedDeliveryAddress || {};
+    const primaryAddress = userData?.addresses?.[0] || {};
     const wasDeliveryEdited =
       draft?.addressLineOne ||
       draft?.cityId ||
       draft?.thanaId ||
       draft?.postalCode;
-
-    isInitialCitySet.current = true;
+    const resolvedCityId = (wasDeliveryEdited ? draft.cityId : primaryAddress?.thana?.city_id) || "";
+    const resolvedAvailableTypes = getAvailableDeliveryTypes(resolvedCityId, shippingZones);
+    const resolvedDeliveryType =
+      (draft.deliveryType && resolvedAvailableTypes.includes(draft.deliveryType))
+        ? draft.deliveryType
+        : resolvedAvailableTypes.length === 1
+          ? resolvedAvailableTypes[0]
+          : "";
 
     reset({
-      name: personalInfo?.customerName || draft.name || "",
+      name: userData?.name || draft.name || "",
       email: userData?.email || draft.email || "",
-      hometownId: personalInfo?.hometownId || draft.hometownId || "",
-      phoneNumber: draft.phoneNumber || personalInfo?.phoneNumber || "",
-      altPhoneNumber: draft.altPhoneNumber || personalInfo?.phoneNumber2 || "",
+      hometownId: userData?.hometown || draft.hometownId || "",
+      phoneNumber: draft.phoneNumber || userData?.phone_number || "",
+      altPhoneNumber: draft.altPhoneNumber || userData?.phone_number_2 || "",
       addressLineOne:
         (wasDeliveryEdited
           ? draft.addressLineOne
-          : prevSavedAddress?.address1) || "",
-      cityId: (wasDeliveryEdited ? draft.cityId : prevSavedAddress?.cityId) || "",
-      thanaId: (wasDeliveryEdited ? draft.thanaId : prevSavedAddress?.thanaId) || "",
+          : primaryAddress?.address1) || "",
+      cityId: resolvedCityId,
+      thanaId: (wasDeliveryEdited ? draft.thanaId : primaryAddress?.thana_id) || "",
       postalCode:
-        (wasDeliveryEdited ? draft.postalCode : prevSavedAddress?.postalCode) ||
-        "",
+        (wasDeliveryEdited ? draft.postalCode : primaryAddress?.postal_code) || "",
       note: draft.note || "",
-      deliveryType: draft.deliveryType || "",
+      deliveryType: resolvedDeliveryType,
       paymentMethod: draft.paymentMethod || "",
     });
   }, [
     reset,
     userData?.email,
-    userData?.userInfo?.personalInfo,
-    userData?.userInfo?.savedDeliveryAddress,
+    userData?.name,
+    userData?.phone_number,
+    userData?.phone_number_2,
+    userData?.hometown,
+    userData?.addresses,
+    shippingZones
   ]);
 
   useEffect(() => {
@@ -326,16 +347,15 @@ export default function CheckoutForm({
             control={control}
             errors={errors}
             isUserLoggedIn={!!userData}
-            userHometown={userData?.userInfo?.personalInfo?.hometown}
+            userHometown={userData?.hometown}
             cities={cities}
           />
           <CheckoutDeliveryAddress
             register={register}
             control={control}
-            reset={reset}
             errors={errors}
             setValue={setValue}
-            deliveryAddresses={userData?.userInfo?.deliveryAddresses}
+            deliveryAddresses={userData?.addresses}
             selectedCityId={selectedCityId}
             thanas={thanasForSelectedCity}
             selectedDeliveryType={selectedDeliveryType}
@@ -343,24 +363,19 @@ export default function CheckoutForm({
             cities={cities}
           />
           {/* If none of the cart item has special offer, show promo code section */}
-          {cartItems?.every(
-            (cartItem) =>
-              !checkIfSpecialOfferIsAvailable(
-                productList?.find((product) => product._id === cartItem._id),
-                specialOffers,
-              ),
-          ) && (
-              <CheckoutPromoCode
-                userPromoCode={userPromoCode}
-                setUserPromoCode={setUserPromoCode}
-                cartItems={cartItems}
-                cartSubtotal={calculateSubtotal(
-                  productList,
-                  cartItems,
-                  specialOffers,
-                )}
-              />
-            )}
+          {!hasSpecialOfferInCart && (
+            <CheckoutPromoCode
+              userPromoCode={userPromoCode}
+              setUserPromoCode={setUserPromoCode}
+              cartItems={cartItems}
+              cartSubtotal={calculateSubtotal(
+                productList,
+                cartItems,
+              )}
+              customerId={userData?.id}
+              customerEmail={formData.email}
+            />
+          )}
           <CheckoutPaymentMethod register={register} errors={errors} />
         </form>
       </div>
@@ -370,7 +385,6 @@ export default function CheckoutForm({
         cartItems={cartItems}
         specialOffers={specialOffers}
         shippingZones={shippingZones}
-        primaryLocation={primaryLocation}
         userPromoCode={userPromoCode}
         isPromoCodeValid={isPromoCodeValid}
         selectedCityId={selectedCityId}

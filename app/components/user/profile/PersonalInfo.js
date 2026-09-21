@@ -13,83 +13,104 @@ export default function PersonalInfo({ serverUserData, cities }) {
   const router = useRouter();
   const [userData, setUserData] = useState(serverUserData || {});
   const { setIsPageLoading } = useLoading();
-  const personalInfo = userData?.userInfo?.personalInfo || {};
   const [isEditingForm, setIsEditingForm] = useState(false);
+
+  // Sync state if serverUserData changes (e.g., after router.refresh())
+  useEffect(() => {
+    if (serverUserData) {
+      setUserData(serverUserData);
+    }
+  }, [serverUserData]);
+
+  const customerName = userData?.name || "";
+  const phoneNumber = userData?.phone_number || "";
+  const altPhoneNumber = userData?.phone_number_2 || "";
+  const hometownValue = userData?.hometown || "";
+
   const {
     register,
     handleSubmit,
     reset,
     control,
+    getValues,
     formState: { errors },
   } = useForm({
     defaultValues: {
-      name: personalInfo?.customerName || "",
-      email: personalInfo?.email || "",
-      phoneNumber: personalInfo?.phoneNumber || "--",
-      altPhoneNumber: personalInfo?.phoneNumber2 || "--",
-      hometownId: personalInfo?.hometownId || "--",
+      name: customerName,
+      email: userData?.email || "",
+      phoneNumber: phoneNumber || "--",
+      altPhoneNumber: altPhoneNumber || "--",
+      hometownId: hometownValue || "--",
     },
     mode: "onBlur",
   });
 
   useEffect(() => {
     reset({
-      name: personalInfo?.customerName || "",
-      email: personalInfo?.email || "",
-      phoneNumber: personalInfo?.phoneNumber || (isEditingForm ? "" : "--"),
-      altPhoneNumber: personalInfo?.phoneNumber2 || (isEditingForm ? "" : "--"),
-      hometownId: personalInfo?.hometownId || (isEditingForm ? "" : "--"),
+      name: customerName || "",
+      email: userData?.email || "",
+      phoneNumber: phoneNumber || (isEditingForm ? "" : "--"),
+      altPhoneNumber: altPhoneNumber || (isEditingForm ? "" : "--"),
+      hometownId: hometownValue || (isEditingForm ? "" : "--"),
     });
   }, [
     isEditingForm,
-    personalInfo?.customerName,
-    personalInfo?.email,
-    personalInfo?.hometownId,
-    personalInfo?.phoneNumber,
-    personalInfo?.phoneNumber2,
+    customerName,
+    userData?.email,
+    phoneNumber,
+    altPhoneNumber,
+    hometownValue,
     reset,
   ]);
 
   const onSubmit = async (data) => {
     setIsPageLoading(true);
 
-    if (data.phoneNumber === "--") data.phoneNumber = "";
-    if (data.altPhoneNumber === "--") data.altPhoneNumber = "";
-    if (data.hometownId === "--") data.hometownId = "";
+    const cleanPhone = data.phoneNumber === "--" ? "" : data.phoneNumber;
+    const cleanAltPhone = data.altPhoneNumber === "--" ? "" : data.altPhoneNumber;
+    const cleanHometown = data.hometownId === "--" ? "" : data.hometownId;
+
+    if (cleanPhone && cleanAltPhone && cleanPhone === cleanAltPhone) {
+      toast.error(
+        "Alternative mobile number cannot be the same as primary mobile number.",
+      );
+      setIsPageLoading(false);
+      return;
+    }
 
     if (
-      personalInfo?.phoneNumber === data.phoneNumber &&
-      personalInfo?.phoneNumber2 === data.altPhoneNumber &&
-      personalInfo?.hometownId === data.hometownId
+      customerName === data.name &&
+      phoneNumber === cleanPhone &&
+      altPhoneNumber === cleanAltPhone &&
+      hometownValue === cleanHometown
     ) {
       toast.error("Not saved as no changes were made.");
       setIsPageLoading(false);
       return setIsEditingForm(false);
     }
 
-    const updatedUserData = {
-      ...userData,
-      userInfo: {
-        ...userData.userInfo,
-        personalInfo: {
-          ...userData.userInfo.personalInfo,
-          phoneNumber: data.phoneNumber,
-          phoneNumber2: data.altPhoneNumber,
-          hometownId: data.hometownId,
-        },
-      },
+    // Flat Postgres payload matching updateOwnProfileSchema exactly
+    const payload = {
+      phone_number: cleanPhone,
+      phone_number_2: cleanAltPhone,
     };
+    if (data.name) payload.name = data.name;
+    if (cleanHometown) payload.hometown = cleanHometown;
 
-    setUserData(updatedUserData);
+    const customerId = userData?.id
 
     try {
-      const result = await routeFetch(`/api/user-data/${userData?._id}`, {
+      const result = await routeFetch(`/api/user-data/${customerId}`, {
         method: "PUT",
-        body: JSON.stringify(updatedUserData),
+        body: JSON.stringify(payload),
       });
-
       if (result.ok) {
         toast.success("Personal information updated successfully.");
+        // Merge with existing userData so email and id are preserved
+        setUserData((prev) => ({
+          ...prev,
+          ...payload,
+        }));
         router.refresh();
       } else {
         console.error(
@@ -101,13 +122,13 @@ export default function PersonalInfo({ serverUserData, cities }) {
     } catch (error) {
       console.error(
         "UpdateError (personalInfo):",
-        result.message || "Failed to update data on server.",
+        error.message || "Failed to update data on server.",
       );
-      toast.error(result.message || "Failed to update data on server.");
+      toast.error("Failed to update data on server.");
+    } finally {
+      setIsEditingForm(false);
+      setIsPageLoading(false);
     }
-
-    setIsEditingForm(false);
-    setIsPageLoading(false);
   };
 
   const onError = (errors) => {
@@ -115,8 +136,13 @@ export default function PersonalInfo({ serverUserData, cities }) {
 
     if (errorTypes.includes("required"))
       toast.error("Please fill up the required fields.");
-    else if (errorTypes.includes("pattern"))
-      toast.error("Please provide valid information.");
+    else if (errorTypes.includes("pattern") || errorTypes.includes("validate"))
+      toast.error(
+        errors.altPhoneNumber?.message ||
+        errors.phoneNumber?.message ||
+        "Please provide valid information.",
+      );
+
     else toast.error("Something went wrong. Please try again.");
   };
 
@@ -237,6 +263,13 @@ export default function PersonalInfo({ serverUserData, cities }) {
                     value: true,
                     message: "Mobile number is required.",
                   },
+                  validate: (val) => {
+                    const altPhone = getValues("altPhoneNumber");
+                    if (altPhone && altPhone !== "--" && val === altPhone) {
+                      return "Primary mobile number cannot be the same as alternative mobile number.";
+                    }
+                    return true;
+                  },
                 })}
                 onInput={(event) =>
                   (event.target.value = event.target.value.replace(/\D/g, ""))
@@ -256,9 +289,16 @@ export default function PersonalInfo({ serverUserData, cities }) {
                 placeholder="01XXXXXXXXX"
                 readOnly={!isEditingForm}
                 {...register("altPhoneNumber", {
-                  pattern: {
-                    value: /^01\d{9}$/,
-                    message: "Mobile number is invalid.",
+                  validate: (val) => {
+                    if (!val || val === "--") return true;
+                    if (!/^01\d{9}$/.test(val)) {
+                      return "Mobile number must be a valid 11-digit number (e.g., 01XXXXXXXXX)";
+                    }
+                    const primary = getValues("phoneNumber");
+                    if (primary && val === primary) {
+                      return "Alternative mobile number cannot be the same as primary mobile number.";
+                    }
+                    return true;
                   },
                 })}
                 onInput={(event) =>
@@ -282,8 +322,8 @@ export default function PersonalInfo({ serverUserData, cities }) {
               }}
               render={({ field: { onChange, value } }) => (
                 <Autocomplete
-                  isReadOnly={!!personalInfo?.hometownId || !isEditingForm}
-                  isDisabled={!!personalInfo?.hometownId || !isEditingForm}
+                  isReadOnly={!!hometownValue || !isEditingForm}
+                  isDisabled={!!hometownValue || !isEditingForm}
                   isRequired
                   labelPlacement="outside"
                   label="Hometown"
@@ -292,7 +332,7 @@ export default function PersonalInfo({ serverUserData, cities }) {
                   variant="bordered"
                   selectedKey={value}
                   onSelectionChange={onChange}
-                  className={`select-with-search w-full [&:has(input:focus)_[data-slot='input-wrapper']]:border-[var(--color-secondary-500)] [&:has(input:focus)_[data-slot='input-wrapper']]:bg-white/75 [&_[data-disabled='true']]:opacity-100 [&_[data-disabled='true']_[data-slot='inner-wrapper']]:opacity-50 [&_[data-slot='input-wrapper']]:rounded-[4px] [&_[data-slot='input-wrapper']]:bg-white/20 [&_[data-slot='input-wrapper']]:shadow-none [&_[data-slot='input-wrapper']]:backdrop-blur-2xl [&_[data-slot='input-wrapper']]:backdrop-opacity-100 [&_[data-slot='input-wrapper']]:hover:border-[var(--color-secondary-500)] [&_label]:!text-neutral-500 ${isEditingForm || personalInfo?.hometownId ? "[&_[data-slot='inner-wrapper']]:!opacity-100" : "[&_[data-slot='inner-wrapper']]:!opacity-0"}`}
+                  className={`select-with-search w-full [&:has(input:focus)_[data-slot='input-wrapper']]:border-[var(--color-secondary-500)] [&:has(input:focus)_[data-slot='input-wrapper']]:bg-white/75 [&_[data-disabled='true']]:opacity-100 [&_[data-disabled='true']_[data-slot='inner-wrapper']]:opacity-50 [&_[data-slot='input-wrapper']]:rounded-[4px] [&_[data-slot='input-wrapper']]:bg-white/20 [&_[data-slot='input-wrapper']]:shadow-none [&_[data-slot='input-wrapper']]:backdrop-blur-2xl [&_[data-slot='input-wrapper']]:backdrop-opacity-100 [&_[data-slot='input-wrapper']]:hover:border-[var(--color-secondary-500)] [&_label]:!text-neutral-500 ${isEditingForm || hometownValue ? "[&_[data-slot='inner-wrapper']]:!opacity-100" : "[&_[data-slot='inner-wrapper']]:!opacity-0"}`}
                 >
                   {cities.map((hometown) => {
                     return (
@@ -305,7 +345,7 @@ export default function PersonalInfo({ serverUserData, cities }) {
               )}
             />
             <p
-              className={`absolute left-0 top-9 -translate-y-1/2 font-semibold text-neutral-700 transition-opacity duration-100 ease-in-out ${!isEditingForm && !personalInfo?.hometownId ? "opacity-100" : "opacity-0"}`}
+              className={`absolute left-0 top-9 -translate-y-1/2 font-semibold text-neutral-700 transition-opacity duration-100 ease-in-out ${!isEditingForm && !hometownValue ? "opacity-100" : "opacity-0"}`}
             >
               --
             </p>

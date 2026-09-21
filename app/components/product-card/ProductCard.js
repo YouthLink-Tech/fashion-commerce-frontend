@@ -44,11 +44,13 @@ export default function ProductCard({
       />
       <CardProductInfo
         product={product}
-        // specialOffers={specialOffers}
+        specialOffers={specialOffers}
         isProductOutOfStock={isProductOutOfStock}
         isProductLimitedStock={isProductLimitedStock}
       />
       <ProductBadges
+        isTrending={!!product.is_trending}
+        isNewArrival={!!product.is_new_arrival}
         hasSpecialOffer={checkIfSpecialOfferIsAvailable(product, specialOffers)}
         specialOffer={getProductSpecialOffer(product, specialOffers, "NA")}
         hasDiscount={hasDiscount}

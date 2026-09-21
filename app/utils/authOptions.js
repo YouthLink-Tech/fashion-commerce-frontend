@@ -10,13 +10,21 @@ const refreshAccessToken = async (token) => {
       headers: { Cookie: cookies().toString() },
     });
 
-    if (!result.ok)
-      throw new Error(result.message || "Failed to refresh access token.");
+    if (!result.ok) {
+      return {
+        ...token,
+        error: "RefreshAccessTokenError",
+      };
+    }
 
-    const newAccessToken = result.data.accessToken;
+    const newAccessToken = result.data?.accessToken;
 
-    if (!newAccessToken)
-      throw new Error("Failed to generate new access token.");
+    if (!newAccessToken) {
+      return {
+        ...token,
+        error: "RefreshAccessTokenError",
+      };
+    }
 
     return {
       ...token,
@@ -28,7 +36,10 @@ const refreshAccessToken = async (token) => {
     console.error(
       `RefreshTokenError (authOptions/refreshAccessToken): ${error.message || "Failed to refresh access token."}`,
     );
-    throw new Error(error.message);
+    return {
+      ...token,
+      error: "RefreshAccessTokenError",
+    };
   }
 };
 
@@ -45,7 +56,10 @@ export const authOptions = {
         try {
           const result = await rawFetch("/api/customer/verify-credentials-login", {
             method: "POST",
-            body: JSON.stringify(credentials),
+            body: JSON.stringify({
+              email: credentials?.email,
+              password: credentials?.password,
+            }),
           });
 
           if (!result.ok)
@@ -53,8 +67,14 @@ export const authOptions = {
               result.message || "Invalid credentials. Please try again.",
             );
 
+          const { customer, accessToken, refreshToken } = result.data;
+
           return {
-            email: credentials.email,
+            id: customer.id,
+            email: customer.email,
+            name: customer.name,
+            accessToken,
+            refreshToken,
           };
         } catch (error) {
           console.error(
@@ -83,11 +103,16 @@ export const authOptions = {
               result.message || "Failed to authenticate with Google.",
             );
 
+          // Backend returns: { customer, accessToken, refreshToken }
+          const { customer, accessToken, refreshToken } = result.data;
+
           return {
-            id: profile.sub,
-            name: profile.name,
-            email: profile.email,
+            id: customer.id,
+            email: customer.email,
+            name: customer.name,
             image: profile.picture,
+            accessToken,
+            refreshToken,
           };
         } catch (error) {
           console.error(
@@ -100,37 +125,26 @@ export const authOptions = {
   ],
   callbacks: {
     async jwt({ token, user, account }) {
-      // Initial sign in
+      // Initial sign-in: tokens are already returned from authorize / profile
       if (user && account) {
         try {
-          const result = await rawFetch("/api/customer/generate-customer-tokens", {
-            method: "POST",
-            body: JSON.stringify({ email: user.email }),
-          });
-
-          if (!result.ok)
-            throw new Error(
-              result.message || "Failed to generate customer tokens.",
-            );
-
-          const userData = result.data;
-
-          cookies().set("refreshToken", userData.refreshToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "None",
-            maxAge: 7 * 24 * 60 * 60, // 7 days
-          });
-
-          token._id = userData._id;
-          token.email = userData.email;
-          token.accessToken = userData.accessToken;
+          if (user.refreshToken) {
+            cookies().set("refreshToken", user.refreshToken, {
+              httpOnly: true,
+              secure: true,
+              sameSite: "None",
+              maxAge: 7 * 24 * 60 * 60, // 7 days
+            });
+          }
+          token.id = user.id;
+          token.email = user.email;
+          token.name = user.name;
+          token.accessToken = user.accessToken;
           token.accessTokenExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
-
           return token;
         } catch (error) {
           console.error(
-            `TokenError (authOptions/callbacks/jwt): ${error.message || "Failed to generate customer tokens."}`,
+            `TokenError (authOptions/callbacks/jwt): ${error.message || "Failed to set user tokens."}`,
           );
           throw new Error(error.message);
         }
@@ -145,8 +159,9 @@ export const authOptions = {
       return refreshAccessToken(token);
     },
     async session({ session, token }) {
-      session.user._id = token._id;
+      session.user.id = token.id;
       session.user.email = token.email;
+      session.user.name = token.name;
       session.accessToken = token.accessToken;
       session.error = token.error;
 

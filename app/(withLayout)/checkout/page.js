@@ -16,7 +16,6 @@ export default async function Checkout() {
     rawFetch("/api/products/all"),
     rawFetch("/api/special-offer/all"),
     rawFetch("/api/shipping-zone/public-options"),
-    rawFetch("/api/location/primary"),
     rawFetch("/api/policy-pdf/all", {
       next: {
         revalidate: 604800, // 7 days — legal documents rarely change
@@ -33,7 +32,6 @@ export default async function Checkout() {
     productsRes,
     offersRes,
     shippingZonesRes,
-    primaryLocationRes,
     legalPolicyPdfLinksRes,
     cityRes,
     thanaRes,
@@ -44,21 +42,14 @@ export default async function Checkout() {
     productList,
     specialOffers,
     shippingZones,
-    primaryLocation,
     legalPolicyPdfLinks,
     cities,
     thanas,
   ] = [
       extractData(userDataRes, null, "checkout/userData"),
-      extractData(productsRes, [], "checkout/products"),
+      extractData(productsRes, { items: [] }, "checkout/products")?.items ?? [],
       extractData(offersRes, [], "checkout/specialOffers"),
       extractData(shippingZonesRes, [], "checkout/shippingZones"),
-      extractData(
-        primaryLocationRes,
-        null,
-        "checkout/primaryLocation",
-        "primaryLocation",
-      ),
       extractData(legalPolicyPdfLinksRes, {}, "checkout/legalPdfLinks"),
       extractData(cityRes, [], "checkout/city"),
       extractData(thanaRes, [], "checkout/thanas"),
@@ -71,7 +62,6 @@ export default async function Checkout() {
         productList={productList}
         specialOffers={specialOffers}
         shippingZones={shippingZones}
-        primaryLocation={primaryLocation}
         legalPolicyPdfLinks={legalPolicyPdfLinks}
         cities={cities}
         thanas={thanas}

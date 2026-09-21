@@ -86,28 +86,28 @@ export default function ProductInfoOverview({
             ৳ {calculateFinalPrice(product, specialOffers).toLocaleString()}
           </p>
         )}
-        {hasSpecialOffer && (
+        {hasSpecialOffer && specialOffer && (
           <>
             <ProductSpecialOfferButton
-              discountTitle={specialOffer?.offerTitle}
+              discountTitle={specialOffer?.title}
               discountAmount={
-                specialOffer?.offerDiscountType === "Percentage"
-                  ? specialOffer?.offerDiscountValue + "%"
-                  : "৳ " + specialOffer?.offerDiscountValue
+                (specialOffer?.discount_type || "").toLowerCase() === "percentage"
+                  ? specialOffer?.discount_value + "%"
+                  : "৳ " + specialOffer?.discount_value
               }
-              discountMinAmount={Number(specialOffer?.minAmount)}
-              discountMaxAmount={Number(specialOffer?.maxAmount)}
+              discountMinAmount={Number(specialOffer?.min_amount)}
+              discountMaxAmount={Number(specialOffer?.max_amount)}
             />
             <div className="max-xl:hidden">
               <DiscountTooptip
-                discountTitle={specialOffer?.offerTitle}
+                discountTitle={specialOffer?.title}
                 discountAmount={
-                  specialOffer?.offerDiscountType === "Percentage"
-                    ? specialOffer?.offerDiscountValue + "%"
-                    : "৳ " + specialOffer?.offerDiscountValue
+                  (specialOffer?.discount_type || "").toLowerCase() === "percentage"
+                    ? specialOffer?.discount_value + "%"
+                    : "৳ " + specialOffer?.discount_value
                 }
-                discountMinAmount={Number(specialOffer?.minAmount)}
-                discountMaxAmount={Number(specialOffer?.maxAmount)}
+                discountMinAmount={Number(specialOffer?.min_amount)}
+                discountMaxAmount={Number(specialOffer?.max_amount)}
               >
                 <div className="flex h-9 cursor-default items-center gap-1.5 rounded-[4px] bg-[#a138b1] px-2 font-semibold text-white shadow-[1px_1px_12px_0_rgba(0,0,0,0.1)] transition-[background-color] duration-300 ease-in-out">
                   <div className="relative h-9 w-6">
@@ -157,7 +157,6 @@ export default function ProductInfoOverview({
       <div className="flex gap-2 max-lg:flex-wrap [&>button>svg]:text-lg [&>button]:rounded-[4px] [&>button]:px-5 [&>button]:py-6 [&>button]:text-sm [&>button]:font-semibold [&>button]:text-neutral-600 [&>button]:duration-300 hover:[&>button]:opacity-100">
         <ProductCartButton
           userData={userData}
-          productId={product?.id}
           productTitle={product?.title}
           productImg={
             product?.variants?.find(

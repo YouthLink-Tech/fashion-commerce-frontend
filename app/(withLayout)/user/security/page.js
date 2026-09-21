@@ -3,6 +3,8 @@ import { tokenizedFetch } from "@/app/lib/fetcher/tokenizedFetch";
 import { authOptions } from "@/app/utils/authOptions";
 import SecurityForm from "@/app/components/user/security/SecurityForm";
 
+export const dynamic = "force-dynamic";
+
 export default async function Security() {
   const session = await getServerSession(authOptions);
 
@@ -18,14 +20,14 @@ export default async function Security() {
     } catch (error) {
       console.error("FetchError (security/userData):", error.message);
     }
-  }
+  };
 
   return (
     <SecurityForm
-      email={userData?.email}
-      name={userData?.userInfo?.personalInfo?.customerName}
-      isLinkedWithCredentials={userData?.isLinkedWithCredentials}
-      isLinkedWithGoogle={userData?.isLinkedWithGoogle}
+      name={userData?.name}
+      googleName={userData?.google_name}
+      isLinkedWithCredentials={userData?.is_linked_with_credentials}
+      isLinkedWithGoogle={userData?.is_linked_with_google}
     />
   );
 }

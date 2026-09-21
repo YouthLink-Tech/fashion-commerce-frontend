@@ -18,7 +18,7 @@ export default function ProductBadges({
   const canvasRef = useRef();
 
   useEffect(() => {
-    if (hasSpecialOffer) {
+    if (hasSpecialOffer && specialOffer) {
       if (!canvasRef.current) {
         canvasRef.current = document.createElement("canvas");
       }
@@ -26,11 +26,12 @@ export default function ProductBadges({
       context.font = "12px 'Oxygen', sans-serif"; // Match the font styles
 
       // Extract badge title and value text
-      const titleText = specialOffer.badgeTitle;
-      const valueText =
-        specialOffer.offerDiscountType === "Percentage"
-          ? `${specialOffer.offerDiscountValue}% OFF!`
-          : `৳ ${specialOffer.offerDiscountValue} OFF!`;
+      const titleText = specialOffer.badge_title || "";
+      const isPercentage =
+        (specialOffer.discount_type || "").toLowerCase() === "percentage";
+      const valueText = isPercentage
+        ? `${specialOffer.discount_value}% OFF!`
+        : `৳ ${specialOffer.discount_value} OFF!`;
 
       // Measure base widths
       let computedTitleWidth = context.measureText(titleText).width;
@@ -79,6 +80,9 @@ export default function ProductBadges({
   const expandedSpecialOfferWidth = baseWidth + specialOfferTextWidth + padding;
   const expandedDiscountWidth = baseWidth + discountTextWidth + padding;
 
+  const isSpecialOfferPercentage =
+    (specialOffer?.discount_type || "").toLowerCase() === "percentage";
+
   return (
     <div className="absolute left-3 top-3 z-[3] space-y-2">
       {isTrending && (
@@ -110,7 +114,7 @@ export default function ProductBadges({
           </p>
         </div>
       )}
-      {hasSpecialOffer ? (
+      {hasSpecialOffer && specialOffer ? (
         <div
           className="relative w-8 overflow-hidden rounded-[3px] bg-[#a138b1] font-semibold text-white shadow-[1px_1px_12px_0_rgba(0,0,0,0.1)] transition-[width] duration-300 hover:w-[var(--expanded-width)] [&:hover>div:last-child]:animate-[scroll_3s_linear_infinite]"
           style={{
@@ -122,11 +126,11 @@ export default function ProductBadges({
             <TiStarOutline className="absolute left-1/2 top-1/2 h-full w-2/3 -translate-x-1/2 -translate-y-1/2 object-contain" />
           </div>
           <div className="absolute left-8 top-2 flex flex-col gap-6 transition-transform duration-300 ease-in-out [&>p]:pointer-events-none [&>p]:text-nowrap [&>p]:text-xs">
-            <p>{specialOffer.badgeTitle}</p>
+            <p>{specialOffer.badge_title}</p>
             <p>
-              {specialOffer.offerDiscountType === "Percentage"
-                ? `${specialOffer.offerDiscountValue}% OFF!`
-                : `৳ ${specialOffer.offerDiscountValue} OFF!`}
+              {isSpecialOfferPercentage
+                ? `${specialOffer.discount_value}% OFF!`
+                : `৳ ${specialOffer.discount_value} OFF!`}
             </p>
           </div>
         </div>

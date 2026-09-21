@@ -1,6 +1,7 @@
 import { useRouter } from "next/navigation";
 import { CgTrash } from "react-icons/cg";
 import { routeFetch } from "@/app/lib/fetcher/routeFetch";
+import toast from "react-hot-toast";
 
 export default function WishlistHeader({ userData, itemCount }) {
   const router = useRouter();
@@ -8,20 +9,12 @@ export default function WishlistHeader({ userData, itemCount }) {
   const removeAllItems = async () => {
     // Remove all items from local wishlist
     localStorage.removeItem("wishlistItems");
-
     // Remove all wishlist items from server wishlist, if user is logged in
     if (userData) {
-      const updatedUserData = {
-        ...userData,
-        wishlistItems: [],
-      };
-
       try {
-        const result = await routeFetch(`/api/user-data/${userData?._id}`, {
-          method: "PUT",
-          body: JSON.stringify(updatedUserData),
+        const result = await routeFetch("/api/wishlist", {
+          method: "DELETE",
         });
-
         if (!result.ok) {
           console.error(
             "UpdateError (wishlistHeader):",
@@ -38,7 +31,6 @@ export default function WishlistHeader({ userData, itemCount }) {
         toast.error("Failed to update the wishlist on server.");
       }
     }
-
     window.dispatchEvent(new Event("storageWishlist"));
   };
 

@@ -18,28 +18,18 @@ export default function ProductWishlistButton({
   const handleAddToWishlist = async () => {
     const currentWishlist =
       JSON.parse(localStorage.getItem("wishlistItems")) || [];
-
-    if (!currentWishlist.some((item) => item._id === productId)) {
-      const updatedWishlist = [...currentWishlist, { _id: productId }];
-
+    if (!currentWishlist.some((item) => item.id === productId)) {
+      const updatedWishlist = [...currentWishlist, { id: productId }];
       // Save item in local wishlist
       localStorage.setItem("wishlistItems", JSON.stringify(updatedWishlist));
-
       // Save item in server wishlist, if user is logged in
       if (userData) {
-        const updatedUserData = {
-          ...userData,
-          wishlistItems: updatedWishlist,
-        };
-
         try {
-          const result = await routeFetch(`/api/user-data/${userData?._id}`, {
-            method: "PUT",
-            body: JSON.stringify(updatedUserData),
+          const result = await routeFetch("/api/wishlist", {
+            method: "POST",
+            body: JSON.stringify({ product_id: productId }),
           });
-
           if (result.ok) {
-            // If server wishlist is updated
             toast.custom(
               (t) => (
                 <ProductToast
@@ -93,7 +83,7 @@ export default function ProductWishlistButton({
         );
       }
     } else {
-      toast.error("Item is already in the wishlist."); // if item already exists
+      toast.error("Item is already in the wishlist.");
     }
 
     window.dispatchEvent(new Event("storageWishlist"));

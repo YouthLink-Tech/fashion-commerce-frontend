@@ -84,6 +84,7 @@ export default function ShopContents({
       if (filterByArr.includes("New Arrivals")) params.set("new_arrivals_only", "true");
       if (filterByArr.includes("In Stock")) params.set("in_stock", "true");
       if (filterByArr.includes("On Sale")) params.set("on_sale", "true");
+      if (filterByArr.includes("Special Offers")) params.set("special_offers", "true");
       if (selectedFilterOptions.sizes.size) params.set("size_ids", Array.from(selectedFilterOptions.sizes).join(","));
       if (selectedFilterOptions.colors.size) params.set("color_ids", Array.from(selectedFilterOptions.colors).join(","));
       if (selectedFilterOptions.price.min != null) params.set("price_min", selectedFilterOptions.price.min);
@@ -102,6 +103,7 @@ export default function ShopContents({
     if (filterByArr.includes("New Arrivals")) params.set("new_arrivals_only", "true");
     if (filterByArr.includes("In Stock")) params.set("in_stock", "true");
     if (filterByArr.includes("On Sale")) params.set("on_sale", "true");
+    if (filterByArr.includes("Special Offers")) params.set("special_offers", "true");
     if (selectedFilterOptions.sizes.size) params.set("size_ids", Array.from(selectedFilterOptions.sizes).join(","));
     if (selectedFilterOptions.colors.size) params.set("color_ids", Array.from(selectedFilterOptions.colors).join(","));
     if (selectedFilterOptions.price.min != null) params.set("price_min", selectedFilterOptions.price.min);

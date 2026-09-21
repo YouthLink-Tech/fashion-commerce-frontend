@@ -13,13 +13,13 @@ export function buildCartSignature(cartItems = []) {
   if (!cartItems?.length) return "";
   return [...cartItems]
     .sort((a, b) => {
-      const idCompare = a._id.localeCompare(b._id);
-      if (idCompare !== 0) return idCompare;
-      return a.selectedColor._id.localeCompare(b.selectedColor._id);
+      const idA = a.variant_id || a.productId || a._id || "";
+      const idB = b.variant_id || b.productId || b._id || "";
+      return idA.localeCompare(idB);
     })
     .map(
       (i) =>
-        `${i._id}:${i.selectedColor._id}:${i.selectedSize}:${i.selectedQuantity}`,
+        `${i.variant_id || i.productId || i._id}:${i.selectedQuantity ?? i.quantity ?? 1}`,
     )
     .join("|");
 }

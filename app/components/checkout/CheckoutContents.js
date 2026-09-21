@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { routeFetch } from "@/app/lib/fetcher/routeFetch";
-import getImageSetsBasedOnColors from "@/app/utils/getImageSetsBasedOnColors";
 import ProductToast from "../toast/ProductToast";
 import CheckoutForm from "./CheckoutForm";
 import CheckoutEmpty from "./CheckoutEmpty";
@@ -17,19 +16,12 @@ export default function CheckoutContents({
   productList,
   specialOffers,
   shippingZones,
-  primaryLocation,
   legalPolicyPdfLinks,
   cities,
   thanas,
 }) {
   const [cartItems, setCartItems] = useState(null);
   const searchParams = useSearchParams();
-
-  // const buildCartSignature = (cartItems = []) =>
-  //   cartItems
-  //     .map(i => `${i._id}:${i.selectedQuantity}`)
-  //     .sort()
-  //     .join("|");
 
   useEffect(() => {
     const paymentStatus = searchParams.get("payment");
@@ -62,128 +54,112 @@ export default function CheckoutContents({
     };
   }, []);
 
+  // Hydrate cart from localStorage or server, then validate against live product catalog
   useEffect(() => {
     if (!productList?.length) return;
-
-    const localCart = JSON.parse(localStorage.getItem("cartItems"));
-    const storedCartItems = localCart?.length
-      ? localCart
-      : userData?.cartItems?.length
-        ? userData.cartItems
-        : [];
-    const activeItemsInCart = storedCartItems
-      .map((storedItem) => {
-        const product = productList?.find((p) => p?._id === storedItem?._id);
-        if (!product) return null;
-
-        const productVariant = product.productVariants.find(
-          (variant) =>
-            variant.location === primaryLocation &&
-            variant.size === storedItem.selectedSize &&
-            variant.color._id === storedItem.selectedColor._id,
-        );
-
-        if (!productVariant) return null;
-
-        const isInactive = product.status !== "active";
-        const isOutOfStock = productVariant?.sku < 1;
-        const isInsufficientStock =
-          !isOutOfStock && productVariant?.sku < storedItem?.selectedQuantity;
-
-        if (!isInactive && !isOutOfStock && !isInsufficientStock)
-          return storedItem;
-
-        toast.custom(
-          (t) => (
-            <ProductToast
-              defaultToast={t}
-              isSuccess={false}
-              message={
-                isInactive
-                  ? "Item inactive"
-                  : isOutOfStock
-                    ? "Item out of stock"
-                    : "Item with insufficient stock"
-              }
-              productImg={
-                getImageSetsBasedOnColors(product.productVariants)?.find(
-                  (imgSet) =>
-                    imgSet?.color?.color === productVariant?.color?.color,
-                )?.images[0]
-              }
-              productTitle={product.productTitle}
-              variantSize={productVariant?.size}
-              variantColor={productVariant?.color}
-            />
-          ),
-          {
-            position: "top-right",
-          },
-        );
-
-        if (isInsufficientStock) {
-          return {
-            ...storedItem,
-            selectedQuantity: productVariant?.sku,
-          };
-        } else {
-          return null;
-        }
-      })
-      .filter(Boolean);
-
-    // ── IDEMPOTENCY: detect stock-driven cart adjustments ─────────────────
-    // If items were removed or quantities capped, this is a new cart state.
-    // Clear the stored intent so the next submit generates a fresh key.
-    // We compare against storedCartItems (pre-validation) not cartItems state
-    // (which may still be null on first load).
-    const preValidationSignature = buildCartSignature(storedCartItems);
-    const postValidationSignature = buildCartSignature(activeItemsInCart);
-
-    if (preValidationSignature !== postValidationSignature) {
-      clearCheckoutIntent();
-    }
-
-    const updateServerCart = async () => {
-      const updatedUserData = {
-        ...userData,
-        cartItems: activeItemsInCart,
-        isCartLastModified: true,
-      };
-
+    let isMounted = true;
+    const validateAndHydrateCart = async () => {
+      let localCart = null;
       try {
-        const result = await routeFetch(`/api/user-data/${userData?._id}`, {
-          method: "PUT",
-          body: JSON.stringify(updatedUserData),
-        });
-
-        if (!result.ok) {
-          console.error(
-            "UpdateError (cartButton):",
-            result.message || "Failed to update the cart on server.",
-          );
-          toast.error(
-            result.message || "Failed to update the cart on server.",
-          );
-        }
-      } catch (error) {
-        console.error("UpdateError (cartButton):", error.message || error);
-        toast.error("Failed to update the cart on server.");
+        localCart = JSON.parse(localStorage.getItem("cartItems"));
+      } catch (e) {
+        localCart = null;
       }
+      let storedCartItems = Array.isArray(localCart) && localCart.length ? localCart : null;
+      // If localStorage is empty and user is logged in, hydrate from server cart (/api/cart)
+      if (!storedCartItems && userData?.id) {
+        try {
+          const res = await routeFetch("/api/cart");
+          if (res.ok && res.data?.items?.length) {
+            storedCartItems = res.data.items.map((i) => ({
+              productId: i.product.id,        // Pure PostgreSQL product UUID
+              variant_id: i.variant_id,      // Pure PostgreSQL variant UUID
+              selectedQuantity: i.quantity,  // Hydrated quantity
+              selectedSize: i.size,          // Size object { id, name }
+              selectedColor: i.color,        // Color object { id, name, hex }
+              image: i.image,                // Cloudinary image ID
+            }));
+          }
+        } catch (error) {
+          console.error("CartHydrateError (checkout):", error);
+        }
+      }
+      if (!isMounted) return;
+      // If still no items found in either storage or server, cart is genuinely empty
+      if (!storedCartItems || !storedCartItems.length) {
+        setCartItems([]);
+        localStorage.setItem("cartItems", JSON.stringify([]));
+        window.dispatchEvent(new Event("storageCart"));
+        return;
+      }
+      // Validate stored cart items against PostgreSQL product schema
+      const activeItemsInCart = storedCartItems
+        .map((storedItem) => {
+          const product = productList?.find((p) => p?.id === storedItem?.productId); // Pure PostgreSQL product ID
+          if (!product) return null;
+          const productVariant = product.variants?.find(
+            (variant) => variant.id === storedItem.variant_id, // Pure PostgreSQL variant ID
+          );
+          if (!productVariant) return null;
+          const isInactive = Boolean(product.status && product.status !== "active");
+          const isOutOfStock = productVariant.available_sku < 1; // Pure PostgreSQL available_sku
+          const isInsufficientStock =
+            !isOutOfStock && productVariant.available_sku < storedItem.selectedQuantity; // available_sku check
+          if (!isInactive && !isOutOfStock && !isInsufficientStock)
+            return storedItem;
+          toast.custom(
+            (t) => (
+              <ProductToast
+                defaultToast={t}
+                isSuccess={false}
+                message={
+                  isInactive
+                    ? "Item inactive"
+                    : isOutOfStock
+                      ? "Item out of stock"
+                      : "Item with insufficient stock"
+                }
+                productImg={
+                  productVariant.media?.[0]?.media?.public_id ||
+                  productVariant.media?.[0]?.public_id ||
+                  product.thumbnail?.public_id
+                }
+                productTitle={product.title}                 // Pure PostgreSQL title
+                variantSize={productVariant?.size?.name}     // Pure PostgreSQL size name
+                variantColor={productVariant?.color?.name}   // Pure PostgreSQL color name
+              />
+            ),
+            {
+              position: "top-right",
+            },
+          );
+          if (isInsufficientStock) {
+            return {
+              ...storedItem,
+              selectedQuantity: productVariant.available_sku, // Cap to available_sku, not undefined sku
+            };
+          } else {
+            return null;
+          }
+        })
+        .filter(Boolean);
+      if (!isMounted) return;
+      // ── IDEMPOTENCY: detect stock-driven cart adjustments ─────────────────
+      const preValidationSignature = buildCartSignature(storedCartItems);
+      const postValidationSignature = buildCartSignature(activeItemsInCart);
+      if (preValidationSignature !== postValidationSignature) {
+        clearCheckoutIntent();
+      }
+
+      setCartItems(activeItemsInCart);
+      localStorage.setItem("cartItems", JSON.stringify(activeItemsInCart));
+      window.dispatchEvent(new Event("storageCart"));
     };
-
-    // If there are cart items in local storage and user just logged in,
-    // update the server cart with the newly added items
-    // if (localCart?.length && userData) updateServerCart();
-    if (localCart?.length && userData && !localStorage.getItem("checkout_payment_pending")) {
-      updateServerCart();
-    }
-
-    setCartItems(activeItemsInCart);
-    localStorage.setItem("cartItems", JSON.stringify(activeItemsInCart));
-    window.dispatchEvent(new Event("storageCart"));
-
-  }, [primaryLocation, productList, userData]);
+    validateAndHydrateCart();
+    return () => {
+      isMounted = false;
+    };
+  }, [productList, userData]);
 
   useEffect(() => {
     if (!cartItems?.length) return;
@@ -198,7 +174,7 @@ export default function CheckoutContents({
 
     if (signature === lastSignature) return;
 
-    const content_ids = [...new Set(cartItems.map(item => item._id))];
+    const content_ids = [...new Set(cartItems.map((item) => item.productId))];
     const totalQuantity = cartItems.reduce((sum, i) => sum + i.selectedQuantity, 0);
 
     const subtotal = calculateSubtotal(productList, cartItems, specialOffers);
@@ -232,13 +208,14 @@ export default function CheckoutContents({
       <div className="sticky left-[55%] top-[60%] animate-blob bg-[var(--color-moving-bubble-secondary)] [animation-delay:0.5s] max-sm:left-3/4" />
       {/* Right Mesh Gradient */}
       <div className="sticky left-[80%] top-1/3 animate-blob bg-[var(--color-moving-bubble-primary)] [animation-delay:2s] max-sm:hidden" />
-      {!!cartItems?.length ? (
+      {cartItems === null ? (
+        <div className="min-h-[50vh]" />
+      ) : cartItems.length > 0 ? (
         <CheckoutForm
           userData={userData}
           productList={productList}
           specialOffers={specialOffers}
           shippingZones={shippingZones}
-          primaryLocation={primaryLocation}
           cartItems={cartItems}
           legalPolicyPdfLinks={legalPolicyPdfLinks}
           cities={cities}

@@ -55,6 +55,8 @@ export default function UserDropdown({
       window.dispatchEvent(new Event("storageCart"));
       localStorage.removeItem("wishlistItems");
       window.dispatchEvent(new Event("storageWishlist"));
+      sessionStorage.removeItem("cart_synced_user");
+      sessionStorage.removeItem("wishlist_synced_user");
       toast.success("Successfully logged out.");
     } catch (error) {
       toast.error("SignOutError:", error.message);

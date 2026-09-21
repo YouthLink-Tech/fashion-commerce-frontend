@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
   Dropdown,
@@ -13,7 +13,7 @@ import { IoCartOutline } from "react-icons/io5";
 import { useLoading } from "@/app/contexts/loading";
 import { routeFetch } from "@/app/lib/fetcher/routeFetch";
 import ProductToast from "@/app/components/toast/ProductToast";
-import getImageSetsBasedOnColors from "@/app/utils/getImageSetsBasedOnColors";
+import { getImageSetsByColor } from "@/app/utils/getImageSetsBasedOnColors";
 import {
   calculateFinalPrice,
   calculateSubtotal,
@@ -25,11 +25,12 @@ import EmptyCartContent from "./EmptyCartContent";
 import CartFooter from "./CartFooter";
 import * as fbq from "@/app/lib/fpixel";
 
+const EMPTY_ARRAY = [];
+
 export default function CartButton({
   userData,
   productList,
   specialOffers,
-  primaryLocation,
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -37,10 +38,19 @@ export default function CartButton({
   const { setIsPageLoading } = useLoading();
   const [cartItems, setCartItems] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
   const productId = searchParams.get("productId");
   const size = searchParams.get("size");
   const colorCode = searchParams.get("colorCode");
 
+  // Memoize products for CartItems and CartFooter so subtotal doesn't recalculate unnecessarily
+  const products = useMemo(() => {
+    return Array.isArray(productList)
+      ? productList
+      : productList?.items || EMPTY_ARRAY;
+  }, [productList]);
+
+  // Sync state with localStorage across tabs and component triggers
   useEffect(() => {
     const handleStorageUpdate = () => {
       const updatedCart = JSON.parse(localStorage.getItem("cartItems"));
@@ -55,69 +65,133 @@ export default function CartButton({
     };
   }, []);
 
+  // One-time sync on login only (never on page refresh)
   useEffect(() => {
-    if (pathname !== "/checkout" && productList?.length) {
-      const localCart = JSON.parse(localStorage.getItem("cartItems"));
-      const storedCartItems = localCart?.length
-        ? localCart
-        : userData?.cartItems?.length
-          ? userData.cartItems
-          : [];
-      const activeItemsInCart = storedCartItems.filter((storedItem) =>
-        productList?.some(
-          (product) =>
-            product?._id === storedItem?._id && product?.status === "active",
-        ),
-      );
+    if (!userData?.id) {
+      sessionStorage.removeItem("cart_synced_user");
+      return;
+    }
 
-      const updateServerCart = async () => {
-        const updatedUserData = {
-          ...userData,
-          cartItems: activeItemsInCart,
-          isCartLastModified: true,
-        };
+    // Check if this user session was already synced in this tab
+    const alreadySynced = sessionStorage.getItem("cart_synced_user") === userData.id;
+    if (alreadySynced) {
+      // PAGE REFRESH: User was already logged in. Do NOT sync!
+      // Simply rehydrate from server if localStorage is empty
+      const localCart = JSON.parse(localStorage.getItem("cartItems")) || [];
+      if (!localCart.length) {
+        routeFetch("/api/cart")
+          .then((res) => {
+            if (res.ok && res.data?.items?.length) {
+              const formattedCart = res.data.items.map((i) => ({
+                productId: i.product.id,
+                variant_id: i.variant_id,
+                selectedQuantity: i.quantity,
+                selectedSize: i.size,
+                selectedColor: i.color,
+                image: i.image,
+              }));
+              localStorage.setItem("cartItems", JSON.stringify(formattedCart));
+              window.dispatchEvent(new Event("storageCart"));
+            }
+          })
+          .catch((err) => console.error("CartHydrateError:", err));
+      }
+      return;
+    }
 
-        try {
-          const result = await routeFetch(`/api/user-data/${userData?._id}`, {
-            method: "PUT",
-            body: JSON.stringify(updatedUserData),
+    // FRESH LOGIN DETECTED: Mark this user as synced immediately
+    sessionStorage.setItem("cart_synced_user", userData.id);
+
+    const localCart = JSON.parse(localStorage.getItem("cartItems")) || [];
+    const itemsToSync = localCart
+      .map((item) => ({
+        variant_id: item.variant_id,
+        quantity: Number(item.selectedQuantity ?? item.quantity) || 1,
+      }))
+      .filter((i) => i.variant_id);
+
+    const syncOrHydrateCart = async () => {
+      try {
+        if (itemsToSync.length > 0) {
+          // Items were added as guest: clear old account cart so guest items REPLACE the account cart
+          await routeFetch("/api/cart", { method: "DELETE" });
+
+          const res = await routeFetch("/api/cart/sync", {
+            method: "POST",
+            body: JSON.stringify({ items: itemsToSync }),
           });
 
-          if (!result.ok) {
-            console.error(
-              "UpdateError (cartButton):",
-              result.message || "Failed to update the cart on server.",
+          if (res.ok && res.data?.items) {
+            // Preserve original guest serial/order
+            const orderMap = new Map(
+              itemsToSync.map((item, idx) => [item.variant_id, idx]),
             );
-            toast.error(
-              result.message || "Failed to update the cart on server.",
-            );
+
+            const formattedCart = res.data.items
+              .map((i) => ({
+                productId: i.product.id,
+                variant_id: i.variant_id,
+                selectedQuantity: i.quantity,
+                selectedSize: i.size,
+                selectedColor: i.color,
+                image: i.image,
+              }))
+              .sort(
+                (a, b) =>
+                  (orderMap.get(a.variant_id) ?? 999) -
+                  (orderMap.get(b.variant_id) ?? 999),
+              );
+
+            localStorage.setItem("cartItems", JSON.stringify(formattedCart));
+            window.dispatchEvent(new Event("storageCart"));
           }
-        } catch (error) {
-          console.error("UpdateError (cartButton):", error.message || error);
-          toast.error("Failed to update the cart on server.");
+        } else {
+          // No guest items: restore user's saved server cart
+          const res = await routeFetch("/api/cart");
+          if (res.ok && res.data?.items?.length) {
+            const formattedCart = res.data.items.map((i) => ({
+              productId: i.product.id,
+              variant_id: i.variant_id,
+              selectedQuantity: i.quantity,
+              selectedSize: i.size,
+              selectedColor: i.color,
+              image: i.image,
+            }));
+            localStorage.setItem("cartItems", JSON.stringify(formattedCart));
+            window.dispatchEvent(new Event("storageCart"));
+          }
         }
-      };
-
-      // If there are cart items in local storage and user just logged in,
-      // update the server cart with the newly added items
-      // if (localCart?.length && userData) updateServerCart();
-      if (localCart?.length && userData && !localStorage.getItem("checkout_payment_pending")) {
-        updateServerCart();
+      } catch (err) {
+        console.error("CartSyncError:", err);
       }
+    };
 
-      setCartItems(activeItemsInCart);
-      localStorage.setItem("cartItems", JSON.stringify(activeItemsInCart));
-      window.dispatchEvent(new Event("storageCart"));
-    }
-  }, [pathname, productList, userData]);
+    syncOrHydrateCart();
+  }, [userData?.id]);
 
+  // Handle URL query parameters auto-add (?productId=...&size=...&colorCode=...)
   useEffect(() => {
-    if (!productList || !productId || !size || !colorCode) return;
+    const productListItems = Array.isArray(productList)
+      ? productList
+      : productList?.items;
 
-    const debounceTimeout = setTimeout(() => {
-      const product = productList?.find(
-        (product) => product?._id === productId && product?.status === "active",
-      );
+    if (!productId || !size || !colorCode) return;
+
+    const debounceTimeout = setTimeout(async () => {
+      // 1. Check in productList
+      let product = productListItems?.find((p) => p?.id === productId);
+
+      // 2. Fallback: If not in initial 30 items, fetch single product by ID
+      if (!product) {
+        try {
+          const res = await routeFetch(`/api/products/single/${productId}`);
+          if (res.ok && res.data) {
+            product = res.data;
+          }
+        } catch (err) {
+          console.error("Failed to fetch product for auto-add:", err);
+        }
+      }
 
       if (!product) {
         return router.replace(pathname, undefined, {
@@ -126,21 +200,23 @@ export default function CartButton({
         });
       }
 
-      const productVariant = product?.productVariants.find(
-        (variant) => variant.color.color == colorCode && variant.size == size,
+      // Case-insensitive hex/color and size match
+      const targetColor = colorCode.toLowerCase();
+      const variant = product.variants?.find(
+        (v) =>
+          (v.color?.hex?.toLowerCase() === targetColor ||
+            v.color?.name?.toLowerCase() === targetColor) &&
+          (v.size?.name === size || v.size?.id === size || v.size === size),
       );
 
-      if (!productVariant) {
+      if (!variant) {
         return router.replace(pathname, undefined, {
           shallow: true,
           scroll: false,
         });
       }
 
-      const isExistingItem = (item) =>
-        item._id === productId &&
-        item.selectedSize === size &&
-        item.selectedColor?.color === colorCode;
+      const isExistingItem = (item) => item.variant_id === variant.id;
 
       const handleAddToCart = async () => {
         const currentCart = JSON.parse(localStorage.getItem("cartItems")) || [];
@@ -155,64 +231,61 @@ export default function CartButton({
 
         setIsPageLoading(true);
 
+        // Resolve product image for toast notification
+        const imageSets = getImageSetsByColor(product?.variants);
+        const productImg =
+          imageSets?.find((imgSet) => imgSet?.color?.id === variant.color?.id)
+            ?.images[0] ||
+          product?.thumbnail?.public_id ||
+          product?.media?.[0]?.public_id;
+
         const newlyAddedItem = {
-          _id: productId,
+          productId: product.id,
+          variant_id: variant.id,
           selectedQuantity: 1,
-          selectedSize: size,
-          selectedColor: productVariant.color,
+          selectedSize: variant.size,
+          selectedColor: variant.color,
+          image: productImg,
         };
 
         const updatedCart = [...currentCart, newlyAddedItem];
-
-        localStorage.setItem("cartItems", JSON.stringify(updatedCart)); // Save item in local cart
+        localStorage.setItem("cartItems", JSON.stringify(updatedCart));
 
         // Trigger FB Pixel AddToCart
         fbq.event("AddToCart", {
           content_type: "product",
-          content_ids: [productId],
+          content_ids: [product.id],
           num_items: 1,
           value: calculateFinalPrice(product, specialOffers) * 1,
           currency: "BDT",
         });
 
-        // Save item in server cart, if user is logged in
+        // Atomic PostgreSQL add if logged in
         if (userData) {
-          const updatedUserData = {
-            ...userData,
-            cartItems: updatedCart,
-            isCartLastModified: true,
-          };
-
           try {
-            const result = await routeFetch(`/api/user-data/${userData?._id}`, {
-              method: "PUT",
-              body: JSON.stringify(updatedUserData),
+            const result = await routeFetch(`/api/cart`, {
+              method: "POST",
+              body: JSON.stringify({
+                variant_id: variant.id,
+                quantity: 1,
+              }),
             });
-            // console.log(result, "result from cart button");
 
             if (result.ok) {
-              // Display custom success toast notification, if server cart is updated
               toast.custom(
                 (t) => (
                   <ProductToast
                     defaultToast={t}
                     isSuccess={true}
                     message="Item added to cart"
-                    productImg={
-                      getImageSetsBasedOnColors(product?.productVariants)?.find(
-                        (imgSet) => imgSet?.color?.color === colorCode,
-                      )?.images[0]
-                    }
-                    productTitle={product?.productTitle}
-                    variantSize={productVariant?.size}
-                    variantColor={productVariant?.color}
+                    productImg={productImg}
+                    productTitle={product?.title}
+                    variantSize={variant?.size?.name || variant?.size}
+                    variantColor={variant?.color}
                   />
                 ),
-                {
-                  position: "top-right",
-                },
+                { position: "top-right" },
               );
-
               router.refresh();
             } else {
               console.error(
@@ -228,26 +301,19 @@ export default function CartButton({
             toast.error("Failed to update the cart on server.");
           }
         } else {
-          // Display custom success toast notification, if saved only locally
           toast.custom(
             (t) => (
               <ProductToast
                 defaultToast={t}
                 isSuccess={true}
                 message="Item added to cart"
-                productImg={
-                  getImageSetsBasedOnColors(product?.productVariants)?.find(
-                    (imgSet) => imgSet?.color?.color === colorCode,
-                  )?.images[0]
-                }
-                productTitle={product?.productTitle}
-                variantSize={productVariant?.size}
-                variantColor={productVariant?.color}
+                productImg={productImg}
+                productTitle={product?.title}
+                variantSize={variant?.size?.name || variant?.size}
+                variantColor={variant?.color}
               />
             ),
-            {
-              position: "top-right",
-            },
+            { position: "top-right" },
           );
         }
 
@@ -256,7 +322,7 @@ export default function CartButton({
           scroll: false,
         });
         setIsPageLoading(false);
-        window.dispatchEvent(new Event("storageCart")); // Dispatch event so that event listener is triggered
+        window.dispatchEvent(new Event("storageCart"));
       };
 
       handleAddToCart();
@@ -268,11 +334,11 @@ export default function CartButton({
     productId,
     size,
     colorCode,
-    setIsPageLoading,
     userData,
     router,
     pathname,
     specialOffers,
+    setIsPageLoading,
   ]);
 
   return (
@@ -318,7 +384,8 @@ export default function CartButton({
             {!!cartItems?.length &&
               cartItems.reduce(
                 (accumulator, item) =>
-                  Number(item.selectedQuantity) + accumulator,
+                  Number(item.selectedQuantity ?? item.quantity ?? 1) +
+                  accumulator,
                 0,
               )}
           </span>
@@ -340,9 +407,8 @@ export default function CartButton({
               <CartItems
                 userData={userData}
                 cartItems={cartItems}
-                productList={productList}
+                productList={products}
                 specialOffers={specialOffers}
-                primaryLocation={primaryLocation}
                 setIsDropdownOpen={setIsDropdownOpen}
               />
             ) : (
@@ -352,7 +418,7 @@ export default function CartButton({
           {!!cartItems?.length && (
             <CartFooter
               subtotal={calculateSubtotal(
-                productList,
+                products,
                 cartItems,
                 specialOffers,
               ).toLocaleString()}

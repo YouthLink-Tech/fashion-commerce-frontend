@@ -14,7 +14,6 @@ import { calculateFinalPrice } from "@/app/utils/orderCalculations";
 
 export default function CartModalButtons({
   userData,
-  productId,
   productTitle,
   productImg,
   defaultColor,
@@ -28,17 +27,19 @@ export default function CartModalButtons({
 }) {
   const router = useRouter();
 
-  // _id kept intentionally — cart schema still uses _id, unrelated to
-  // Product.id, unchanged until cart/checkout migration. size/color stored
-  // as full {id,name}/{id,name,hex} objects, matching ProductCartButton.
-  const isExistingItem = (item) =>
-    item._id === productId &&
-    item.selectedSize?.id === selectedOptions?.size?.id &&
-    item.selectedColor?.id === selectedOptions?.color?.id;
+  const selectedVariant = product?.variants?.find(
+    (v) =>
+      v.color?.id === selectedOptions?.color?.id &&
+      v.size?.id === selectedOptions?.size?.id,
+  );
+  const isExistingItem = (item) => item.variant_id === selectedVariant?.id;
 
   const handleAddToCart = async () => {
     if (!selectedOptions?.size)
       return toast.error("Please select a size first.");
+
+    if (!selectedVariant)
+      return toast.error("Selected combination is unavailable.");
 
     setIsAddToCartModalOpen(false);
 
@@ -54,17 +55,17 @@ export default function CartModalButtons({
           ...currentItem,
           selectedQuantity: !isExistingItem(currentItem)
             ? currentQuantity
-            : currentQuantity + newlyAddedQuantity > productVariantSku
-              ? productVariantSku
-              : currentQuantity + newlyAddedQuantity,
+            : Math.min(currentQuantity + newlyAddedQuantity, productVariantSku, 30),
         };
       });
     } else {
       const newlyAddedItem = {
-        _id: productId,
-        selectedQuantity: selectedOptions?.quantity,
+        productId: product.id,
+        variant_id: selectedVariant.id,
+        selectedQuantity: Number(selectedOptions?.quantity) || 1,
         selectedSize: selectedOptions?.size,
         selectedColor: selectedOptions?.color,
+        image: productImg,
       };
 
       updatedCart = [...currentCart, newlyAddedItem];
@@ -74,7 +75,7 @@ export default function CartModalButtons({
 
     fbq.event("AddToCart", {
       content_type: "product",
-      content_ids: [productId],
+      content_ids: [product.id],
       num_items: selectedOptions.quantity,
       value: calculateFinalPrice(product, specialOffers) * selectedOptions.quantity,
       currency: "BDT",
@@ -82,16 +83,13 @@ export default function CartModalButtons({
 
     // Save item in server cart, if user is logged in
     if (userData) {
-      const updatedUserData = {
-        ...userData,
-        cartItems: updatedCart,
-        isCartLastModified: true,
-      };
-
       try {
-        const result = await routeFetch(`/api/user-data/${userData?._id}`, {
-          method: "PUT",
-          body: JSON.stringify(updatedUserData),
+        const result = await routeFetch(`/api/cart`, {
+          method: "POST",
+          body: JSON.stringify({
+            variant_id: selectedVariant.id,
+            quantity: Number(selectedOptions?.quantity) || 1,
+          }),
         });
 
         if (result.ok) {

@@ -6,13 +6,20 @@ import DeliveryAddress from "./DeliveryAddress";
 
 export default function DeliveryAddresses({ serverUserData, userEmail, cities, thanas }) {
   const [userData, setUserData] = useState(serverUserData || {});
-  const deliveryAddresses = userData?.userInfo?.deliveryAddresses || [];
+  const deliveryAddresses = userData?.addresses || [];
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
+
+  // Syncs local state when server data updates (e.g. after router.refresh())
+  useEffect(() => {
+    if (serverUserData) {
+      setUserData(serverUserData);
+    }
+  }, [serverUserData]);
 
   useEffect(() => {
     const newAddressForm = document.getElementById("new-adddress-form");
 
-    if (isAddingNewAddress)
+    if (isAddingNewAddress && newAddressForm)
       newAddressForm.scrollIntoView({
         behavior: "smooth",
         block: "center",
@@ -56,8 +63,6 @@ export default function DeliveryAddresses({ serverUserData, userEmail, cities, t
               type="update"
               address={address}
               addressNumber={addressIndex + 1}
-              userData={userData}
-              userEmail={userEmail}
               setUserData={setUserData}
               setIsAddingNewAddress={setIsAddingNewAddress}
               cities={cities}
@@ -74,7 +79,6 @@ export default function DeliveryAddresses({ serverUserData, userEmail, cities, t
           userEmail={userEmail}
           setUserData={setUserData}
           setIsAddingNewAddress={setIsAddingNewAddress}
-          isAddressListEmpty={!deliveryAddresses?.length}
           cities={cities}
           thanas={thanas}
         />

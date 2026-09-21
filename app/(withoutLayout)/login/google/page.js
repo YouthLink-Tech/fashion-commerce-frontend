@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { signIn, useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 
-export default function GoogleSignInWindow() {
+function GoogleSignInContent() {
   const { data: session, status } = useSession();
+  const searchParams = useSearchParams();
+  const isCallback = searchParams.get("callback") === "true";
+  const authError = searchParams.get("error");
 
   useEffect(() => {
     const sendResult = (isSuccessful) => {
@@ -14,14 +18,19 @@ export default function GoogleSignInWindow() {
       }
     };
 
+    if (authError) {
+      console.error("LoginError (googleWindow/authError):", authError);
+      sendResult(false);
+      return;
+    }
+
     const handleGoogleLogin = async () => {
       try {
-        const result = await signIn("google", { redirect: false });
-
-        if (result?.error) {
-          console.error("LoginError (googleWindow/signIn):", result.error);
-          sendResult(false);
-        }
+        await signIn(
+          "google",
+          { callbackUrl: "/login/google?callback=true" },
+          { prompt: "select_account" },
+        );
       } catch (error) {
         console.error(
           "LoginError (googleWindow/catch):",
@@ -31,12 +40,26 @@ export default function GoogleSignInWindow() {
       }
     };
 
-    if (status !== "loading" && !session) {
+    // If not a callback yet, initiate Google sign-in even if a credentials session exists
+    if (!isCallback) {
       handleGoogleLogin();
-    } else if (session) {
-      sendResult(true);
+    } else if (status !== "loading") {
+      // Returned from Google OAuth redirect
+      if (session) {
+        sendResult(true);
+      } else {
+        sendResult(false);
+      }
     }
-  }, [session, status]);
+  }, [session, status, isCallback, authError]);
 
-  return <div></div>;
+  return <div className="flex min-h-screen items-center justify-center bg-white"></div>;
+}
+
+export default function GoogleSignInWindow() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-white"></div>}>
+      <GoogleSignInContent />
+    </Suspense>
+  );
 }

@@ -44,9 +44,9 @@ export default function CheckoutForgotPassword({ setIsPageLoading }) {
       } else {
         console.error(
           "SubmissionError (checkoutForgotPassword):",
-          result.message.message || "Failed to request for password reset.",
+          result.message || "Failed to request for password reset.",
         );
-        toast.error(result.message.message);
+        toast.error(result.message);
       }
     } catch (error) {
       console.error(

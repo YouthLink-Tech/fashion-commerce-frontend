@@ -7,7 +7,7 @@ const needsAuthCheck = (pathname) =>
   PROTECTED_ROUTES.some((route) => pathname.includes(route));
 
 export async function middleware(req) {
-  const pathname = req.nextUrl.pathname
+  const pathname = req.nextUrl.pathname;
   const fullUrl = req.url;
 
   // Pure URL corrections — no auth needed
@@ -24,15 +24,23 @@ export async function middleware(req) {
   //   2. logged in and trying to access the reset password page
 
   // Unauthenticated user hitting /user/* → redirect home
-  if (!token && (pathname.includes("/user") || pathname.includes("/order-confirmed")))
-    return NextResponse.redirect(new URL("/", fullUrl));
+  if (!token || token.error) {
+    if (pathname.includes("/user") || pathname.includes("/order-confirmed")) {
+      const response = NextResponse.redirect(new URL("/", fullUrl));
+      // Wipe session cookies immediately
+      response.cookies.delete("next-auth.session-token");
+      response.cookies.delete("__Secure-next-auth.session-token");
+      response.cookies.delete("refreshToken");
+      return response;
+    }
+  }
 
   // Authenticated user hitting exact /user → redirect to /user/profile
-  if (token && /\/user\/?$/i.test(pathname))
+  if (token && !token.error && /\/user\/?$/i.test(pathname))
     return NextResponse.redirect(new URL("/user/profile", fullUrl));
 
   // Authenticated user hitting reset-password → redirect home
-  if (token && pathname.includes("reset-password"))
+  if (token && !token.error && pathname.includes("reset-password"))
     return NextResponse.redirect(new URL("/", fullUrl));
 
   return NextResponse.next();

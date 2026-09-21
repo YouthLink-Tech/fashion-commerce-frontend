@@ -28,12 +28,6 @@ export default async function SideLinks() {
         tags: ['special-offers']
       }
     }),
-    rawFetch("/api/location/primary", {
-      next: {
-        revalidate: 7200,           // 2 hours fallback
-        tags: ['primary-location']  // cleared when location changes
-      }
-    }),
     rawFetch("/api/policy-pdf/all", {
       next: {
         revalidate: 604800, // 7 days — legal documents rarely change
@@ -47,7 +41,6 @@ export default async function SideLinks() {
     userDataRes,
     productsRes,
     offersRes,
-    primaryLocationRes,
     legalPolicyPdfLinksRes,
   ] = await Promise.allSettled(promises);
 
@@ -55,18 +48,11 @@ export default async function SideLinks() {
     userData,
     productList,
     specialOffers,
-    primaryLocation,
     legalPolicyPdfLinks,
   ] = [
       extractData(userDataRes, null, "desktopNav/userData"),
       extractData(productsRes, [], "desktopNav/productList"),
       extractData(offersRes, [], "desktopNav/specialOffers"),
-      extractData(
-        primaryLocationRes,
-        null,
-        "desktopNav/primaryLocation",
-        "primaryLocation",
-      ),
       extractData(legalPolicyPdfLinksRes, {}, "desktopNav/legalPdfLinks"),
     ];
 
@@ -83,13 +69,12 @@ export default async function SideLinks() {
             userData={userData}
             productList={productList}
             specialOffers={specialOffers}
-            primaryLocation={primaryLocation}
           />
         </Suspense>
         <UserDropdown
           isLoggedIn={!!userData}
           userEmail={userData?.email}
-          userName={userData?.userInfo?.personalInfo?.customerName}
+          userName={userData?.name}
           legalPolicyPdfLinks={legalPolicyPdfLinks}
         />
       </ul>

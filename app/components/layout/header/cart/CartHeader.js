@@ -1,6 +1,7 @@
 import { useRouter } from "next/navigation";
 import { CgTrash } from "react-icons/cg";
 import { routeFetch } from "@/app/lib/fetcher/routeFetch";
+import toast from "react-hot-toast";
 
 export default function CartHeader({ userData, totalItems }) {
   const router = useRouter();
@@ -11,16 +12,9 @@ export default function CartHeader({ userData, totalItems }) {
 
     // Remove all cart items from server cart, if user is logged in
     if (userData) {
-      const updatedUserData = {
-        ...userData,
-        cartItems: [],
-        isCartLastModified: true,
-      };
-
       try {
-        const result = await routeFetch(`/api/user-data/${userData?._id}`, {
-          method: "PUT",
-          body: JSON.stringify(updatedUserData),
+        const result = await routeFetch(`/api/cart`, {
+          method: "DELETE",
         });
 
         if (!result.ok) {

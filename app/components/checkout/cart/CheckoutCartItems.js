@@ -15,8 +15,8 @@ import {
   checkIfSpecialOfferIsAvailable,
   getProductSpecialOffer,
 } from "@/app/utils/orderCalculations";
-import getImageSetsBasedOnColors from "@/app/utils/getImageSetsBasedOnColors";
-import { getProductVariantSku } from "@/app/utils/productSkuCalculation";
+import { getImageSetsByColor } from "@/app/utils/getImageSetsBasedOnColors";
+import { getVariantAvailableSku } from "@/app/utils/productSkuCalculation";
 import TransitionLink from "@/app/components/ui/TransitionLink";
 import DiscountModal from "../../ui/DiscountModal";
 import DiscountTooptip from "../../ui/DiscountTooltip";
@@ -27,48 +27,67 @@ export default function CheckoutCartItems({
   productList,
   cartItems,
   specialOffers,
-  primaryLocation,
 }) {
   const router = useRouter();
   const cartSubtotal = calculateSubtotal(productList, cartItems, specialOffers);
   const [isSpecialOfferModalOpen, setIsSpecialOfferModalOpen] = useState(false);
   const [activeModalItem, setActiveModalItem] = useState(null);
 
-  const handleCartUpdate = async (updatedCart) => {
-    localStorage.setItem("cartItems", JSON.stringify(updatedCart)); // Save item in local cart
+  const products = Array.isArray(productList)
+    ? productList
+    : productList?.items || [];
 
-    // Save item in server cart, if user is logged in
-    if (userData) {
-      const updatedUserData = {
-        ...userData,
-        cartItems: updatedCart,
-        isCartLastModified: true,
-      };
+  const handleQuantityUpdate = async (itemInfo, newQty, maxLimit = 30) => {
+    const clampedQty = Math.max(1, Math.min(newQty, maxLimit));
+    if (clampedQty < 1) return;
 
+    const updatedCart = cartItems.map((item) =>
+      item.variant_id === itemInfo.variant_id
+        ? { ...item, selectedQuantity: clampedQty, quantity: clampedQty }
+        : item,
+    );
+    localStorage.setItem("cartItems", JSON.stringify(updatedCart));
+
+    if (userData && itemInfo.variant_id) {
       try {
-        const result = await routeFetch(`/api/user-data/${userData?._id}`, {
-          method: "PUT",
-          body: JSON.stringify(updatedUserData),
+        const result = await routeFetch(`/api/cart/${itemInfo.variant_id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ quantity: clampedQty }),
         });
-
         if (!result.ok) {
-          console.error(
-            "UpdateError (checkoutCartItems):",
-            result.message || "Failed to update the cart on server.",
-          );
-          toast.error(result.message || "Failed to update the cart on server.");
+          toast.error(result.message || "Failed to update quantity.");
         } else {
           router.refresh();
         }
       } catch (error) {
-        console.error(
-          "UpdateError (checkoutCartItems):",
-          error.message || error,
-        );
-        toast.error("Failed to update the cart on server.");
+        console.error("UpdateQuantityError (cartItems):", error);
+        toast.error("Failed to update cart on server.");
       }
     }
+    window.dispatchEvent(new Event("storageCart"));
+  };
 
+  const handleRemoveItem = async (variantId) => {
+    const updatedCart = cartItems.filter(
+      (item) => item.variant_id !== variantId,
+    );
+    localStorage.setItem("cartItems", JSON.stringify(updatedCart));
+
+    if (userData && variantId) {
+      try {
+        const result = await routeFetch(`/api/cart/${variantId}`, {
+          method: "DELETE",
+        });
+        if (!result.ok) {
+          toast.error(result.message || "Failed to remove item.");
+        } else {
+          router.refresh();
+        }
+      } catch (error) {
+        console.error("RemoveCartError (cartItems):", error);
+        toast.error("Failed to remove item from server.");
+      }
+    }
     window.dispatchEvent(new Event("storageCart"));
   };
 
@@ -76,20 +95,34 @@ export default function CheckoutCartItems({
     <>
       <ul className="mb-4 space-y-5">
         {cartItems.map((cartItemInfo) => {
-          const cartItem = productList?.find(
-            (product) => product._id === cartItemInfo._id,
+          // Lookup using PostgreSQL product id, consistent with CartItems.js
+          const cartItem = products.find(
+            (product) => product.id === cartItemInfo.productId,
           );
-          const cartItemSKU = getProductVariantSku(
-            cartItem?.productVariants,
-            primaryLocation,
-            cartItemInfo.selectedColor._id,
-            cartItemInfo.selectedSize,
-          );
-          const cartItemImgUrl = getImageSetsBasedOnColors(
-            cartItem?.productVariants,
-          )?.find(
-            (imgSet) => imgSet.color._id === cartItemInfo.selectedColor._id,
+          // Normalize data across guest items and server-hydrated items identical to CartItems.js
+          const itemColor =
+            cartItemInfo.selectedColor || cartItemInfo.color || {};
+          const itemSize = cartItemInfo.selectedSize || cartItemInfo.size || {};
+          const quantity =
+            Number(cartItemInfo.selectedQuantity ?? cartItemInfo.quantity) || 1;
+          // Exact same SKU calculation helper as CartItems.js
+          const cartItemSKU =
+            getVariantAvailableSku(
+              cartItem?.variants,
+              itemColor.id,
+              itemSize.id,
+            ) || 30;
+          // Exact same maxQuantity ceiling as CartItems.js
+          const maxQuantity = Math.max(1, Math.min(cartItemSKU, 30));
+          // Exact same color-based image set lookup as CartItems.js
+          const imageSets = getImageSetsByColor(cartItem?.variants);
+          const colorImage = imageSets?.find(
+            (imgSet) => imgSet.color?.id === itemColor.id,
           )?.images[0];
+          const cartItemImgUrl =
+            colorImage ||
+            cartItemInfo.image ||
+            cartItem?.thumbnail?.public_id;
           const isOnlyRegularDiscountAvailable =
             checkIfOnlyRegularDiscountIsAvailable(cartItem, specialOffers);
           const cartItemFinalPrice = calculateFinalPrice(
@@ -102,37 +135,39 @@ export default function CheckoutCartItems({
             "NA",
           );
           const isEligibleForSpecialOffer =
-            cartSubtotal >= parseFloat(specialOfferInfo?.minAmount);
+            cartSubtotal >= parseFloat(specialOfferInfo?.min_amount || 0);
+
+          const savedAmount = isEligibleForSpecialOffer
+            ? calculateProductSpecialOfferDiscount(
+              cartItem,
+              cartItemInfo,
+              specialOfferInfo,
+              cartItems,
+              products,
+            )
+            : 0;
 
           return (
             <li
-              key={
-                "cart-item-" +
-                cartItemInfo._id +
-                "-size-" +
-                cartItemInfo.selectedSize +
-                "-color-" +
-                cartItemInfo.selectedColor.label
-              }
+              key={cartItemInfo.variant_id}
               className="flex w-full items-stretch justify-between gap-x-2.5"
             >
               {/* Cart Item Image (with link to product page) */}
               <TransitionLink
                 href={`/product/${cartItem?.slug}`}
-                className="relative block min-h-full w-1/4 overflow-hidden rounded-[4px] bg-[var(--product-default)] max-sm:w-20"
+                className="relative block min-h-full w-1/4 shrink-0 overflow-hidden rounded-[4px] bg-[var(--product-default)] max-sm:w-20"
               >
                 {!!cartItemImgUrl && (
                   <Image
                     className="h-full w-full object-cover"
-                    // src={cartItemImgUrl}
                     src={getImage(cartItemImgUrl, 400)}
-                    alt={cartItem?.productTitle}
+                    alt={cartItem?.title || "Cart item"}
                     fill
                     sizes="15vh"
                   />
                 )}
               </TransitionLink>
-              <div className="grow text-neutral-400">
+              <div className="min-w-0 grow text-neutral-400">
                 <div className="flex h-full flex-col justify-between gap-1.5">
                   <div className="flex justify-between gap-x-5">
                     <div>
@@ -142,7 +177,7 @@ export default function CheckoutCartItems({
                         className="underline-offset-1 hover:underline"
                       >
                         <h4 className="line-clamp-1 text-neutral-600">
-                          {cartItem?.productTitle}
+                          {cartItem?.title}
                         </h4>
                       </TransitionLink>
                       {/* Cart Item Unit Price (with discount price, if any) */}
@@ -156,7 +191,7 @@ export default function CheckoutCartItems({
                                 : ""
                             }
                           >
-                            ৳ {Number(cartItem?.regularPrice).toLocaleString()}
+                            ৳ {Number(cartItem?.regular_price || 0).toLocaleString()}
                           </p>
                           {isOnlyRegularDiscountAvailable && (
                             <p>৳ {cartItemFinalPrice.toLocaleString()}</p>
@@ -166,7 +201,7 @@ export default function CheckoutCartItems({
                       {/* Cart Item Size */}
                       <div className="mt-[3px] flex gap-x-1.5 text-xs md:text-[13px]">
                         <h5>Size:</h5>
-                        <span>{cartItemInfo?.selectedSize}</span>
+                        <span>{itemSize.name || itemSize}</span>
                       </div>
                       {/* Cart Item Color */}
                       <div className="mt-[3px] flex gap-x-1.5 text-xs md:text-[13px]">
@@ -175,14 +210,13 @@ export default function CheckoutCartItems({
                           <div
                             style={{
                               background:
-                                cartItemInfo?.selectedColor?.label !==
-                                  "Multicolor"
-                                  ? cartItemInfo?.selectedColor?.color
+                                itemColor.name !== "Multicolor"
+                                  ? (itemColor.hex || itemColor.color)
                                   : "linear-gradient(90deg, blue 0%, red 40%, green 80%)",
                             }}
                             className="size-3.5 rounded-full"
                           />
-                          {cartItemInfo?.selectedColor?.label}
+                          {itemColor.name}
                         </div>
                       </div>
                       {/* Special Offer Text (if applicable) */}
@@ -196,22 +230,17 @@ export default function CheckoutCartItems({
                               onClick={() => {
                                 setActiveModalItem({
                                   ...specialOfferInfo,
-                                  savedAmount:
-                                    calculateProductSpecialOfferDiscount(
-                                      cartItem,
-                                      cartItemInfo,
-                                      specialOfferInfo,
-                                    ),
+                                  isEligibleForDiscount: isEligibleForSpecialOffer,
+                                  savedAmount,
                                 });
                                 setIsSpecialOfferModalOpen(true);
                               }}
                             >
                               <span>
                                 Special Offer* (
-                                {specialOfferInfo?.offerDiscountType ===
-                                  "Percentage"
-                                  ? specialOfferInfo?.offerDiscountValue + "%"
-                                  : "৳ " + specialOfferInfo?.offerDiscountValue}
+                                {(specialOfferInfo?.discount_type || "").toLowerCase() === "percentage"
+                                  ? specialOfferInfo?.discount_value + "%"
+                                  : "৳ " + specialOfferInfo?.discount_value}
                                 )
                               </span>
                               <span>
@@ -223,37 +252,25 @@ export default function CheckoutCartItems({
                               </span>
                             </span>
                             <DiscountTooptip
-                              discountTitle={specialOfferInfo?.offerTitle}
+                              discountTitle={specialOfferInfo?.title}
                               discountAmount={
-                                specialOfferInfo?.offerDiscountType ===
-                                  "Percentage"
-                                  ? specialOfferInfo?.offerDiscountValue + "%"
-                                  : "৳ " + specialOfferInfo?.offerDiscountValue
+                                (specialOfferInfo?.discount_type || "").toLowerCase() === "percentage"
+                                  ? specialOfferInfo?.discount_value + "%"
+                                  : "৳ " + specialOfferInfo?.discount_value
                               }
-                              isEligibleForSpecialOffer={
-                                isEligibleForSpecialOffer
-                              }
-                              savedAmount={calculateProductSpecialOfferDiscount(
-                                cartItem,
-                                cartItemInfo,
-                                specialOfferInfo,
-                              )}
-                              discountMinAmount={Number(
-                                specialOfferInfo?.minAmount,
-                              )}
-                              discountMaxAmount={Number(
-                                specialOfferInfo?.maxAmount,
-                              )}
+                              isEligibleForSpecialOffer={isEligibleForSpecialOffer}
+                              savedAmount={savedAmount}
+                              discountMinAmount={Number(specialOfferInfo?.min_amount)}
+                              discountMaxAmount={Number(specialOfferInfo?.max_amount)}
                             >
                               <span
                                 className={`mt-[3px] hidden cursor-default items-center gap-x-1 text-xs underline-offset-2 hover:underline xl:flex ${isEligibleForSpecialOffer ? "text-[#45963a]" : "text-[#90623a]"}`}
                               >
                                 <span>
                                   Special Offer* (
-                                  {specialOfferInfo?.offerDiscountType ===
-                                    "Percentage"
-                                    ? specialOfferInfo?.offerDiscountValue + "%"
-                                    : "৳ " + specialOfferInfo?.offerDiscountValue}
+                                  {(specialOfferInfo?.discount_type || "").toLowerCase() === "percentage"
+                                    ? specialOfferInfo?.discount_value + "%"
+                                    : "৳ " + specialOfferInfo?.discount_value}
                                   )
                                 </span>
                                 <span>
@@ -272,8 +289,7 @@ export default function CheckoutCartItems({
                     <span className="shrink-0 text-neutral-600">
                       ৳{" "}
                       {(
-                        cartItemFinalPrice *
-                        Number(cartItemInfo?.selectedQuantity)
+                        cartItemFinalPrice * quantity
                       ).toLocaleString()}
                     </span>
                   </div>
@@ -281,20 +297,7 @@ export default function CheckoutCartItems({
                     {/* Cart Item Remove Button */}
                     <div
                       className="mt-auto flex w-fit cursor-pointer items-center justify-between gap-x-1 font-semibold transition-[color] duration-300 ease-in-out hover:text-red-500"
-                      onClick={() =>
-                        handleCartUpdate(
-                          cartItems.filter(
-                            (item) =>
-                              !(
-                                item._id === cartItem?._id &&
-                                item.selectedSize ===
-                                cartItemInfo?.selectedSize &&
-                                item.selectedColor?._id ===
-                                cartItemInfo?.selectedColor?._id
-                              ),
-                          ),
-                        )
-                      }
+                      onClick={() => handleRemoveItem(cartItemInfo.variant_id)}
                     >
                       <CgTrash className="text-sm" />
                       <p className="text-xs">Remove</p>
@@ -305,22 +308,15 @@ export default function CheckoutCartItems({
                       <button
                         className="transition-[background-color,border-color] hover:border-transparent hover:bg-[var(--color-secondary-500)]"
                         type="button"
-                        onClick={() =>
-                          handleCartUpdate(
-                            cartItems.map((availableCartItem) => ({
-                              ...availableCartItem,
-                              selectedQuantity:
-                                availableCartItem._id === cartItem?._id &&
-                                  availableCartItem.selectedSize ===
-                                  cartItemInfo?.selectedSize &&
-                                  availableCartItem.selectedColor?._id ===
-                                  cartItemInfo?.selectedColor?._id &&
-                                  Number(cartItemInfo?.selectedQuantity) > 1
-                                  ? Number(cartItemInfo?.selectedQuantity) - 1
-                                  : Number(availableCartItem?.selectedQuantity),
-                            })),
-                          )
-                        }
+                        onClick={() => {
+                          if (quantity > 1) {
+                            handleQuantityUpdate(
+                              cartItemInfo,
+                              quantity - 1,
+                              maxQuantity,
+                            );
+                          }
+                        }}
                       >
                         <HiChevronLeft />
                       </button>
@@ -330,53 +326,29 @@ export default function CheckoutCartItems({
                         type="number"
                         arial-label="Quantity"
                         min={1}
-                        max={cartItemSKU}
-                        value={cartItemInfo?.selectedQuantity}
-                        onChange={(event) => {
-                          const inputValue = Number(event.target.value);
-                          const updatedCart = cartItems.map(
-                            (availableCartItem) => ({
-                              ...availableCartItem,
-                              selectedQuantity: !(
-                                availableCartItem._id === cartItem?._id &&
-                                availableCartItem.selectedSize ===
-                                cartItemInfo?.selectedSize &&
-                                availableCartItem.selectedColor?._id ===
-                                cartItemInfo?.selectedColor?._id
-                              )
-                                ? Number(availableCartItem.selectedQuantity)
-                                : inputValue < 1
-                                  ? 1
-                                  : inputValue > cartItemSKU
-                                    ? cartItemSKU
-                                    : inputValue,
-                            }),
+                        max={maxQuantity}
+                        value={quantity}
+                        onChange={(e) => {
+                          const val = Math.max(
+                            1,
+                            Math.min(Number(e.target.value) || 1, maxQuantity),
                           );
-
-                          handleCartUpdate(updatedCart);
+                          handleQuantityUpdate(cartItemInfo, val, maxQuantity);
                         }}
                       />
-                      {/* Quantity Inccrease Button */}
+                      {/* Quantity Increase Button */}
                       <button
                         className="transition-[background-color,border-color] hover:border-transparent hover:bg-[var(--color-secondary-500)]"
                         type="button"
-                        onClick={() =>
-                          handleCartUpdate(
-                            cartItems.map((availableCartItem) => ({
-                              ...availableCartItem,
-                              selectedQuantity:
-                                availableCartItem._id === cartItem?._id &&
-                                  availableCartItem.selectedSize ===
-                                  cartItemInfo?.selectedSize &&
-                                  availableCartItem.selectedColor?._id ===
-                                  cartItemInfo?.selectedColor?._id &&
-                                  Number(cartItemInfo?.selectedQuantity) !=
-                                  cartItemSKU
-                                  ? Number(cartItemInfo?.selectedQuantity) + 1
-                                  : Number(availableCartItem?.selectedQuantity),
-                            })),
-                          )
-                        }
+                        onClick={() => {
+                          if (quantity < maxQuantity) {
+                            handleQuantityUpdate(
+                              cartItemInfo,
+                              quantity + 1,
+                              maxQuantity,
+                            );
+                          }
+                        }}
                       >
                         <HiChevronRight />
                       </button>
@@ -391,16 +363,16 @@ export default function CheckoutCartItems({
       <DiscountModal
         isDiscountModalOpen={isSpecialOfferModalOpen}
         setIsDiscountModalOpen={setIsSpecialOfferModalOpen}
-        discountTitle={activeModalItem?.offerTitle}
-        isEligibleForDiscount={true}
+        discountTitle={activeModalItem?.title}
+        isEligibleForDiscount={activeModalItem?.isEligibleForDiscount ?? false}
         discountAmount={
-          activeModalItem?.offerDiscountType === "Percentage"
-            ? activeModalItem?.offerDiscountValue + "%"
-            : "৳ " + activeModalItem?.offerDiscountValue
+          (activeModalItem?.discount_type || "").toLowerCase() === "percentage"
+            ? activeModalItem?.discount_value + "%"
+            : "৳ " + activeModalItem?.discount_value
         }
         savedAmount={activeModalItem?.savedAmount}
-        discountMinAmount={Number(activeModalItem?.minAmount)}
-        discountMaxAmount={Number(activeModalItem?.maxAmount)}
+        discountMinAmount={Number(activeModalItem?.min_amount)}
+        discountMaxAmount={Number(activeModalItem?.max_amount)}
       />
     </>
   );

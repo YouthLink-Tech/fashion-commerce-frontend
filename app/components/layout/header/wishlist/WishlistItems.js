@@ -16,27 +16,22 @@ export default function WishlistItems({
 }) {
   const router = useRouter();
 
-  const removeWishlistItem = async (wishlistItemId) => {
-    const updatedWishlist = wishlistItems.filter(
-      (item) => item._id !== wishlistItemId,
-    );
+  const products = Array.isArray(productList)
+    ? productList
+    : productList?.items || [];
 
+  const removeWishlistItem = async (productId) => {
+    const updatedWishlist = wishlistItems.filter(
+      (item) => item.id !== productId,
+    );
     // Save item in local wishlist
     localStorage.setItem("wishlistItems", JSON.stringify(updatedWishlist));
-
-    // Save item in server wishlist, if user is logged in
-    if (userData) {
-      const updatedUserData = {
-        ...userData,
-        wishlistItems: updatedWishlist,
-      };
-
+    // Remove item from server wishlist, if user is logged in
+    if (userData && productId) {
       try {
-        const result = await routeFetch(`/api/user-data/${userData?._id}`, {
-          method: "PUT",
-          body: JSON.stringify(updatedUserData),
+        const result = await routeFetch(`/api/wishlist/${productId}`, {
+          method: "DELETE",
         });
-
         if (!result.ok) {
           console.error(
             "UpdateError (wishlistItems):",
@@ -49,57 +44,61 @@ export default function WishlistItems({
           router.refresh();
         }
       } catch (error) {
-        console.error("UpdateError (wishlistItems):", error.message || error);
-        toast.error("Failed to update the wishlist on server.");
+        console.error("RemoveWishlistError (wishlistItems):", error);
+        toast.error("Failed to remove item from server.");
       }
     }
-
     window.dispatchEvent(new Event("storageWishlist"));
   };
 
   return (
     <ul className="mb-4 space-y-[18px]">
       {wishlistItems.map((wishlistItemInfo) => {
-        const wishlistItem = productList?.find(
-          (product) => product._id === wishlistItemInfo._id,
+        const wishlistItem = products.find(
+          (product) => product.id === wishlistItemInfo.id,
         );
+
+        const wishlistItemImg =
+          wishlistItem?.thumbnail?.public_id ||
+          wishlistItem?.variants?.[0]?.media?.[0]?.public_id;
 
         return (
           <li
-            key={"wishlist-item-" + wishlistItemInfo?._id}
+            key={"wishlist-item-" + wishlistItemInfo?.id}
             className="flex w-full items-stretch justify-between gap-x-2.5"
           >
             {/* Wishlist Item Image (with link to product page) */}
             <TransitionLink
               href={`/product/${wishlistItem?.slug}`}
-              className="relative min-h-full w-16 overflow-hidden rounded-[4px] bg-[var(--product-default)] sm:aspect-[1.1/1] sm:w-1/5"
+              className="relative min-h-full w-16 shrink-0 overflow-hidden rounded-[4px] bg-[var(--product-default)] sm:aspect-[1.1/1] sm:w-1/5"
               hasDrawer={true}
               setIsDrawerOpen={setIsDropdownOpen}
             >
-              {!!wishlistItem?.productVariants[0]?.imageUrls[0] && (
+              {!!wishlistItemImg && (
                 <Image
                   className="h-full w-full object-cover"
-                  // src={wishlistItem?.productVariants[0]?.imageUrls[0]}
-                  src={getImage(wishlistItem?.productVariants[0]?.imageUrls[0], 400)}
-                  alt={wishlistItem?.productTitle}
+                  src={getImage(wishlistItemImg, 400)}
+                  alt={wishlistItem?.title || "Wishlist item"}
                   fill
                   sizes="15vh"
                 />
               )}
             </TransitionLink>
-            <div className="flex min-h-full grow flex-col justify-between text-neutral-400">
+            <div className="min-w-0 flex min-h-full grow flex-col justify-between text-neutral-400 gap-1.5">
               {/* Wishlist Item Title (with link to product page) */}
               <div className="flex justify-between gap-x-5">
-                <TransitionLink
-                  href={`/product/${wishlistItem?.slug}`}
-                  className="block underline-offset-1 hover:underline"
-                  hasDrawer={true}
-                  setIsDrawerOpen={setIsDropdownOpen}
-                >
-                  <h4 className="text-neutral-600">
-                    {wishlistItem?.productTitle}
-                  </h4>
-                </TransitionLink>
+                <div className="min-w-0">
+                  <TransitionLink
+                    href={`/product/${wishlistItem?.slug}`}
+                    className="block underline-offset-1 hover:underline"
+                    hasDrawer={true}
+                    setIsDrawerOpen={setIsDropdownOpen}
+                  >
+                    <h4 className="text-neutral-600">
+                      {wishlistItem?.title}
+                    </h4>
+                  </TransitionLink>
+                </div>
                 {/* Wishlist Item Price */}
                 <span className="shrink-0 text-neutral-600">
                   ৳{" "}
@@ -113,7 +112,7 @@ export default function WishlistItems({
                 {/* Wishlist Item Remove Button */}
                 <button
                   className="mt-auto flex w-fit cursor-pointer items-center justify-between gap-x-1 font-semibold transition-[color] duration-300 ease-in-out hover:text-red-500"
-                  onClick={() => removeWishlistItem(wishlistItem?._id)}
+                  onClick={() => removeWishlistItem(wishlistItemInfo.id)}
                 >
                   <CgTrash className="text-sm" />
                   <p className="text-xs">Remove</p>

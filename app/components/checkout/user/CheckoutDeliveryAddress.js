@@ -6,12 +6,11 @@ import {
 } from "@nextui-org/react";
 import { getAvailableDeliveryTypes, getEstimatedDeliveryTime, isDeliveryTypeChoiceNeeded } from "@/app/utils/orderCalculations";
 import CheckoutSelectDeliveryAddress from "../cart/CheckoutSelectDeliveryAddress";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 export default function CheckoutDeliveryAddress({
   register,
   control,
-  reset,
   errors,
   setValue,
   deliveryAddresses,
@@ -25,33 +24,26 @@ export default function CheckoutDeliveryAddress({
   const availableTypes = getAvailableDeliveryTypes(selectedCityId, shippingZones);
   const needsChoice = isDeliveryTypeChoiceNeeded(selectedCityId, shippingZones);
 
-  const isFirstRun = useRef(true);
-
   useEffect(() => {
-    if (isFirstRun.current) {
-      // On initial mount (e.g. restoring a draft with a city already set),
-      // don't blow away a deliveryType the user already had saved.
-      isFirstRun.current = false;
-      if (selectedCityId && availableTypes.length === 1 && !selectedDeliveryType) {
-        setValue('deliveryType', availableTypes[0]);
-      }
-      return;
-    }
-
     if (!selectedCityId) {
-      setValue('deliveryType', '');
+      if (selectedDeliveryType) setValue("deliveryType", "");
       return;
     }
-
     if (availableTypes.length === 1) {
-      setValue('deliveryType', availableTypes[0]);
-    } else if (availableTypes.length > 1 && !availableTypes.includes(selectedDeliveryType)) {
-      setValue('deliveryType', '');
+      if (selectedDeliveryType !== availableTypes[0]) {
+        setValue("deliveryType", availableTypes[0]);
+      }
+    } else if (
+      availableTypes.length > 1 &&
+      !availableTypes.includes(selectedDeliveryType)
+    ) {
+      if (selectedDeliveryType) setValue("deliveryType", "");
     } else if (availableTypes.length === 0) {
-      setValue('deliveryType', '');
+      if (selectedDeliveryType) setValue("deliveryType", "");
     }
+  },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCityId, availableTypes.join(',')]);
+    [selectedCityId, availableTypes.join(","), selectedDeliveryType, setValue]);
 
   return (
     <section className="w-full space-y-4 rounded-md border-2 border-neutral-50/20 bg-white/40 p-5 shadow-[0_0_20px_0_rgba(0,0,0,0.05)] backdrop-blur-2xl">
@@ -60,7 +52,7 @@ export default function CheckoutDeliveryAddress({
         {!!deliveryAddresses?.length && (
           <CheckoutSelectDeliveryAddress
             deliveryAddresses={deliveryAddresses}
-            reset={reset}
+            setValue={setValue}
           />
         )}
       </div>

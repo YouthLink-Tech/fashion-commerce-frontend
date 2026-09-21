@@ -12,7 +12,6 @@ export default function CheckoutCart({
   cartItems,
   specialOffers,
   shippingZones,
-  primaryLocation,
   userPromoCode,
   isPromoCodeValid,
   selectedCityId,
@@ -27,7 +26,7 @@ export default function CheckoutCart({
 }) {
   const isSpecialOfferApplied = cartItems.some((cartItem) => {
     const product = productList?.find(
-      (product) => product._id === cartItem?._id,
+      (product) => product.id === cartItem?.productId, // Pure PostgreSQL id comparison
     );
     const cartSubtotal = calculateSubtotal(
       productList,
@@ -91,7 +90,6 @@ export default function CheckoutCart({
             productList={productList}
             cartItems={cartItems}
             specialOffers={specialOffers}
-            primaryLocation={primaryLocation}
           />
         </div>
       </div>

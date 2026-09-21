@@ -98,6 +98,7 @@ export function buildListingQueryFromSearchParams(searchParams, categorySlug, { 
   if (filterByArr.includes("New Arrivals")) params.set("new_arrivals_only", "true");
   if (filterByArr.includes("In Stock")) params.set("in_stock", "true");
   if (filterByArr.includes("On Sale")) params.set("on_sale", "true");
+  if (filterByArr.includes("Special Offers")) params.set("special_offers", "true");
   params.delete("filterBy"); // internal UI param, not a backend param
 
   const sortLabel = Array.from(parsed.sortBy)[0];
@@ -119,6 +120,7 @@ export function buildFilterFacetsQueryFromSearchParams(searchParams, categorySlu
   if (filterByArr.includes("New Arrivals")) params.set("new_arrivals_only", "true");
   if (filterByArr.includes("In Stock")) params.set("in_stock", "true");
   if (filterByArr.includes("On Sale")) params.set("on_sale", "true");
+  if (filterByArr.includes("Special Offers")) params.set("special_offers", "true");
 
   return params.toString();
 }

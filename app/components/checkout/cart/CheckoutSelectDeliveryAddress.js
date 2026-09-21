@@ -11,7 +11,7 @@ import { HiOutlineMapPin } from "react-icons/hi2";
 
 export default function CheckoutSelectDeliveryAddress({
   deliveryAddresses,
-  reset,
+  setValue,
 }) {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
 
@@ -45,11 +45,22 @@ export default function CheckoutSelectDeliveryAddress({
                       key={address.id}
                       className="w-full cursor-pointer space-y-4 rounded-[4px] border-2 border-neutral-100 p-4 text-neutral-500 transition-[border-color] duration-300 ease-in-out hover:border-green-600/50 [&_:is(h3,h4)]:text-neutral-700 [&_h3]:text-base [&_h4]:text-sm [&_p]:text-[13px]"
                       onClick={() => {
-                        reset({
-                          addressLineOne: address.address1,
-                          city: address.city,
-                          thana: address.thana,
-                          postalCode: address.postalCode,
+                        // Set delivery fields atomically without wiping customer name/email/phone
+                        setValue("addressLineOne", address.address1 || "", {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                        setValue("cityId", address.thana?.city_id || "", {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                        setValue("thanaId", address.thana_id || "", {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                        setValue("postalCode", address.postal_code || "", {
+                          shouldValidate: true,
+                          shouldDirty: true,
                         });
                         setIsAddressModalOpen(false);
                       }}
@@ -70,15 +81,15 @@ export default function CheckoutSelectDeliveryAddress({
                         <div className="max-sm:space-y-4 sm:flex sm:gap-x-4">
                           <div className="w-full space-y-2 font-semibold">
                             <h4>City</h4>
-                            <p>{address?.city}</p>
+                            <p>{address?.thana?.city?.name}</p>
                           </div>
                           <div className="w-full space-y-2 font-semibold">
                             <h4>Thana</h4>
-                            <p>{address?.thana}</p>
+                            <p>{address?.thana?.name}</p>
                           </div>
                           <div className="w-full space-y-2 font-semibold">
                             <h4>Postal Code</h4>
-                            <p>{address?.postalCode}</p>
+                            <p>{address?.postal_code}</p>
                           </div>
                         </div>
                       </div>

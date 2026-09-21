@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 import { CgHeart, CgShoppingCart } from "react-icons/cg";
 import { routeFetch } from "@/app/lib/fetcher/routeFetch";
 import ProductToast from "../toast/ProductToast";
-import { getColors } from "@/app/utils/productSkuCalculation";
+import { getColors, getSizesForColor } from "@/app/utils/productSkuCalculation";
 
 export default function CardButtons({
   userData,
@@ -18,33 +18,30 @@ export default function CardButtons({
     const currentWishlist =
       JSON.parse(localStorage.getItem("wishlistItems")) || [];
 
-    if (!currentWishlist.some((item) => item._id === product.id)) {
-      const updatedWishlist = [...currentWishlist, { _id: product.id }];
+    if (!currentWishlist.some((item) => item.id === product.id)) {
+      const updatedWishlist = [...currentWishlist, { id: product.id }];
 
       // Save item in local wishlist
       localStorage.setItem("wishlistItems", JSON.stringify(updatedWishlist));
 
-      const variantSizes = [
-        ...new Map((product.variants ?? []).map((v) => [v.size.id, v.size])).values(),
-      ];
       const variantColors = getColors(product.variants);
-      const productImg = product.variants?.[0]?.media?.[0]?.public_id;
+      const variantSizes = getSizesForColor(
+        product.variants,
+        variantColors[0]?.id,
+      );
+      const productImg =
+        product.variants?.[0]?.media?.[0]?.public_id ||
+        product.thumbnail?.public_id;
 
-      // Save item in server wishlist, if user is logged in
+      // Save item in server wishlist if user is logged in
       if (userData) {
-        const updatedUserData = {
-          ...userData,
-          wishlistItems: updatedWishlist,
-        };
-
         try {
-          const result = await routeFetch(`/api/user-data/${userData?._id}`, {
-            method: "PUT",
-            body: JSON.stringify(updatedUserData),
+          const result = await routeFetch("/api/wishlist", {
+            method: "POST",
+            body: JSON.stringify({ product_id: product.id }),
           });
 
           if (result.ok) {
-            // If server wishlist is updated
             toast.custom(
               (t) => (
                 <ProductToast
@@ -72,14 +69,11 @@ export default function CardButtons({
             );
           }
         } catch (error) {
-          console.error(
-            "UpdateError (productWishlistButton):",
-            error.message || error,
-          );
+          console.error("UpdateError (cardButtons):", error);
           toast.error("Failed to update the wishlist on server.");
         }
       } else {
-        // If saved only locally
+        // Display toast notification for guest user
         toast.custom(
           (t) => (
             <ProductToast
@@ -98,7 +92,7 @@ export default function CardButtons({
         );
       }
     } else {
-      toast.error("Item is already in the wishlist."); // if item already exists
+      toast.error("Item is already in the wishlist.");
     }
 
     window.dispatchEvent(new Event("storageWishlist"));

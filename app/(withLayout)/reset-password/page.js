@@ -3,25 +3,32 @@ import { rawFetch } from "@/app/lib/fetcher/rawFetch";
 import TransitionLink from "@/app/components/ui/TransitionLink";
 import ResetPasswordForm from "@/app/components/reset/ResetPasswordForm";
 
+export const dynamic = "force-dynamic";
+
 export default async function ResetPassword({ searchParams }) {
-  const token = searchParams.token;
-  let isTokenValid, email, validationMessage;
+  const token = searchParams?.token;
+  let isTokenValid = false;
+  let email = null;
+  let validationMessage = "Unable to validate token.";
 
-  try {
-    const result = await rawFetch("/api/customer/validate-reset-token", {
-      method: "PUT",
-      body: JSON.stringify({ token }),
-    });
+  if (token) {
+    try {
+      const result = await rawFetch("/api/customer/validate-reset-token", {
+        method: "PUT",
+        body: JSON.stringify({ token }),
+        cache: "no-store",
+      });
 
-    isTokenValid = result.ok;
-    email = result.data.email;
-    validationMessage = result.message.message;
-  } catch (error) {
-    console.error("ValidationError:", error.message.message || error);
+      isTokenValid = result.ok;
+      email = result.data?.email;
+      validationMessage = result.message || "Token validated successfully.";
+    } catch (error) {
+      console.error("ValidationError:", error.message || error);
 
-    isTokenValid = false;
-    email = null;
-    validationMessage = error.message.message || "Unable to validate token.";
+      isTokenValid = false;
+      email = null;
+      validationMessage = error.message || "Unable to validate token.";
+    }
   }
 
   return (

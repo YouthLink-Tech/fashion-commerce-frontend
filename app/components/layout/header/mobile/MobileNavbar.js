@@ -36,12 +36,6 @@ export default async function MobileNavbar({
         tags: ['special-offers']
       }
     }),
-    rawFetch("/api/location/primary", {
-      next: {
-        revalidate: 7200,           // 2 hours fallback
-        tags: ['primary-location']  // cleared when location changes
-      }
-    }),
     rawFetch("/api/policy-pdf/all", {
       next: {
         revalidate: 604800, // 7 days — legal documents rarely change
@@ -51,18 +45,12 @@ export default async function MobileNavbar({
     ),
   ];
 
-  const [userDataRes, productsRes, offersRes, primaryLocationRes, legalPdfRes] =
+  const [userDataRes, productsRes, offersRes, legalPdfRes] =
     await Promise.allSettled(promises);
 
   const userData = extractData(userDataRes, null, "mobileNav/userData");
   const productList = extractData(productsRes, [], "mobileNav/products");
   const specialOffers = extractData(offersRes, [], "mobileNav/specialOffers");
-  const primaryLocation = extractData(
-    primaryLocationRes,
-    null,
-    "mobileNav/primaryLocation",
-    "primaryLocation",
-  );
   const legalPolicyPdfLinks = extractData(
     legalPdfRes,
     {},
@@ -108,7 +96,6 @@ export default async function MobileNavbar({
               userData={userData}
               productList={productList}
               specialOffers={specialOffers}
-              primaryLocation={primaryLocation}
             />
           </Suspense>
           {/* Navigation button */}

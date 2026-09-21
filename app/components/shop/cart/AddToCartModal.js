@@ -69,7 +69,6 @@ export default function AddToCartModal({
         <hr className="mb-5 mt-10 h-0.5 bg-neutral-100 md:my-5" />
         <CartModalButtons
           userData={userData}
-          productId={product?.id}
           productTitle={product?.title}
           productImg={
             imageSets?.find((imgSet) => imgSet?.color?.id === selectedOptions?.color?.id)?.images[0]
