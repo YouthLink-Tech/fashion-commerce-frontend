@@ -1,15 +1,20 @@
+import formatExpectedDeliveryDate from "@/app/utils/formatExpectedDeliveryDate";
 import { formatIsoDateTime } from "@/app/utils/formatIsoDateTime";
 
-export default function OrderDeliveryDetails({ delivery }) {
+export default function OrderDeliveryDetails({ order }) {
+
   const fullAddress = [
-    delivery?.address1?.trim(),
-    delivery?.thana?.trim(),
-    delivery?.city?.trim(),
-    delivery?.postalCode?.trim()
-  ].filter(Boolean).join(", ");
+    order?.delivery_address1?.trim(),
+    order?.thana?.name?.trim(),
+    order?.thana?.city?.name?.trim(),
+    order?.delivery_postal_code?.trim(),
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   const capitalizeFirstLetter = (text) => {
-    return text?.charAt(0)?.toUpperCase() + text?.slice(1)?.toLowerCase();
+    if (!text || typeof text !== "string") return "--";
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   };
 
   return (
@@ -20,28 +25,30 @@ export default function OrderDeliveryDetails({ delivery }) {
       <div className="space-y-1 [&>div]:flex [&>div]:justify-between [&>div]:gap-3 sm:[&>div]:gap-10 xl:[&>div]:gap-20 [&_h4]:font-semibold sm:[&_h4]:text-nowrap">
         <div>
           <h4>Address</h4>
-          <p className="text-right">{fullAddress}</p>
+          <p className="text-right">{fullAddress || "--"}</p>
         </div>
         <div>
           <h4>Delivery Method</h4>
           <p className="text-right">
-            {capitalizeFirstLetter(delivery?.deliveryMethod)}
+            {capitalizeFirstLetter(order?.delivery_method)}
           </p>
         </div>
         <div>
           <h4>Note to Seller</h4>
           <p className="text-right">
-            {!delivery?.noteToSeller ? "--" : `"${delivery.noteToSeller}"`}
+            {!order?.delivery_note_to_seller
+              ? "--"
+              : `"${order.delivery_note_to_seller}"`}
           </p>
         </div>
         <div>
           <h4>
-            {!delivery?.deliveredAt ? "Delivery Expected at" : "Delivered at"}
+            {!order?.delivered_at ? "Delivery Expected at" : "Delivered at"}
           </h4>
           <p className="text-right">
-            {!delivery?.deliveredAt
-              ? delivery?.expectedDeliveryDate || "--"
-              : `${formatIsoDateTime(delivery?.deliveredAt)}`}
+            {!order?.delivered_at
+              ? formatExpectedDeliveryDate(order?.expected_delivery_date)
+              : `${formatIsoDateTime(order?.delivered_at)}`}
           </p>
         </div>
       </div>

@@ -1,7 +1,8 @@
-export function formatIsoDateTime(dateIsoString) {
+export function formatIsoDateTime(dateIsoString, fallback = "--") {
+  if (!dateIsoString) return fallback;
   const date = new Date(dateIsoString);
-
-  // Format the date part
+  if (isNaN(date.getTime())) return fallback;
+  // Format the date part (e.g., "September 28 2026")
   const datePart = date
     .toLocaleDateString("en-US", {
       timeZone: "Asia/Dhaka",
@@ -9,16 +10,13 @@ export function formatIsoDateTime(dateIsoString) {
       day: "2-digit",
       year: "numeric",
     })
-    .replace(",", ""); // Remove the comma after the day
-
-  // Format the time part
+    .replace(",", ""); // Remove the comma after day
+  // Format the time part (e.g., "04:40 PM")
   const timePart = date.toLocaleTimeString("en-US", {
     timeZone: "Asia/Dhaka",
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
   });
-
-  // Combine and return the result
   return `${datePart}, ${timePart}`;
 }

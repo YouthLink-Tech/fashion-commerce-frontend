@@ -23,9 +23,11 @@ import {
   COMPANY_NAME,
   COMPANY_PHONE,
 } from "@/app/config/company";
+import formatOrderDateTime from "@/app/utils/formatOrderDateTime";
 
 // Generate Barcode as PNG Data URL
 const generateBarcodeData = (order) => {
+  if (!order) return "";
   const canvas = document.createElement("canvas");
   JsBarcode(canvas, order, {
     format: "CODE128",
@@ -41,7 +43,7 @@ const generateBarcodeData = (order) => {
   return canvas.toDataURL("image/png");
 };
 
-// Define styles
+// Define styles (100% original untouched)
 const styles = StyleSheet.create({
   page: {
     backgroundColor: "#FFFDE7",
@@ -246,8 +248,8 @@ const PDFDocument = ({ order }) => {
   }, []);
 
   const barcodeDataUrl = React.useMemo(
-    () => generateBarcodeData(order?.orderNumber),
-    [order?.orderNumber],
+    () => generateBarcodeData(order?.order_number),
+    [order?.order_number],
   );
 
   if (!order) {
@@ -255,31 +257,56 @@ const PDFDocument = ({ order }) => {
     return null;
   }
 
-  // Prepare the product rows without applying discount at this point
-  const productRows = order?.productInformation.map((product) => {
-    const productTotal = (
-      product?.discountInfo
-        ? product?.discountInfo?.finalPriceAfterDiscount *
-        product?.sku.toFixed(2)
-        : product?.regularPrice * product?.sku
-    ).toFixed(2); // Original price without discount
+  // Prepare the product rows from Postgres items
+  const productRows = (order?.items || []).map((product) => {
+    const unitPrice = Number(
+      product?.final_price_after_discount ?? product?.regular_price ?? 0,
+    );
+    const quantity = Number(product?.quantity || 1);
+    const productTotal = (unitPrice * quantity).toFixed(2);
 
     return [
-      product.productTitle, // Title
-      product.color?.label || "", // Color
-      product.size || "", // Size
-      `${product?.discountInfo ? product?.discountInfo?.finalPriceAfterDiscount : product?.regularPrice}`, // Unit Price
-      product.sku, // QTY
-      `${productTotal}`, // Total (without discount)
-      product.offerTitle
+      product.product_title, // Title
+      product.color_name || "", // Color
+      product.size_name || "", // Size
+      `${unitPrice}`, // Unit Price
+      quantity, // QTY
+      `${productTotal}`, // Total
+      product.offer_title
         ? {
-          offerTitle: product.offerTitle,
+          offerTitle: product.offer_title,
           offerDiscount: 0,
-          productTitle: product.productTitle,
+          productTitle: product.product_title,
         }
-        : null, // Store offer details without applying discount yet
+        : null,
     ];
   });
+
+  const totalDiscount =
+    Number(order?.total_special_offer_discount || 0) +
+    Number(order?.applied_promo_discount || 0);
+
+  const deliveryAddress = [
+    order?.delivery_address1,
+    order?.thana?.name,
+    order?.thana?.city?.name,
+    order?.delivery_postal_code,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const paymentMethod = order?.payment?.payment_method
+    ? order.payment.payment_method.toUpperCase()
+    : "--";
+
+  const shippingMethod = order?.delivery_method
+    ? order.delivery_method.toUpperCase()
+    : "--";
+
+  const paymentStatus = order?.payment?.payment_status
+    ? order.payment.payment_status.charAt(0).toUpperCase() +
+    order.payment.payment_status.slice(1).toLowerCase()
+    : "--";
 
   return (
     <Document>
@@ -301,7 +328,7 @@ const PDFDocument = ({ order }) => {
             {/* Order Information */}
             <View style={styles.orderInfo2}>
               <Text style={{ letterSpacing: 4, textTransform: "uppercase" }}>
-                #{order?.orderNumber}
+                #{order?.order_number}
               </Text>
               <View style={styles.barcode}>
                 <Image
@@ -318,19 +345,18 @@ const PDFDocument = ({ order }) => {
                   marginBottom: 5,
                 }}
               >
-                {order?.customerInfo?.customerName}
+                {order?.customer?.name}
               </Text>
               <Text style={{ letterSpacing: 4, textTransform: "uppercase" }}>
-                {order?.customerInfo?.phoneNumber}
+                {order?.phone_number}
               </Text>
-              {order?.customerInfo?.phoneNumber2 &&
-                order?.customerInfo?.phoneNumber2 !== "0" && (
-                  <Text
-                    style={{ letterSpacing: 4, textTransform: "uppercase" }}
-                  >
-                    {order?.customerInfo?.phoneNumber2}
-                  </Text>
-                )}
+              {order?.phone_number_2 && order?.phone_number_2 !== "0" && (
+                <Text
+                  style={{ letterSpacing: 4, textTransform: "uppercase" }}
+                >
+                  {order?.phone_number_2}
+                </Text>
+              )}
               <Text
                 style={{
                   letterSpacing: 4,
@@ -339,21 +365,21 @@ const PDFDocument = ({ order }) => {
                   marginBottom: 5,
                 }}
               >
-                {`${order?.deliveryInfo?.address1} ${order?.deliveryInfo?.thana} ${order?.deliveryInfo?.city} ${order?.deliveryInfo?.postalCode}`}
+                {deliveryAddress}
               </Text>
             </View>
             <View style={styles.orderInfo3}>
               <Text style={{ textAlign: "right", marginBottom: 3 }}>
-                {order?.dateTime}
+                {formatOrderDateTime(order?.placed_at).dateTime}
               </Text>
               <Text style={{ textAlign: "right", marginBottom: 3 }}>
-                Shipping Method : {order?.deliveryInfo?.deliveryMethod}
+                Shipping Method : {shippingMethod}
               </Text>
               <Text style={{ textAlign: "right", marginBottom: 3 }}>
-                Payment Method : {order?.paymentInfo?.paymentMethod}
+                Payment Method : {paymentMethod}
               </Text>
               <Text style={{ textAlign: "right" }}>
-                Payment Status : {order?.paymentInfo?.paymentStatus}
+                Payment Status : {paymentStatus}
               </Text>
             </View>
           </View>
@@ -407,7 +433,7 @@ const PDFDocument = ({ order }) => {
           <View style={styles.border}></View>
 
           <View style={styles.subTable}>
-            {/* Subtotal, Promo Discount, Offer Discount, Shipping Charge, and Total */}
+            {/* Subtotal, Discount, Shipping Charge, and Total */}
             <View style={styles.subtotal}>
               <Text
                 style={{
@@ -419,13 +445,12 @@ const PDFDocument = ({ order }) => {
                 Subtotal
               </Text>
               <Text style={{ fontWeight: 500 }}>
-                {order?.subtotal?.toFixed(2)}
+                {Number(order?.subtotal || 0).toFixed(2)}
               </Text>
             </View>
 
-            {(order?.promoInfo || order?.totalSpecialOfferDiscount > 0) && (
+            {totalDiscount > 0 && (
               <View style={styles.subtotal}>
-                {/* Discount Label */}
                 <Text
                   style={{
                     color: "#E74C3A",
@@ -436,11 +461,8 @@ const PDFDocument = ({ order }) => {
                   Discount
                 </Text>
 
-                {/* Discount Value */}
                 <Text style={{ fontWeight: 500 }}>
-                  {order?.totalSpecialOfferDiscount > 0
-                    ? `-${Number(order?.totalSpecialOfferDiscount || 0).toFixed(2)}`
-                    : `-${Number(order?.promoInfo?.appliedPromoDiscount || 0).toFixed(2)}`}
+                  -{totalDiscount.toFixed(2)}
                 </Text>
               </View>
             )}
@@ -456,7 +478,7 @@ const PDFDocument = ({ order }) => {
                 Shipping
               </Text>
               <Text style={{ fontWeight: 500 }}>
-                +{order?.shippingCharge?.toFixed(2)}
+                +{Number(order?.shipping_charge || 0).toFixed(2)}
               </Text>
             </View>
 
@@ -471,7 +493,7 @@ const PDFDocument = ({ order }) => {
                 Total
               </Text>
               <Text style={{ fontWeight: 500 }}>
-                {order?.total?.toFixed(2)}
+                {Number(order?.total || 0).toFixed(2)}
               </Text>
             </View>
           </View>

@@ -3,10 +3,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@nextui-org/react";
 import TransitionLink from "../../ui/TransitionLink";
 import { getImage } from "@/app/lib/cloudinaryUtils";
 
-export default function ReturnInfoModalItems({ returnProducts }) {
+export default function ReturnInfoModalItems({ returnItems = [], orderItems = [] }) {
+
   const calculateTotalItems = () => {
-    return returnProducts.reduce(
-      (accumulator, item) => Number(item.sku) + accumulator,
+    return returnItems.reduce(
+      (accumulator, item) => Number(item.quantity || 0) + accumulator,
       0,
     );
   };
@@ -23,29 +24,29 @@ export default function ReturnInfoModalItems({ returnProducts }) {
       </div>
       <div className="rounded-[4px] border-2 border-neutral-200 p-3 font-semibold sm:px-5 sm:py-4">
         <ul className="grid auto-rows-fr gap-5">
-          {returnProducts?.map((item, index) => {
+          {returnItems?.map((returnItem, index) => {
+
+            const matchedItem = orderItems?.find(
+              (i) => i.id === returnItem.order_item_id,
+            );
+
             return (
               <li
                 key={
                   "marked-return-item-" +
-                  item?._id +
-                  "-size-" +
-                  item?.size +
-                  "-color-" +
-                  item?.color?.label
+                  returnItem.id
                 }
                 className="flex w-full items-stretch justify-between gap-x-2.5"
               >
                 <TransitionLink
-                  href={`/product/${item?.slug}`}
+                  href={`/product/${matchedItem?.product_slug}`}
                   className="relative block min-h-full w-[72px] shrink-0 overflow-hidden rounded-[4px] bg-[var(--product-default)] sm:w-20 md:w-28 xl:w-1/4"
                 >
-                  {!!item?.thumbnailImgUrl && (
+                  {!!matchedItem?.thumbnail_image_url && (
                     <Image
                       className="h-full w-full object-cover"
-                      // src={item?.thumbnailImgUrl}
-                      src={getImage(item?.thumbnailImgUrl, 400)}
-                      alt={`${item?.productTitle} - Marked Return Item (${index + 1})`}
+                      src={getImage(matchedItem?.thumbnail_image_url, 400)}
+                      alt={`${matchedItem?.product_title} - Marked Return Item (${index + 1})`}
                       fill
                       sizes="15vh"
                     />
@@ -56,31 +57,31 @@ export default function ReturnInfoModalItems({ returnProducts }) {
                     <div className="flex justify-between gap-x-2 sm:gap-x-5">
                       <div>
                         <TransitionLink
-                          href={`/product/${item?.slug}`}
+                          href={`/product/${matchedItem?.product_slug}`}
                           className="underline-offset-1 hover:underline"
                         >
                           <h4 className="line-clamp-1 text-neutral-600 md:text-[15px]">
-                            {item?.productTitle}
+                            {matchedItem?.product_title}
                           </h4>
                         </TransitionLink>
                         <div className="mt-1 flex gap-x-1.5 text-xs md:text-[13px]">
                           <h5>Unit Price:</h5>
-                          <span>{item?.finalUnitPrice?.toLocaleString()}</span>
+                          <span>{Number(returnItem?.final_unit_price || 0).toLocaleString()}</span>
                         </div>
                         <div className="mt-1 flex gap-x-1.5 text-xs md:text-[13px]">
                           <h5>Size:</h5>
-                          <span>{item?.size}</span>
+                          <span>{matchedItem?.size_name}</span>
                         </div>
                         <div className="mt-1 flex gap-x-1.5 text-xs md:text-[13px]">
                           <h5>Color:</h5>
                           <div className="flex items-center gap-x-1">
                             <div
                               style={{
-                                backgroundColor: item?.color?.color,
+                                backgroundColor: matchedItem?.color_hex || "#fff",
                               }}
                               className="size-3.5 max-h-3.5 max-w-3.5 rounded-full"
                             />
-                            <p className="line-clamp-1">{item?.color?.label}</p>
+                            <p className="line-clamp-1">{matchedItem?.color_name}</p>
                           </div>
                         </div>
                       </div>
@@ -89,33 +90,34 @@ export default function ReturnInfoModalItems({ returnProducts }) {
                           <p className="w-full text-nowrap text-right text-neutral-600 md:text-[15px]">
                             ৳{" "}
                             {(
-                              item?.finalUnitPrice * item?.sku
-                            )?.toLocaleString()}
+                              Number(returnItem?.final_unit_price || 0) *
+                              Number(returnItem?.quantity || 0)
+                            ).toLocaleString()}
                           </p>
                         </div>
                         <div>
                           <div className="flex gap-x-1.5 justify-self-end text-[13px] md:text-sm">
                             <h5 className="lg:hidden">Qty:</h5>
                             <h5 className="max-lg:hidden">Quantity:</h5>
-                            <span>{item?.sku}</span>
+                            <span>{returnItem?.quantity}</span>
                           </div>
                         </div>
                       </div>
                     </div>
                     <div className="mt-1 text-xs md:text-[13px]">
                       <h5 className="mr-1.5 inline text-nowrap">
-                        Provided Issue{item?.issues?.length > 1 ? "s" : ""}:
+                        Provided Issue{returnItem?.issues?.length > 1 ? "s" : ""}:
                       </h5>
-                      <span>{item?.issues?.join(", ")}</span>
+                      <span>{returnItem?.issues?.join(", ")}</span>
                     </div>
                     <div className="mt-1 flex items-center gap-x-1.5">
                       <h5 className="text-xs md:text-[13px]">Status:</h5>
                       <div
-                        className={`h-fit w-fit cursor-default text-nowrap rounded-[3px] px-1.5 py-1 text-[10px]/[1] font-semibold md:text-[11px]/[1] ${item?.status === "Pending" ? "bg-yellow-100 text-yellow-600" : item?.status === "Accepted" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}
+                        className={`h-fit w-fit cursor-default text-nowrap rounded-[3px] px-1.5 py-1 text-[10px]/[1] font-semibold md:text-[11px]/[1] ${returnItem?.status?.toLowerCase() === "pending" ? "bg-yellow-100 text-yellow-600" : returnItem?.status?.toLowerCase() === "accepted" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}
                       >
-                        {item?.status}
+                        {returnItem?.status}
                       </div>
-                      {!!item.declineReason && (
+                      {!!returnItem?.decline_reason && (
                         <Popover
                           classNames={{
                             content: [
@@ -128,7 +130,7 @@ export default function ReturnInfoModalItems({ returnProducts }) {
                             Why?
                           </PopoverTrigger>
                           <PopoverContent>
-                            <p>{item.declineReason}</p>
+                            <p>{returnItem.decline_reason}</p>
                           </PopoverContent>
                         </Popover>
                       )}

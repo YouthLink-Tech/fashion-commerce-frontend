@@ -11,17 +11,19 @@ export default function OrderShipmentDetails({ shipment, isDeliveryDone }) {
         <div>
           <h4>Courier</h4>
           <p className="text-right">
-            {!shipment ? "--" : shipment?.selectedShipmentHandlerName}
+            {shipment?.shipmentHandler?.name || "--"}
           </p>
         </div>
         <div>
           <h4>Shipped at</h4>
           <p className="text-right">
-            {!shipment ? "--" : `${formatIsoDateTime(shipment?.shippedAt)}`}
+            {shipment?.shipped_at
+              ? formatIsoDateTime(shipment?.shipped_at)
+              : "--"}
           </p>
         </div>
-        {!!shipment && !isDeliveryDone && (
-          <TrackingCode trackingCode={shipment?.trackingNumber} />
+        {!!shipment?.tracking_number && !isDeliveryDone && (
+          <TrackingCode trackingCode={shipment?.tracking_number} />
         )}
       </div>
     </div>

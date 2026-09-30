@@ -12,13 +12,10 @@ export default async function OrderConfirmed({ searchParams }) {
   if (!session?.user?.email) redirect("/");
 
   const res = await tokenizedFetch(`/api/order/${orderNumber}`);
-  if (!res?.ok) redirect("/");
-
-  // Authorization: confirm this order belongs to the logged-in user
-  if (res.data?.customerInfo?.email !== session.user.email) redirect("/");
+  if (!res?.ok || !res?.data) redirect("/");
 
   // Already seen — redirect permanently
-  if (res.data.confirmationViewed) redirect(`/user/orders/${orderNumber}`);
+  if (res.data.confirmation_viewed) redirect(`/user/orders/${orderNumber}`);
 
   // First visit — mark it in DB before rendering
   await tokenizedFetch(`/api/order/${orderNumber}/mark-confirmation-viewed`, {

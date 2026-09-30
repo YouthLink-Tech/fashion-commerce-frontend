@@ -5,13 +5,24 @@ import DiscountTooptip from "../../ui/DiscountTooltip";
 import DiscountModal from "../../ui/DiscountModal";
 
 export default function OrderItemsInfo({
-  totalSpecialOfferDiscount,
-  promoInfo,
-  subtotal,
-  shippingCharge,
-  total,
+  order
 }) {
   const [isPromoModalOpen, setIsPromoModalOpen] = useState(false);
+
+  const subtotal = Number(order?.subtotal || 0);
+  const totalSpecialOfferDiscount = Number(
+    order?.total_special_offer_discount || 0,
+  );
+  const shippingCharge = Number(order?.shipping_charge || 0);
+  const total = Number(order?.total || 0);
+
+  const hasPromo = !!order?.promo_code_snapshot;
+  const promoTitle = order?.promo_code_snapshot;
+  const promoValue =
+    order?.promo_discount_type === "percentage"
+      ? `${order?.promo_discount_value}%`
+      : `৳ ${order?.promo_discount_value}`;
+  const appliedPromo = Number(order?.applied_promo_discount || 0);
 
   return (
     <div className="space-y-2">
@@ -27,7 +38,7 @@ export default function OrderItemsInfo({
           </span>
         </div>
       )}
-      {!!promoInfo && (
+      {hasPromo && (
         <div className="flex justify-between">
           <h5
             className="text-neutral-400 xl:hidden"
@@ -35,47 +46,38 @@ export default function OrderItemsInfo({
           >
             Promo (
             <span className="cursor-default text-[#45963a] underline underline-offset-2">
-              {promoInfo?.promoCode}
+              {promoTitle}
             </span>
             )
           </h5>
           <DiscountModal
             isDiscountModalOpen={isPromoModalOpen}
             setIsDiscountModalOpen={setIsPromoModalOpen}
-            discountTitle={promoInfo?.promoCode}
-            discountAmount={
-              promoInfo?.promoDiscountType === "Percentage"
-                ? promoInfo?.promoDiscountValue + "%"
-                : "৳ " + promoInfo?.promoDiscountValue
-            }
+            discountTitle={promoTitle}
+            discountAmount={promoValue}
             isEligibleForDiscount={true}
-            savedAmount={promoInfo?.appliedPromoDiscount}
+            savedAmount={appliedPromo}
           />
           <h5 className="text-neutral-400 max-xl:hidden">
             Promo (
             <DiscountTooptip
-              discountTitle={promoInfo?.promoCode}
-              discountAmount={
-                promoInfo?.promoDiscountType === "Percentage"
-                  ? promoInfo?.promoDiscountValue + "%"
-                  : "৳ " + promoInfo?.promoDiscountValue
-              }
+              discountTitle={promoTitle}
+              discountAmount={promoValue}
               isEligibleForSpecialOffer={true}
-              savedAmount={promoInfo?.appliedPromoDiscount}
+              savedAmount={appliedPromo}
             >
               <span className="cursor-default text-[#45963a] underline underline-offset-2">
-                {promoInfo?.promoCode}
+                {promoTitle}
               </span>
             </DiscountTooptip>
             )
           </h5>
           <span className="text-right text-red-600">
             - ৳{" "}
-            {`${promoInfo?.appliedPromoDiscount?.toLocaleString()}${
-              promoInfo?.discountType === "percentage"
-                ? ` (${promoInfo?.discountAmount?.toLocaleString()}%)`
+            {`${appliedPromo.toLocaleString()}${order?.promo_discount_type === "percentage" && order?.promo_discount_value
+                ? ` (${Number(order.promo_discount_value).toLocaleString()}%)`
                 : ""
-            }`}
+              }`}
           </span>
         </div>
       )}

@@ -126,27 +126,51 @@ export default function CheckoutForm({
       userPromoCode?.code || "",
     );
 
+    const resolvedHometown = data.hometownId?.trim() || userData?.hometown || null;
+
+    const payload = {
+      name: data.name?.trim(),
+      email: data.email?.trim(),
+      phone_number: data.phoneNumber?.trim(),
+      phone_number_2: data.altPhoneNumber?.trim() || "",
+      hometown_id: resolvedHometown,
+      delivery_address1: data.addressLineOne?.trim(),
+      thana_id: data.thanaId,
+      delivery_postal_code: String(data.postalCode || "").trim(),
+      delivery_note_to_seller: data.note?.trim() || "",
+      delivery_type: (data.deliveryType || "standard").toLowerCase(),
+      payment_method: data.paymentMethod?.trim() || "SSLCommerz",
+      promo_code: userPromoCode?.code || null,
+      items: cartItems.map((item) => ({
+        variant_id: item.variant_id,
+        quantity: Number(item.selectedQuantity),
+      })),
+      user_device: userDevice.toLowerCase(), // "mobile" | "tablet" | "desktop"
+      idempotency_key: idempotencyKey,
+      fbp: fbp || null,
+      fbc: fbc || null,
+    };
+
     try {
       const result = await routeFetch("/api/order", {
         method: "POST",
-        body: JSON.stringify({
-          ...data,
-          idempotencyKey,
-          promoCode: userPromoCode?.code || null,
-          cartItems,
-          userDevice,
-          fbp: fbp || null,
-          fbc: fbc || null,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (result.ok) {
 
-        const { checkoutSessionId } = result.data;
+        const checkoutSessionId = result.data?.checkout_session_id;
+
+        if (!checkoutSessionId) {
+          toast.error("Checkout session ID missing from response.");
+          setIsSubmitting(false);
+          setIsPageLoading(false);
+          return;
+        }
 
         const paymentRes = await routeFetch('/api/payment-init', {
           method: "POST",
-          body: JSON.stringify({ checkoutSessionId })
+          body: JSON.stringify({ checkout_session_id: checkoutSessionId })
         });
 
         if (!paymentRes?.ok) {
@@ -163,6 +187,13 @@ export default function CheckoutForm({
           return;
         }
 
+        if (!paymentRes.data?.redirectUrl) {
+          toast.error("Payment redirect URL missing.");
+          setIsSubmitting(false);
+          setIsPageLoading(false);
+          return;
+        }
+
         // UX signal
         toast.loading("Redirecting to secure payment...");
         localStorage.setItem("checkout_payment_pending", "true");
@@ -172,6 +203,9 @@ export default function CheckoutForm({
           window.location.href = paymentRes.data.redirectUrl;
         }, 100);
       } else {
+        setIsSubmitting(false);
+        setIsPageLoading(false);
+
         if (result.errorCode === "FAULTY_ITEMS") {
           toast.error("Unable to place order. Please try again.");
           router.refresh();
@@ -180,17 +214,11 @@ export default function CheckoutForm({
           // Clear intent → next submit generates fresh key + new session.
           invalidateCheckoutIntent();
           toast.error("Your session expired. Please try again.");
-          setIsSubmitting(false);
-          setIsPageLoading(false);
         } else if (result.errorCode === "SESSION_ALREADY_SPENT") {
           toast.success("Your order has already been placed!");
-          setIsSubmitting(false);
-          setIsPageLoading(false);
           router.push("/user/orders");
         } else if (result.errorCode === "SESSION_PROCESSING") {
           toast.loading("Your payment is being processed. Please wait...");
-          setIsSubmitting(false);
-          setIsPageLoading(false);
         } else if (result.errorCode === "STOCK_UNAVAILABLE") {
           // Stock was grabbed by someone else between page load and submit.
           // Refresh to re-validate cart against live inventory.
@@ -202,8 +230,6 @@ export default function CheckoutForm({
             result.message || "Unable to place order.",
           );
           toast.error(result.message || "Unable to place order.");
-          setIsSubmitting(false);
-          setIsPageLoading(false);
         }
       }
     } catch (error) {

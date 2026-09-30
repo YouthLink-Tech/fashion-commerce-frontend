@@ -9,13 +9,21 @@ import { LuMessagesSquare } from "react-icons/lu";
 import ReturnInfoModalInfo from "./ReturnInfoModalInfo";
 import ReturnInfoModalItems from "./ReturnInfoModalItems";
 import ReturnInfoModalProofImages from "./ReturnInfoModalProofImages";
+const STATUS_MESSAGES = {
+  Processed: "Your return has been processed. Details are below.",
+  Declined: "Your return request was declined. See the details below, or contact us if you have questions.",
+};
+
+const DEFAULT_MESSAGE =
+  "We've received your return request. Here's what you submitted.";
 
 export default function ReturnInfoModal({
   isReturnInfoModalOpen,
   setIsReturnInfoModalOpen,
   activeReturnOrder,
 }) {
-  const { orderNumber, orderStatus, returnInfo } = activeReturnOrder || {};
+  const { order_number, order_status, return: returnInfo,
+    items: orderItems, } = activeReturnOrder || {};
 
   return (
     <Modal
@@ -29,26 +37,25 @@ export default function ReturnInfoModal({
         {() => (
           <>
             <ModalHeader className="uppercase">
-              Return Order Overview
+              Return Overview (Order #{order_number})
             </ModalHeader>
             <ModalBody className="-mt-5">
               <p className="mb-5 text-sm text-neutral-500">
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Quo rem
-                minus vel blanditiis incidunt ex obcaecati eaque.
+                {STATUS_MESSAGES[order_status] ?? DEFAULT_MESSAGE}
               </p>
               <ReturnInfoModalInfo
-                orderStatus={orderStatus}
+                orderStatus={order_status}
                 returnInfo={returnInfo}
               />
-              <ReturnInfoModalItems returnProducts={returnInfo?.products} />
+              <ReturnInfoModalItems returnItems={returnInfo?.items} orderItems={orderItems} />
               <ReturnInfoModalProofImages
-                returnProofImgUrls={returnInfo?.imgUrls}
+                returnProofImgUrls={returnInfo?.image_urls}
               />
             </ModalBody>
             <ModalFooter>
-              {(orderStatus === "Processed" || orderStatus === "Declined") && (
+              {(order_status === "processed" || order_status === "declined") && (
                 <a
-                  href={`/contact-us?orderNumber=${orderNumber}`}
+                  href={`/contact-us?orderNumber=${order_number}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex w-fit items-center gap-2 rounded-[4px] bg-[var(--color-primary-500)] px-4 py-2.5 text-sm font-semibold text-neutral-600 transition-[background-color] duration-300 hover:bg-[var(--color-primary-700)]"

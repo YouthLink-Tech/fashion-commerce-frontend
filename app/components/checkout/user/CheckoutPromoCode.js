@@ -34,6 +34,61 @@ export default function CheckoutPromoCode({
     setApiErrorMessage("");
   }, [userPromoCode, cartItems, cartSubtotal]);
 
+  // Automatically re-validate promo code when customer logs in or email changes
+  useEffect(() => {
+    // Only re-validate if a promo code is already applied and customerId is now present
+    if (!userPromoCode?.code || !customerId) return;
+
+    let isMounted = true;
+
+    const revalidateOnAuth = async () => {
+      try {
+        const params = new URLSearchParams();
+        if (customerId) params.append("customerId", customerId);
+        if (customerEmail) params.append("email", customerEmail);
+        const query = params.toString() ? `?${params.toString()}` : "";
+
+        const result = await rawFetch(
+          `/api/promo-code/single-by-code/${encodeURIComponent(userPromoCode.code)}${query}`,
+        );
+
+        if (!isMounted) return;
+
+        // If the customer already used this promo code on an earlier order:
+        if (!result.ok || !result.data) {
+          const errorMsg =
+            result.errorCode === "PROMO_ALREADY_USED" ||
+              result.message?.toLowerCase().includes("already used")
+              ? `You have already used promo code "${userPromoCode.code}".`
+              : result.message || "Promo code is no longer applicable.";
+
+          // 1. Remove promo code from checkout state
+          setUserPromoCode(null);
+          // 2. Display red error message under the promo input box
+          setApiErrorMessage(errorMsg);
+
+          const promoCodeMessageElement = document.querySelector("#promo-code-message");
+          const sectionElement =
+            promoCodeMessageElement?.parentElement?.parentElement?.parentElement;
+
+          if (promoCodeMessageElement && sectionElement) {
+            promoCodeMessageElement.style.opacity = "1";
+            promoCodeMessageElement.style.transform = "scale(1)";
+            sectionElement.style.paddingBottom = "52px";
+          }
+        }
+      } catch (error) {
+        console.error("FetchError (revalidatePromoCode):", error.message);
+      }
+    };
+
+    revalidateOnAuth();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [customerId, customerEmail, setUserPromoCode, userPromoCode?.code]);
+
   const handlePromoCodeValidation = async () => {
     const inputElement = document.querySelector("#promo-code");
     const enteredPromoCode = inputElement?.value?.trim();

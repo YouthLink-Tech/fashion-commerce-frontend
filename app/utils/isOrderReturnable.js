@@ -1,5 +1,5 @@
 export default function isOrderReturnable(orderStatus, deliveryDateStr) {
-  if (orderStatus !== "Delivered" || !deliveryDateStr) return false;
+  if (orderStatus !== "delivered" || !deliveryDateStr) return false;
 
   const deliveryDate = new Date(deliveryDateStr);
   const currentDate = new Date();

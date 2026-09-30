@@ -1,39 +1,68 @@
+function formatStatusText(str) {
+  if (!str) return "--";
+  return str
+    .replace(/[-_]+/g, " ")
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
 export default function getOrderStatusWithColor(orderStatus) {
-  switch (orderStatus) {
-    case "Pending":
-    case "Processing":
+  const status = (orderStatus || "").toLowerCase();
+
+  switch (status) {
+    case "pending":
       return {
-        text: orderStatus === "Pending" ? "Processing" : "Confirmed",
+        text: "Processing",
         bgColor: "bg-yellow-100",
         textColor: "text-yellow-600",
       };
-    case "Shipped":
-    case "On Hold":
-    case "Return Initiated":
-    case "Processed":
+    case "processing":
       return {
-        text: orderStatus === "Shipped" ? "On Its Way" : orderStatus,
+        text: "Confirmed",
+        bgColor: "bg-yellow-100",
+        textColor: "text-yellow-600",
+      };
+    case "shipped":
+      return {
+        text: "On Its Way",
         bgColor: "bg-blue-100",
         textColor: "text-blue-600",
       };
-    case "Return Requested":
-    case "Declined":
+    case "on_hold":
+    case "return_initiated":
+    case "processed":
       return {
-        text: orderStatus,
+        text: formatStatusText(status),
+        bgColor: "bg-blue-100",
+        textColor: "text-blue-600",
+      };
+    case "return_requested":
+    case "declined":
+      return {
+        text: formatStatusText(status),
         bgColor: "bg-red-100",
         textColor: "text-red-600",
       };
-    case "Cancelled":
+    case "cancelled":
       return {
         text: "Cancelled",
         bgColor: "bg-neutral-100",
         textColor: "text-neutral-600",
       };
-    default:
+    case "delivered":
+    case "refunded":
       return {
-        text: orderStatus,
+        text: formatStatusText(status),
         bgColor: "bg-green-100",
         textColor: "text-green-600",
+      };
+    default:
+      return {
+        text: formatStatusText(status),
+        bgColor: "bg-neutral-100",
+        textColor: "text-neutral-600",
       };
   }
 }

@@ -6,11 +6,13 @@ import EmptyOrderHistory from "@/app/components/order/history/EmptyOrderHistory"
 import OrderHistory from "@/app/components/order/history/OrderHistory";
 
 export default async function Orders({ searchParams }) {
-  const paramOrderNumber = searchParams.order;
+  const { order: paramOrderNumber } = (await searchParams) || {};
 
   const session = await getServerSession(authOptions);
 
-  let userOrders, orderToTrack, legalPolicyPdfLinks;
+  let userOrders = [],
+    orderToTrack = null,
+    legalPolicyPdfLinks = {};
 
   if (session?.user?.email) {
     try {
@@ -21,7 +23,7 @@ export default async function Orders({ searchParams }) {
       userOrders = result.data || [];
 
       orderToTrack =
-        userOrders.find((order) => order.orderNumber == paramOrderNumber) ||
+        userOrders.find((order) => order.order_number == paramOrderNumber) ||
         null;
     } catch (error) {
       console.error("FetchError (orderHistory/userOrders):", error.message);

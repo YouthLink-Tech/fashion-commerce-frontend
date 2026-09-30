@@ -4,6 +4,7 @@ export default function ReturnBriefDescriptionField({ register, errors }) {
       <label htmlFor="description">Brief Description</label>
       <textarea
         {...register("description", {
+          required: "Brief description is required.",
           minLength: {
             value: 50,
             message: "Brief description must have at least 50 characters.",

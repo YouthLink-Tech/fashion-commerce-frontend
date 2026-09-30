@@ -14,29 +14,32 @@ export default function OrderCard({
   setIsReturnInfoModalOpen,
   setActiveReturnOrder,
 }) {
-  const orderStatus = getOrderStatusWithColor(order?.orderStatus);
+  const orderStatus = getOrderStatusWithColor(order?.order_status);
   const {
     orderMonthFirstThreeLetters,
     orderMonthRestOfLetters,
     orderDayAndYear,
     orderTime,
-  } = formatOrderDateTime(order?.dateTime);
+  } = formatOrderDateTime(order?.placed_at);
+
   const isOrderTrackable =
     orderStatus?.text == "Processing" ||
     orderStatus?.text == "Confirmed" ||
     orderStatus?.text == "On Its Way" ||
     orderStatus?.text == "On Hold";
   const isReturnRequested =
-    order?.orderStatus === "Processed" ||
-    order?.orderStatus?.toLowerCase().includes("return") ||
-    order?.orderStatus?.toLowerCase().includes("refund") ||
-    order?.orderStatus?.toLowerCase().includes("request");
+    order?.order_status === "processed" ||
+    order?.order_status === "return_requested" ||
+    order?.order_status === "declined" ||
+    order?.order_status === "return_initiated" ||
+    order?.order_status === "refunded" ||
+    !!order?.return;
 
   return (
     <div className="h-fit w-full rounded-[4px] border-2 border-neutral-300 p-3.5 text-sm xl:p-5">
       <div className="mb-4 items-start justify-between gap-2 max-sm:space-y-2 sm:flex">
         <h2 className="text-sm font-semibold md:text-base">
-          Order #{order?.orderNumber}
+          Order #{order?.order_number}
         </h2>
         <div
           className={`w-fit cursor-default text-nowrap rounded-[3px] px-2 py-1.5 text-xs font-semibold max-sm:ml-auto ${orderStatus?.bgColor} ${orderStatus?.textColor}`}
@@ -55,16 +58,16 @@ export default function OrderCard({
         </div>
         <div>
           <h4>Payment Method</h4>
-          <p className="text-right">{order?.paymentInfo?.paymentMethod}</p>
+          <p className="text-right">{order?.payment?.payment_method || "--"}</p>
         </div>
         <div>
           <h4>Paid Amount</h4>
-          <p className="text-right">৳ {order?.total?.toLocaleString()}</p>
+          <p className="text-right">৳ {Number(order?.total || 0).toLocaleString()}</p>
         </div>
       </div>
       <div className="mt-8 flex flex-wrap gap-2.5">
         <TransitionLink
-          href={`/user/orders/${order?.orderNumber?.toLowerCase()}`}
+          href={`/user/orders/${order?.order_number?.toLowerCase()}`}
           className="flex items-center gap-2 rounded-[4px] bg-[var(--color-secondary-500)] px-4 py-2.5 text-center text-xs font-semibold text-neutral-700 transition-[background-color] duration-300 hover:bg-[var(--color-secondary-600)] max-sm:w-full max-sm:justify-center"
         >
           Order Details
@@ -83,8 +86,8 @@ export default function OrderCard({
           </button>
         )}
         {isOrderReturnable(
-          order?.orderStatus,
-          order?.deliveryInfo?.deliveredAt,
+          order?.order_status,
+          order?.delivered_at,
         ) &&
           orderStatus?.text !== "Return Requested" && (
             <button
@@ -92,7 +95,7 @@ export default function OrderCard({
               onClick={() => {
                 setValue(
                   "items",
-                  Array.from(order?.productInformation, () => ({
+                  Array.from(order?.items || [], () => ({
                     isRequested: false,
                     quantity: 0,
                     issues: [],

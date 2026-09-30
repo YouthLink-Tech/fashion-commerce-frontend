@@ -8,13 +8,13 @@ import DiscountModal from "../../ui/DiscountModal";
 import DiscountTooptip from "../../ui/DiscountTooltip";
 import { getImage } from "@/app/lib/cloudinaryUtils";
 
-export default function OrderItems({ orderItems }) {
+export default function OrderItems({ orderItems = [] }) {
   const [isSpecialOfferModalOpen, setIsSpecialOfferModalOpen] = useState(false);
   const [activeModalItem, setActiveModalItem] = useState(null);
 
   const calculateTotalItems = () => {
     return orderItems?.reduce(
-      (accumulator, item) => Number(item?.sku) + accumulator,
+      (accumulator, item) => Number(item?.quantity || 0) + accumulator,
       0,
     );
   };
@@ -29,73 +29,64 @@ export default function OrderItems({ orderItems }) {
       </div>
       <ul className="mb-4 grid auto-rows-fr gap-5">
         {orderItems?.map((item) => {
-          const itemFinalPrice =
-            !item?.offerInfo && !!item?.discountInfo
-              ? Number(item?.discountInfo?.finalPriceAfterDiscount)
-              : Number(item?.regularPrice);
-          const itemTotalPrice = itemFinalPrice * Number(item?.sku);
+          const unitPrice = Number(
+            item?.final_price_after_discount ?? item?.regular_price ?? 0,
+          );
+          const itemTotalPrice = unitPrice * Number(item?.quantity || 1);
 
           return (
             <li
-              key={
-                "order-item-" +
-                item?._id +
-                "-size-" +
-                item?.size +
-                "-color-" +
-                item?.color?.label
-              }
+              key={item.id}
               className="flex w-full items-stretch justify-between gap-x-2.5"
             >
               <TransitionLink
-                href={`/product/${item?.slug}`}
-                className="relative block min-h-full w-[72px] overflow-hidden rounded-[4px] bg-[var(--product-default)] sm:w-20 xl:w-1/4"
+                href={`/product/${item?.product_slug}`}
+                className="relative block min-h-full w-[72px] shrink-0 overflow-hidden rounded-[4px] bg-[var(--product-default)] sm:w-20 xl:w-1/4"
               >
-                {!!item?.thumbnailImgUrl && (
+                {!!item?.thumbnail_image_url && (
                   <Image
                     className="h-full w-full object-cover"
-                    // src={item?.thumbnailImgUrl}
-                    src={getImage(item?.thumbnailImgUrl, 400)}
-                    alt={item?.productTitle}
+                    src={getImage(item?.thumbnail_image_url, 400)}
+                    alt={item?.product_title}
                     fill
                     sizes="15vh"
                   />
                 )}
               </TransitionLink>
-              <div className="grow text-xs text-neutral-400 lg:text-sm">
+              <div className="min-w-0 grow text-xs text-neutral-400 lg:text-sm">
                 <div className="flex h-full flex-col justify-between">
                   <div className="flex justify-between gap-x-2 sm:gap-x-5">
                     <div>
                       <TransitionLink
-                        href={`/product/${item?.slug}`}
+                        href={`/product/${item?.product_slug}`}
                         className="underline-offset-1 hover:underline"
                       >
                         <h4 className="line-clamp-1 text-neutral-600 md:text-[15px]">
-                          {item?.productTitle}
+                          {item?.product_title}
                         </h4>
                       </TransitionLink>
                       <div className="mt-1 flex gap-x-1.5 text-xs md:text-[13px]">
                         <h5>Unit Price:</h5>
-                        <span>{itemFinalPrice?.toLocaleString()}</span>
+                        <span>{unitPrice.toLocaleString()}</span>
                       </div>
                       <div className="mt-1 flex gap-x-1.5 text-xs md:text-[13px]">
                         <h5>Size:</h5>
-                        <span>{item?.size}</span>
+                        <span>{item?.size_name}</span>
                       </div>
                       <div className="mt-1 flex gap-x-1.5 text-xs md:text-[13px]">
                         <h5>Color:</h5>
                         <div className="flex items-center gap-x-1">
                           <div
                             style={{
-                              backgroundColor: item?.color?.color,
+                              backgroundColor: item?.color_hex,
                             }}
                             className="size-3.5 max-h-3.5 max-w-3.5 rounded-full"
                           />
-                          <p className="line-clamp-1">{item?.color?.label}</p>
+                          <p className="line-clamp-1">{item?.color_name}</p>
                         </div>
                       </div>
                       {/* Special Offer Text (if applicable) */}
-                      {!!item?.offerInfo && (
+                      {!!item?.offer_title && (
                         <>
                           <span
                             className="mt-1 flex cursor-default items-center gap-x-1 text-xs text-[#45963a] underline-offset-2 hover:underline xl:hidden"
@@ -106,10 +97,9 @@ export default function OrderItems({ orderItems }) {
                           >
                             <span>
                               Special Offer (
-                              {item?.offerInfo?.offerDiscountType ===
-                                "Percentage"
-                                ? item?.offerInfo?.offerDiscountValue + "%"
-                                : "৳ " + item?.offerInfo?.offerDiscountValue}
+                              {item?.offer_discount_type === "percentage"
+                                ? `${item?.offer_discount_value}%`
+                                : `৳ ${item?.offer_discount_value}`}
                               )
                             </span>
                             <span>
@@ -117,25 +107,23 @@ export default function OrderItems({ orderItems }) {
                             </span>
                           </span>
                           <DiscountTooptip
-                            discountTitle={item?.offerInfo?.offerTitle}
+                            discountTitle={item?.offer_title}
                             discountAmount={
-                              item?.offerInfo?.offerDiscountType ===
-                                "Percentage"
-                                ? item?.offerInfo?.offerDiscountValue + "%"
-                                : "৳ " + item?.offerInfo?.offerDiscountValue
+                              item?.offer_discount_type === "percentage"
+                                ? `${item?.offer_discount_value}%`
+                                : `৳ ${item?.offer_discount_value}`
                             }
                             isEligibleForSpecialOffer={true}
                             savedAmount={Number(
-                              item?.offerInfo?.appliedOfferDiscount,
+                              item?.applied_offer_discount || 0,
                             )}
                           >
                             <span className="mt-1 hidden cursor-default items-center gap-x-1 text-xs text-[#45963a] underline-offset-2 hover:underline xl:flex">
                               <span>
                                 Special Offer (
-                                {item?.offerInfo?.offerDiscountType ===
-                                  "Percentage"
-                                  ? item?.offerInfo?.offerDiscountValue + "%"
-                                  : "৳ " + item?.offerInfo?.offerDiscountValue}
+                                {item?.offer_discount_type === "percentage"
+                                  ? `${item?.offer_discount_value}%`
+                                  : `৳ ${item?.offer_discount_value}`}
                                 )
                               </span>
                               <span>
@@ -156,7 +144,7 @@ export default function OrderItems({ orderItems }) {
                         <div className="flex gap-x-1.5 justify-self-end text-[13px] md:text-sm">
                           <h5 className="lg:hidden">Qty:</h5>
                           <h5 className="max-lg:hidden">Quantity:</h5>
-                          <span>{item?.sku}</span>
+                          <span>{item?.quantity}</span>
                         </div>
                       </div>
                     </div>
@@ -170,14 +158,14 @@ export default function OrderItems({ orderItems }) {
       <DiscountModal
         isDiscountModalOpen={isSpecialOfferModalOpen}
         setIsDiscountModalOpen={setIsSpecialOfferModalOpen}
-        discountTitle={activeModalItem?.offerInfo?.offerTitle}
+        discountTitle={activeModalItem?.offer_title}
         isEligibleForDiscount={true}
         discountAmount={
-          activeModalItem?.offerInfo?.offerDiscountType === "Percentage"
-            ? activeModalItem?.offerInfo?.offerDiscountValue + "%"
-            : "৳ " + activeModalItem?.offerInfo?.offerDiscountValue
+          activeModalItem?.offer_discount_type === "percentage"
+            ? `${activeModalItem?.offer_discount_value}%`
+            : `৳ ${activeModalItem?.offer_discount_value}`
         }
-        savedAmount={Number(activeModalItem?.offerInfo?.appliedOfferDiscount)}
+        savedAmount={Number(activeModalItem?.applied_offer_discount || 0)}
       />
     </div>
   );

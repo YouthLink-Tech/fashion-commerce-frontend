@@ -13,14 +13,15 @@ export function buildCartSignature(cartItems = []) {
   if (!cartItems?.length) return "";
   return [...cartItems]
     .sort((a, b) => {
-      const idA = a.variant_id || a.productId || a._id || "";
-      const idB = b.variant_id || b.productId || b._id || "";
+      const idA = a.variant_id || "";
+      const idB = b.variant_id || "";
       return idA.localeCompare(idB);
     })
-    .map(
-      (i) =>
-        `${i.variant_id || i.productId || i._id}:${i.selectedQuantity ?? i.quantity ?? 1}`,
-    )
+    .map((i) => {
+      const variantId = i.variant_id || "";
+      const quantity = Number(i.selectedQuantity ?? 1);
+      return `${variantId}:${quantity}`;
+    })
     .join("|");
 }
 
@@ -36,10 +37,10 @@ function buildCartHash(userId, cartItems, formDraft, promoCode) {
     formDraft?.email || "",
     formDraft?.phoneNumber || "",
     formDraft?.altPhoneNumber || "",
-    formDraft?.hometown || "",
+    formDraft?.hometownId || "",
     formDraft?.addressLineOne || "",
-    formDraft?.city || "",
-    formDraft?.thana || "",
+    formDraft?.cityId || "",
+    formDraft?.thanaId || "",
     formDraft?.postalCode || "",
     formDraft?.note || "",
     formDraft?.deliveryType || "",

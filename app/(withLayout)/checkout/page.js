@@ -13,7 +13,7 @@ export default async function Checkout() {
     session?.user?.email
       ? tokenizedFetch(`/api/customer/single/${session?.user?.email}`)
       : Promise.resolve(null),
-    rawFetch("/api/products/all"),
+    rawFetch("/api/products/all?limit=200"),
     rawFetch("/api/special-offer/all"),
     rawFetch("/api/shipping-zone/public-options"),
     rawFetch("/api/policy-pdf/all", {
@@ -49,7 +49,7 @@ export default async function Checkout() {
       extractData(userDataRes, null, "checkout/userData"),
       extractData(productsRes, { items: [] }, "checkout/products")?.items ?? [],
       extractData(offersRes, [], "checkout/specialOffers"),
-      extractData(shippingZonesRes, [], "checkout/shippingZones"),
+      extractData(shippingZonesRes, {}, "checkout/shippingZones"),
       extractData(legalPolicyPdfLinksRes, {}, "checkout/legalPdfLinks"),
       extractData(cityRes, [], "checkout/city"),
       extractData(thanaRes, [], "checkout/thanas"),

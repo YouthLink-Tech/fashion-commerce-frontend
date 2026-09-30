@@ -1,4 +1,5 @@
 import formatOrderDateTime from "@/app/utils/formatOrderDateTime";
+import getOrderStatusWithColor from "@/app/utils/getOrderStatusColor";
 
 export default function ReturnInfoModalInfo({ orderStatus, returnInfo }) {
   const {
@@ -6,7 +7,9 @@ export default function ReturnInfoModalInfo({ orderStatus, returnInfo }) {
     orderMonthRestOfLetters,
     orderDayAndYear,
     orderTime,
-  } = formatOrderDateTime(returnInfo?.dateTime);
+  } = formatOrderDateTime(returnInfo?.requested_at);
+
+  const statusDisplay = getOrderStatusWithColor(orderStatus)?.text || orderStatus;
 
   return (
     <>
@@ -24,14 +27,14 @@ export default function ReturnInfoModalInfo({ orderStatus, returnInfo }) {
         </div>
         <div>
           <h4>Return Status</h4>
-          <p className="text-right">{orderStatus}</p>
+          <p className="text-right">{statusDisplay}</p>
         </div>
         <div>
           <h4>
-            {orderStatus === "Refunded" ? "Refunded" : "Expected Refund"} Amount
+            {orderStatus === "refunded" ? "Refunded" : "Expected Refund"} Amount
           </h4>
           <p className="text-right">
-            ৳ {returnInfo?.refundAmount?.toLocaleString()}
+            ৳ {Number(returnInfo?.refund_amount || 0).toLocaleString()}
           </p>
         </div>
         {returnInfo?.description && (

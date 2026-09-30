@@ -13,7 +13,6 @@ import {
 import toast from "react-hot-toast";
 import { useLoading } from "@/app/contexts/loading";
 import { routeFetch } from "@/app/lib/fetcher/routeFetch";
-import customCurrentDateTimeFormat from "@/app/utils/customCurrentDateTimeFormat";
 import ReturnItemsField from "./ReturnItemsField";
 import ReturnBriefDescriptionField from "./ReturnBriefDescriptionField";
 import ReturnImagesField from "./ReturnImagesField";
@@ -46,49 +45,51 @@ export default function ReturnOrderModal({
     (returnItem) => returnItem?.isRequested,
   );
 
-  const calculateFinalPrice = (productVariant) => {
-    let finalPrice;
+  // Calculates exact net unit price taking promo, special offers, and regular discounts into account
+  const calculateFinalPrice = (item) => {
+    if (!item) return 0;
 
-    if (!!activeReturnOrder?.promoInfo) {
-      const unitPrice = !productVariant?.discountInfo
-        ? Number(productVariant?.regularPrice)
-        : Number(productVariant?.discountInfo.finalPriceAfterDiscount);
-      const appliedPromoPerVariant =
-        activeReturnOrder?.promoInfo?.appliedPromoDiscount /
-        activeReturnOrder?.productInformation?.length;
+    const regularPrice = Number(item.regular_price || 0);
+    const itemQty = Number(item.quantity || 1);
+    const appliedOfferDiscount = Number(item.applied_offer_discount || 0);
+    const appliedPromoDiscount = Number(activeReturnOrder?.applied_promo_discount || 0);
 
-      finalPrice =
-        unitPrice - appliedPromoPerVariant / Number(productVariant?.sku);
-    } else if (!!productVariant?.discountInfo)
-      finalPrice = Number(productVariant?.discountInfo.finalPriceAfterDiscount);
-    else if (!!productVariant?.offerInfo) {
-      finalPrice =
-        Number(productVariant?.regularPrice) -
-        Number(productVariant?.offerInfo?.appliedOfferDiscount) /
-        Number(productVariant?.sku);
-    } else finalPrice = Number(productVariant?.regularPrice);
+    const totalItemsCount = activeReturnOrder?.items?.length || 1;
 
-    return Math.round(Math.round(finalPrice * 10) / 10); // Round off, if it has decimal points
+    let finalPrice = regularPrice;
+
+    if (appliedPromoDiscount > 0) {
+      const basePrice =
+        Number(item.discount_value || 0) > 0 && item.final_price_after_discount
+          ? Number(item.final_price_after_discount)
+          : regularPrice;
+      const promoSharePerItem = appliedPromoDiscount / totalItemsCount;
+      finalPrice = Math.max(0, basePrice - (promoSharePerItem / itemQty));
+    } else if (appliedOfferDiscount > 0) {
+      finalPrice = Math.max(0, regularPrice - (appliedOfferDiscount / itemQty));
+    } else if (Number(item.discount_value || 0) > 0 && item.final_price_after_discount) {
+      finalPrice = Number(item.final_price_after_discount);
+    }
+    return Math.round(Math.round(finalPrice * 10) / 10);
   };
 
   const calculateOrderAmount = () => {
     return (
-      Number(activeReturnOrder?.total) -
-      Number(activeReturnOrder?.shippingCharge)
+      Number(activeReturnOrder?.total || 0) -
+      Number(activeReturnOrder?.shipping_charge || 0)
     );
   };
 
   const calculateRefundAmount = () => {
-    return returnItems?.reduce(
-      (accumulator, returnItem, returnItemIndex) =>
-        !returnItem?.isRequested
-          ? accumulator
-          : accumulator +
-          calculateFinalPrice(
-            activeReturnOrder?.productInformation[returnItemIndex],
-          ) *
-          returnItem?.quantity,
-      0,
+    return (
+      returnItems?.reduce((accumulator, returnItem, returnItemIndex) => {
+        if (!returnItem?.isRequested) return accumulator;
+        const item = activeReturnOrder?.items?.[returnItemIndex];
+        return (
+          accumulator +
+          calculateFinalPrice(item) * Number(returnItem?.quantity || 0)
+        );
+      }, 0) || 0
     );
   };
 
@@ -99,58 +100,59 @@ export default function ReturnOrderModal({
     if (!isPolicyChecked)
       return toast.error("You must agree with the return policy.");
 
-    const returnInfo = {
-      dateTime: customCurrentDateTimeFormat(),
-      description: data.description || null,
-      products: activeReturnOrder.productInformation
-        .map((product, index) =>
-          !data.items[index].isRequested
-            ? null
-            : {
-              ...product,
-              sku: data.items[index].quantity,
-              issues: data.items[index].issues,
-              status: "Pending",
-              finalUnitPrice: calculateFinalPrice(product),
-            },
-        )
-        ?.filter((value) => !!value),
-      imgUrls: returnImgUrls,
-      orderAmount,
-      refundAmount,
+    // Building pure PostgreSQL return request payload
+    const selectedProducts = (activeReturnOrder?.items || [])
+      .map((item, index) => {
+        const formItem = data.items?.[index];
+        if (!formItem?.isRequested) return null;
+        return {
+          order_item_id: item.id,
+          quantity: Number(formItem.quantity),
+          issues: formItem.issues || [],
+        };
+      })
+      .filter(Boolean);
+
+    if (!selectedProducts.length) {
+      return toast.error("Please select at least one product to return.");
+    }
+
+    if (!returnImgUrls?.length) {
+      return toast.error("Please upload at least one image as proof.");
+    }
+
+    const payload = {
+      description: data.description?.trim(),
+      image_urls: returnImgUrls,
+      products: selectedProducts,
     };
 
     setIsPageLoading(true);
 
-    const updatedActiveReturnOrder = {
-      ...activeReturnOrder,
-      orderStatus: "Return Requested",
-      returnInfo,
-    };
-
     try {
       const result = await routeFetch(
-        `/api/order-status/${activeReturnOrder._id}`,
+        `/api/order/${activeReturnOrder?.order_number}/return-request`,
         {
-          method: "PATCH",
-          body: JSON.stringify(updatedActiveReturnOrder),
+          method: "POST",
+          body: JSON.stringify(payload),
         },
       );
 
-      if (result.ok) {
+      if (result.success || result.ok) {
         toast.success("Return request submitted.");
         router.refresh();
         setIsReturnModalOpen(false);
       } else {
-        toast.error(result.message);
+        toast.error(result.message || "Failed to submit return request");
         console.error("UpdateError (returnOrderModal):", result.message);
       }
     } catch (err) {
-      toast.error(err?.message);
+      toast.error(err?.message || "Failed to submit return request");
       console.error("UpdateError (returnOrderModal):", err);
     }
-
-    setIsPageLoading(false);
+    finally {
+      setIsPageLoading(false);
+    }
   };
 
   const onError = (errors) => {
@@ -199,7 +201,7 @@ export default function ReturnOrderModal({
         {(onClose) => (
           <>
             <ModalHeader className="uppercase">
-              Return Request (Order #{activeReturnOrder?.orderNumber})
+              Return Request (Order #{activeReturnOrder?.order_number})
             </ModalHeader>
             <ModalBody className="-mt-5">
               <p className="mb-5 text-sm text-neutral-500">

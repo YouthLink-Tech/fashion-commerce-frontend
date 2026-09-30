@@ -13,14 +13,16 @@ import OrderItemsInfo from "@/app/components/order/details/OrderItemsInfo";
 import OrderInvoiceButton from "@/app/components/order/details/OrderInvoiceButton";
 
 export default async function OrderDetails({ params }) {
+  const { id } = (await params) || {};
+
   const session = await getServerSession(authOptions);
 
-  let order;
+  let order = null;
 
-  if (session?.user?.email) {
+  if (session?.user?.email && id) {
     try {
       const result = await tokenizedFetch(
-        `/api/order/single/${params.id}?email=${session?.user?.email}`,
+        `/api/order/${id}`,
       );
 
       order = result.data;
@@ -44,24 +46,20 @@ export default async function OrderDetails({ params }) {
       <OrderDetailsHeader order={order} />
       <div className="max-xl:space-y-4 xl:grid xl:grid-cols-2 xl:gap-4">
         <div>
-          <OrderCustomerDetails customer={order?.customerInfo} />
+          <OrderCustomerDetails order={order} user={session?.user} />
           <OrderShipmentDetails
-            shipment={order?.shipmentInfo}
-            isDeliveryDone={!!order?.deliveryInfo?.deliveredAt}
+            shipment={order?.shipment}
+            isDeliveryDone={!!order?.delivered_at}
           />
-          <OrderDeliveryDetails delivery={order?.deliveryInfo} />
+          <OrderDeliveryDetails order={order} />
         </div>
         <div className="bottom-[var(--section-padding)] top-[var(--section-padding)] h-fit w-full rounded-[4px] border-2 border-neutral-200 p-3.5 font-semibold xl:p-5">
           <div className="relative flex w-full flex-col">
-            <OrderItems orderItems={order?.productInformation} />
+            <OrderItems orderItems={order?.items} />
             <div className="space-y-4 bg-white text-[13px] max-lg:order-last md:text-sm">
               <hr className="h-0.5 w-full bg-neutral-100" />
               <OrderItemsInfo
-                totalSpecialOfferDiscount={order?.totalSpecialOfferDiscount}
-                promoInfo={order?.promoInfo}
-                subtotal={order?.subtotal}
-                shippingCharge={order?.shippingCharge}
-                total={order?.total}
+                order={order}
               />
               <OrderInvoiceButton selectedOrder={order} />
             </div>

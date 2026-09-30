@@ -32,12 +32,12 @@ export default function ReturnItemsField({
         </p>
       </div>
       <div className="space-y-2">
-        {activeReturnOrder?.productInformation.map((item, index) => {
-          const returnItem = returnItems[index];
+        {activeReturnOrder?.items?.map((item, index) => {
+          const returnItem = returnItems?.[index] || {};
 
           return (
             <div
-              key={"return-item-" + item?._id + item?.size + item?.color._id}
+              key={"return-item-" + item?.id}
               className={`cursor-pointer rounded-[4px] border-2 p-2 transition-[border-color,background-color] duration-300 ease-in-out hover:border-[var(--color-primary-200)] hover:bg-[var(--color-primary-100)] ${returnItem.isRequested ? "border-[var(--color-primary-200)] bg-[var(--color-primary-100)]" : "border-neutral-100"}`}
             >
               <div
@@ -60,12 +60,11 @@ export default function ReturnItemsField({
                 }}
               >
                 <div className="relative min-h-full w-1/4 overflow-hidden rounded-[4px] bg-[var(--product-default)] max-sm:w-20">
-                  {!!item?.thumbnailImgUrl && (
+                  {!!item?.thumbnail_image_url && (
                     <Image
                       className="h-full w-full object-cover"
-                      // src={item?.thumbnailImgUrl}
-                      src={getImage(item?.thumbnailImgUrl, 400)}
-                      alt={item?.productTitle}
+                      src={getImage(item?.thumbnail_image_url, 400)}
+                      alt={item?.product_title || "Product item"}
                       fill
                       sizes="15vh"
                     />
@@ -75,7 +74,7 @@ export default function ReturnItemsField({
                   <div className="flex items-stretch justify-between gap-x-5">
                     <div>
                       <h4 className="line-clamp-1 text-neutral-600">
-                        {item?.productTitle}
+                        {item?.product_title}
                       </h4>
                       <div className="mt-1 flex gap-x-1.5 text-xs md:text-[13px]">
                         <h5>Unit Price:</h5>
@@ -85,18 +84,18 @@ export default function ReturnItemsField({
                       </div>
                       <div className="mt-[3px] flex gap-x-1.5 text-xs md:text-[13px]">
                         <h5>Size:</h5>
-                        <span>{item?.size}</span>
+                        <span>{item?.size_name}</span>
                       </div>
                       <div className="mt-[3px] flex gap-x-1.5 text-xs md:text-[13px]">
                         <h5>Color:</h5>
                         <div className="flex items-center gap-x-1">
                           <div
                             style={{
-                              backgroundColor: item?.color?.color,
+                              backgroundColor: item?.color_hex || "#fff",
                             }}
                             className="size-3.5 rounded-full"
                           />
-                          {item?.color?.label}
+                          {item?.color_name}
                         </div>
                       </div>
                     </div>
@@ -124,14 +123,14 @@ export default function ReturnItemsField({
                           type="number"
                           {...register(`items.${index}.quantity`, {
                             min: 0,
-                            max: item?.sku,
+                            max: item?.quantity,
                             onChange: (value) => {
                               setValue(
                                 `items.${index}.quantity`,
                                 value < 0
                                   ? 0
-                                  : value > item?.sku
-                                    ? item?.sku
+                                  : value > item?.quantity
+                                    ? item?.quantity
                                     : value,
                                 { shouldValidate: true },
                               );
@@ -144,7 +143,7 @@ export default function ReturnItemsField({
                           onClick={() => {
                             setValue(
                               `items.${index}.quantity`,
-                              Number(returnItem.quantity) !== Number(item?.sku)
+                              Number(returnItem.quantity) !== Number(item?.quantity)
                                 ? Number(returnItem.quantity) + 1
                                 : returnItem.quantity,
                             );
