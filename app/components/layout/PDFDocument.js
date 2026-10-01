@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+"use client";
+import React from "react";
 import {
   Document,
   Page,
@@ -142,7 +143,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   border: {
-    borderBottom: "2px solid #000000", // Subtle border for header
+    borderBottomWidth: 2,
+    borderBottomColor: "#000000",
+    borderBottomStyle: "solid",
     marginBottom: 20,
   },
   subTable: {
@@ -206,47 +209,45 @@ const styles = StyleSheet.create({
   },
 });
 
+// Register the Montserrat font
+Font.register({
+  family: "Montserrat",
+  fonts: [
+    {
+      src: montserratNormal,
+      fontWeight: 400,
+    },
+    {
+      src: montserratMedium,
+      fontWeight: 500,
+    },
+    {
+      src: montserratSemibold,
+      fontWeight: 600,
+    },
+    {
+      src: montserratBold,
+      fontWeight: 700,
+    },
+    {
+      src: montserratBlack,
+      fontWeight: 900,
+    },
+  ],
+});
+
+// Register Lilita One font family
+Font.register({
+  family: "Lilita One",
+  fonts: [
+    {
+      src: lilitaOne, // Adjust the path to the font file
+      fontWeight: 400, // Assuming only one weight
+    },
+  ],
+});
+
 const PDFDocument = ({ order }) => {
-  useEffect(() => {
-    // Register the Montserrat font
-    Font.register({
-      family: "Montserrat",
-      fonts: [
-        {
-          src: montserratNormal,
-          fontWeight: 400,
-        },
-        {
-          src: montserratMedium,
-          fontWeight: 500,
-        },
-        {
-          src: montserratSemibold,
-          fontWeight: 600,
-        },
-        {
-          src: montserratBold,
-          fontWeight: 700,
-        },
-        {
-          src: montserratBlack,
-          fontWeight: 900,
-        },
-      ],
-    });
-
-    // Register Lilita One font family
-    Font.register({
-      family: "Lilita One",
-      fonts: [
-        {
-          src: lilitaOne, // Adjust the path to the font file
-          fontWeight: 400, // Assuming only one weight
-        },
-      ],
-    });
-  }, []);
-
   const barcodeDataUrl = React.useMemo(
     () => generateBarcodeData(order?.order_number),
     [order?.order_number],

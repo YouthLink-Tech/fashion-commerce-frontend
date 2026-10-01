@@ -18,10 +18,20 @@ export default function OrderItemsInfo({
 
   const hasPromo = !!order?.promo_code_snapshot;
   const promoTitle = order?.promo_code_snapshot;
+
+  const isPercentage =
+    (order?.promo_discount_type || "").toLowerCase() === "percentage";
+  const promoDiscountValue =
+    order?.promo_discount_value != null
+      ? Number(order.promo_discount_value)
+      : null;
+
   const promoValue =
-    order?.promo_discount_type === "percentage"
-      ? `${order?.promo_discount_value}%`
-      : `৳ ${order?.promo_discount_value}`;
+    isPercentage && promoDiscountValue != null
+      ? `${promoDiscountValue}%`
+      : promoDiscountValue != null
+        ? `৳ ${promoDiscountValue.toLocaleString()}`
+        : `৳ ${appliedPromo.toLocaleString()}`;
   const appliedPromo = Number(order?.applied_promo_discount || 0);
 
   return (
@@ -74,8 +84,8 @@ export default function OrderItemsInfo({
           </h5>
           <span className="text-right text-red-600">
             - ৳{" "}
-            {`${appliedPromo.toLocaleString()}${order?.promo_discount_type === "percentage" && order?.promo_discount_value
-                ? ` (${Number(order.promo_discount_value).toLocaleString()}%)`
+            {`${appliedPromo.toLocaleString()}${isPercentage && promoDiscountValue != null
+                ? ` (${promoDiscountValue.toLocaleString()}%)`
                 : ""
               }`}
           </span>
