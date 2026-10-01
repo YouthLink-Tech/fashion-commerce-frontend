@@ -89,7 +89,7 @@ export default function OrderCard({
           order?.order_status,
           order?.delivered_at,
         ) &&
-          orderStatus?.text !== "Return Requested" && (
+          !order?.return && (
             <button
               className="flex items-center gap-2 rounded-[4px] bg-[var(--color-primary-500)] px-4 py-2.5 text-center text-xs font-semibold text-neutral-700 transition-[background-color] duration-300 hover:bg-[var(--color-primary-700)] max-sm:w-full max-sm:justify-center"
               onClick={() => {

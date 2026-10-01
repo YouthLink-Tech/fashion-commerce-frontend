@@ -60,6 +60,7 @@ export default function CheckoutForm({
     watch,
     control,
     setValue,
+    getValues,
     handleSubmit,
     reset,
     formState: { errors },
@@ -96,6 +97,16 @@ export default function CheckoutForm({
       return toast.error(
         "You must agree with the terms and conditions and policies.",
       );
+
+    const phone = data.phoneNumber?.trim();
+    const altPhone = data.altPhoneNumber?.trim();
+    if (phone && altPhone && phone === altPhone) {
+      setIsPageLoading(false);
+      setIsSubmitting(false);
+      return toast.error(
+        "Alternative mobile number cannot be the same as primary mobile number.",
+      );
+    }
 
     if (!userData) return toast.error("Please log in or register to continue.");
 
@@ -246,7 +257,11 @@ export default function CheckoutForm({
     if (errorTypes.includes("required"))
       toast.error("Please fill up the required fields.");
     else if (errorTypes.includes("pattern") || errorTypes.includes("validate"))
-      toast.error("Please provide valid information.");
+      toast.error(
+        errors.altPhoneNumber?.message ||
+        errors.phoneNumber?.message ||
+        "Please provide valid information.",
+      );
     else if (
       errorTypes.includes("notMatchingWithConfirm") ||
       errorTypes.includes("notMatchingWithNew")
@@ -371,6 +386,7 @@ export default function CheckoutForm({
           <CheckoutPersonalInfo
             register={register}
             control={control}
+            getValues={getValues}
             errors={errors}
             isUserLoggedIn={!!userData}
             userHometown={userData?.hometown}

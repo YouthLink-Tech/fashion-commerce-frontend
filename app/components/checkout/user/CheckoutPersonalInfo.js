@@ -4,6 +4,7 @@ import { Autocomplete, AutocompleteItem } from "@nextui-org/react";
 export default function CheckoutPersonalInfo({
   register,
   control,
+  getValues,
   errors,
   isUserLoggedIn,
   userHometown,
@@ -78,6 +79,13 @@ export default function CheckoutPersonalInfo({
                   value: true,
                   message: "Primary mobile number is required.",
                 },
+                validate: (val) => {
+                  const altPhone = getValues?.("altPhoneNumber");
+                  if (altPhone && val === altPhone) {
+                    return "Primary mobile number cannot be the same as alternative mobile number.";
+                  }
+                  return true;
+                },
               })}
               onInput={(event) =>
                 (event.target.value = event.target.value.replace(/\D/g, ""))
@@ -101,6 +109,14 @@ export default function CheckoutPersonalInfo({
                 pattern: {
                   value: /^01\d{9}$/,
                   message: "Mobile number is invalid.",
+                },
+                validate: (val) => {
+                  if (!val) return true;
+                  const primary = getValues?.("phoneNumber");
+                  if (primary && val === primary) {
+                    return "Alternative mobile number cannot be the same as primary mobile number.";
+                  }
+                  return true;
                 },
               })}
               onInput={(event) =>

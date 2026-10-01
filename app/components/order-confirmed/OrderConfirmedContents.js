@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import * as fbq from "@/app/lib/fpixel";
 import CheckoutConfirmation from "@/app/components/checkout/CheckoutConfirmation";
 import { markCheckoutCompleted } from "@/app/utils/idempotency";
+import { routeFetch } from "@/app/lib/fetcher/routeFetch";
 
 export default function OrderConfirmedContents({ order }) {
   const hasTracked = useRef(false);
@@ -15,14 +16,25 @@ export default function OrderConfirmedContents({ order }) {
     localStorage.removeItem("checkout_payment_pending");
     window.dispatchEvent(new Event("storageCart"));
 
+    // Also clear server-side cart for the logged-in customer
+    routeFetch("/api/cart", { method: "DELETE" }).catch(() => { });
+
     // Update wishlist — remove items that were ordered
-    const orderedIds = new Set(order?.items.map((p) => p.product_id));
+    const orderedProductIds = (order?.items || []).map((p) => p.product_id);
+    const orderedIds = new Set(orderedProductIds);
     const currentWishlist = JSON.parse(localStorage.getItem("wishlistItems") || "[]");
     const updatedWishlist = currentWishlist.filter(
       (item) => !orderedIds.has(item.id)
     );
     localStorage.setItem("wishlistItems", JSON.stringify(updatedWishlist));
     window.dispatchEvent(new Event("storageWishlist"));
+
+    // Also tell the server to remove each ordered product from server wishlist
+    orderedProductIds.forEach((pid) => {
+      if (pid) {
+        routeFetch(`/api/wishlist/${pid}`, { method: "DELETE" }).catch(() => { });
+      }
+    });
   }, [order?.items]);
 
   useEffect(() => {
