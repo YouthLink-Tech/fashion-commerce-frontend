@@ -26,13 +26,13 @@ export default function OrderItemsInfo({
       ? Number(order.promo_discount_value)
       : null;
 
+  const appliedPromo = Number(order?.applied_promo_discount || 0);
   const promoValue =
     isPercentage && promoDiscountValue != null
       ? `${promoDiscountValue}%`
       : promoDiscountValue != null
         ? `৳ ${promoDiscountValue.toLocaleString()}`
         : `৳ ${appliedPromo.toLocaleString()}`;
-  const appliedPromo = Number(order?.applied_promo_discount || 0);
 
   return (
     <div className="space-y-2">
@@ -85,8 +85,8 @@ export default function OrderItemsInfo({
           <span className="text-right text-red-600">
             - ৳{" "}
             {`${appliedPromo.toLocaleString()}${isPercentage && promoDiscountValue != null
-                ? ` (${promoDiscountValue.toLocaleString()}%)`
-                : ""
+              ? ` (${promoDiscountValue.toLocaleString()}%)`
+              : ""
               }`}
           </span>
         </div>

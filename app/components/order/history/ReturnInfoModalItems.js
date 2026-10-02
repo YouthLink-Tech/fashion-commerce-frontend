@@ -113,7 +113,7 @@ export default function ReturnInfoModalItems({ returnItems = [], orderItems = []
                     <div className="mt-1 flex items-center gap-x-1.5">
                       <h5 className="text-xs md:text-[13px]">Status:</h5>
                       <div
-                        className={`h-fit w-fit cursor-default text-nowrap rounded-[3px] px-1.5 py-1 text-[10px]/[1] font-semibold md:text-[11px]/[1] ${returnItem?.status?.toLowerCase() === "pending" ? "bg-yellow-100 text-yellow-600" : returnItem?.status?.toLowerCase() === "accepted" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}
+                        className={`h-fit w-fit cursor-default text-nowrap rounded-[3px] px-1.5 py-1 text-[10px]/[1] font-semibold capitalize md:text-[11px]/[1] ${returnItem?.status?.toLowerCase() === "pending" ? "bg-yellow-100 text-yellow-600" : returnItem?.status?.toLowerCase() === "accepted" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}
                       >
                         {returnItem?.status}
                       </div>
