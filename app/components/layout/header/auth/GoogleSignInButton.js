@@ -6,6 +6,7 @@ import { LuCheck } from "react-icons/lu";
 import { FcGoogle } from "react-icons/fc";
 import { useLoading } from "@/app/contexts/loading";
 import { COMPANY_NAME } from "@/app/config/company";
+import { signIn } from "next-auth/react";
 
 export default function GoogleSignInButton({
   isLinkedWithGoogle,
@@ -47,6 +48,19 @@ export default function GoogleSignInButton({
   };
 
   const handleGoogleSignIn = () => {
+    // Detecting if the user is on a mobile device (iPhone, iPad, Android)
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      // Mobile (Safari / Chrome): Direct redirect with the account chooser
+      signIn(
+        "google",
+        { callbackUrl: window.location.href },
+        { prompt: "select_account" }
+      );
+      return;
+    }
+
     setIsPageLoading(true);
 
     window.isLoginSuccessful = null;
