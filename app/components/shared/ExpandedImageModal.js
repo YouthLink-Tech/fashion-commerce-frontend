@@ -1,6 +1,9 @@
+"use client";
+
 import { getImage } from "@/app/lib/cloudinaryUtils";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   CgArrowLeft,
   CgArrowRight,
@@ -23,6 +26,11 @@ export default function ExpandedImagesModal({
   setIsImageExpanded,
 }) {
   const [zoomLevel, setZoomLevel] = useState(0); // 0-4 zoom levels
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleZoomIn = () => {
     if (zoomLevel < 4) {
@@ -83,9 +91,11 @@ export default function ExpandedImagesModal({
     totalImages,
   ]);
 
-  return (
+  if (!mounted || !isImageExpanded) return null;
+
+  return createPortal(
     <div
-      className={`fixed inset-0 z-[6] flex h-svh w-dvw items-center justify-center bg-black bg-opacity-80 text-neutral-300 backdrop-blur ${isImageExpanded ? "" : "hidden"}`}
+      className="fixed inset-0 z-[9999] flex h-svh w-dvw items-center justify-center bg-black bg-opacity-80 text-neutral-300 backdrop-blur"
       id="expanded-img-bg"
       onClick={(event) =>
         event.target.id === "expanded-img-bg" && setIsImageExpanded(false)
@@ -164,6 +174,7 @@ export default function ExpandedImagesModal({
           />
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

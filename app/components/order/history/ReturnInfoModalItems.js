@@ -126,7 +126,7 @@ export default function ReturnInfoModalItems({ returnItems = [], orderItems = []
                           }}
                           placement="bottom-start"
                         >
-                          <PopoverTrigger className="h-fit w-fit cursor-pointer text-[11px] font-semibold text-[var(--color-primary-900)] underline underline-offset-1 md:text-xs/[1]">
+                          <PopoverTrigger className="!z-0 h-fit w-fit cursor-pointer text-[11px] font-semibold text-[var(--color-primary-900)] underline underline-offset-1 md:text-xs/[1]">
                             Why?
                           </PopoverTrigger>
                           <PopoverContent>
