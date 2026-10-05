@@ -21,7 +21,16 @@ export default function ProductContents({
   notifyVariants,
   randomViewers,
 }) {
-  const [selectedOptions, setSelectedOptions] = useState(null);
+  const [selectedOptions, setSelectedOptions] = useState(() => {
+    if (product?.variants?.length) {
+      return {
+        color: getColors(product.variants)[0],
+        size: undefined,
+        quantity: 1,
+      };
+    }
+    return null;
+  });
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isImageExpanded, setIsImageExpanded] = useState(false);
   const [numOfTimesThumbnailsMoved, setNumOfTimesThumbnailsMoved] = useState(0);

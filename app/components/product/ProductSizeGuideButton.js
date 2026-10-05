@@ -46,14 +46,16 @@ export default function ProductSizeGuideButton({ sizeGuidePublicId }) {
                 </p>
                 <div className="relative h-auto min-h-[20svh] w-full sm:min-h-[25svh] xl:min-h-[33.33svh]">
                   <Skeleton className="absolute inset-0 z-[0] h-full w-full rounded-md" />
-                  <Image
-                    src={getImage(sizeGuidePublicId, 600)}
-                    alt="Size guide"
-                    className="relative h-auto w-full object-contain"
-                    width={0}
-                    height={0}
-                    sizes="(max-width: 1280px) 100svh, 100dvw"
-                  />
+                  {sizeGuidePublicId && (
+                    <Image
+                      src={getImage(sizeGuidePublicId, 600)}
+                      alt="Size guide"
+                      className="relative h-auto w-full object-contain"
+                      width={0}
+                      height={0}
+                      sizes="(max-width: 1280px) 100svh, 100dvw"
+                    />
+                  )}
                 </div>
               </ModalBody>
               <ModalFooter>
