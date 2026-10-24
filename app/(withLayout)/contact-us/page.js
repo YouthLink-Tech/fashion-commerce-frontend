@@ -7,17 +7,17 @@ import callingImg from "@/public/contact/calling.svg";
 import ContactForm from "@/app/components/contact/ContactForm";
 
 export default async function ContactUs({ searchParams }) {
-  const paramOrderNumber = searchParams.orderNumber;
+  const paramOrderNumber = searchParams?.orderNumber;
 
   const session = await getServerSession(authOptions);
 
-  let userData = {};
+  let userData = null;
   let isParamOrderNumberLegit = false;
 
   if (session?.user?.email) {
     const promises = [
       tokenizedFetch(`/api/customer/single/${session?.user?.email}`),
-      tokenizedFetch(`/api/order/customer?email=${session?.user?.email}`),
+      tokenizedFetch(`/api/order/customer`),
     ];
 
     const [userDataRes, userOrdersRes] = await Promise.allSettled(promises);
@@ -28,8 +28,9 @@ export default async function ContactUs({ searchParams }) {
 
     isParamOrderNumberLegit = userOrders.some(
       (order) =>
-        order.orderNumber == paramOrderNumber &&
-        (order.orderStatus == "Processed" || order.orderStatus == "Declined"),
+        (order.order_number) == paramOrderNumber &&
+        (order.order_status === "processed" ||
+          order.order_status === "declined"),
     );
   }
 

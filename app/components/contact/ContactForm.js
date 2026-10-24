@@ -8,9 +8,12 @@ import { useLoading } from "@/app/contexts/loading";
 import { rawFetch } from "@/app/lib/fetcher/rawFetch";
 
 export default function ContactForm({ userData, orderId, isOrderNumberLegit }) {
-  const router = useRouter();
   const { setIsPageLoading } = useLoading();
-  const isFromOrderHistoryPage = useRef(false);
+
+  const isLoggedIn = Boolean(userData?.email);
+  const customerName = userData?.name || "";
+  const customerEmail = userData?.email || "";
+  const customerPhone = userData?.phone_number || "";
 
   const {
     register,
@@ -20,9 +23,9 @@ export default function ContactForm({ userData, orderId, isOrderNumberLegit }) {
     formState: { errors },
   } = useForm({
     defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
+      name: customerName,
+      email: customerEmail,
+      phone: customerPhone,
       topic: isOrderNumberLegit ? `Refund Rejected (Order #${orderId})` : "",
       message: "",
     },
@@ -30,23 +33,14 @@ export default function ContactForm({ userData, orderId, isOrderNumberLegit }) {
   });
 
   useEffect(() => {
-    if (isOrderNumberLegit) isFromOrderHistoryPage.current = true;
-
-    router.replace("/contact-us", undefined, {
-      shallow: true,
-      scroll: false,
-    });
-  }, [isOrderNumberLegit, router]);
-
-  useEffect(() => {
     reset({
-      name: userData?.userInfo?.personalInfo?.customerName || "",
-      email: userData?.email || "",
-      phone: userData?.userInfo?.personalInfo?.phoneNumber || "",
-      topic: getValues("topic") || "",
+      name: customerName,
+      email: customerEmail,
+      phone: customerPhone,
+      topic: getValues("topic") || (isOrderNumberLegit ? `Refund Rejected (Order #${orderId})` : ""),
       message: getValues("message") || "",
     });
-  }, [getValues, reset, userData]);
+  }, [customerEmail, customerName, customerPhone, getValues, isOrderNumberLegit, orderId, reset]);
 
   const onSubmit = async (data) => {
     setIsPageLoading(true);
@@ -59,6 +53,13 @@ export default function ContactForm({ userData, orderId, isOrderNumberLegit }) {
 
       if (result.ok) {
         toast.success(result.message);
+        reset({
+          name: customerName,
+          email: customerEmail,
+          phone: customerPhone,
+          topic: "",
+          message: "",
+        });
       } else {
         console.error(
           "SubmissionError (contactForm):",
@@ -70,13 +71,6 @@ export default function ContactForm({ userData, orderId, isOrderNumberLegit }) {
       console.error("SubmissionError (contactForm):", error.message || error);
       toast.error("Failed to submit contact form.");
     } finally {
-      reset({
-        name: userData?.userInfo?.personalInfo?.customerName || "",
-        email: userData?.email || "",
-        phone: userData?.userInfo?.personalInfo?.phoneNumber || "",
-        topic: "",
-        message: "",
-      });
       setIsPageLoading(false);
     }
   };
@@ -86,7 +80,7 @@ export default function ContactForm({ userData, orderId, isOrderNumberLegit }) {
 
     if (errorTypes.includes("required"))
       toast.error("Please fill up the required fields.");
-    else if (errorTypes.includes("pattern") || errorTypes.includes("minLength"))
+    else if (errorTypes.includes("pattern") || errorTypes.includes("minLength") || errorTypes.includes("maxLength"))
       toast.error("Please provide valid information.");
     else toast.error("Something went wrong. Please try again.");
   };
@@ -106,15 +100,23 @@ export default function ContactForm({ userData, orderId, isOrderNumberLegit }) {
               type="text"
               className="h-10 w-full rounded-[4px] border-2 border-neutral-200 bg-white/20 px-3 text-xs text-neutral-700 outline-none backdrop-blur-2xl transition-[background-color,border-color] duration-300 ease-in-out placeholder:text-neutral-400 md:text-[13px] [&:not(:read-only):focus]:border-[var(--color-secondary-500)] [&:not(:read-only):focus]:bg-white/75"
               placeholder="Enter your full name"
-              readOnly={!!userData}
+              readOnly={isLoggedIn}
               {...register("name", {
                 pattern: {
-                  value: /^[a-zA-Z\s'-]{3,}$/,
-                  message: "Full name is not valid.",
+                  value: /^[\p{L}\p{M}\s.'-]{3,50}$/u,
+                  message: "Full name contains invalid characters.",
                 },
                 required: {
                   value: true,
                   message: "Full name is required.",
+                },
+                minLength: {
+                  value: 3,
+                  message: "Full name must be at least 3 characters long.",
+                },
+                maxLength: {
+                  value: 50,
+                  message: "Full name cannot exceed 50 characters.",
                 },
               })}
             />
@@ -129,7 +131,7 @@ export default function ContactForm({ userData, orderId, isOrderNumberLegit }) {
               type="email"
               className="h-10 w-full rounded-[4px] border-2 border-neutral-200 bg-white/20 px-3 text-xs text-neutral-700 outline-none backdrop-blur-2xl transition-[background-color,border-color] duration-300 ease-in-out placeholder:text-neutral-400 md:text-[13px] [&:not(:read-only):focus]:border-[var(--color-secondary-500)] [&:not(:read-only):focus]:bg-white/75"
               placeholder="Enter your email"
-              readOnly={!!userData}
+              readOnly={isLoggedIn}
               {...register("email", {
                 pattern: {
                   value:
@@ -180,6 +182,7 @@ export default function ContactForm({ userData, orderId, isOrderNumberLegit }) {
               type="text"
               className="h-10 w-full rounded-[4px] border-2 border-neutral-200 bg-white/20 px-3 text-xs text-neutral-700 outline-none backdrop-blur-2xl transition-[background-color,border-color] duration-300 ease-in-out placeholder:text-neutral-400 [&:not(:read-only):focus]:border-[var(--color-secondary-500)] [&:not(:read-only):focus]:bg-white/75"
               placeholder="Enter the subject"
+              readOnly={isOrderNumberLegit}
               {...register("topic", {
                 required: {
                   value: true,
@@ -189,8 +192,11 @@ export default function ContactForm({ userData, orderId, isOrderNumberLegit }) {
                   value: 5,
                   message: "Subject must have at least 5 characters.",
                 },
+                maxLength: {
+                  value: 255,
+                  message: "Subject cannot exceed 255 characters.",
+                },
               })}
-              readOnly={isFromOrderHistoryPage.current}
             />
             {errors.topic && (
               <p className="text-xs text-red-500">{errors.topic?.message}</p>
@@ -209,6 +215,10 @@ export default function ContactForm({ userData, orderId, isOrderNumberLegit }) {
               minLength: {
                 value: 25,
                 message: "Message must have at least 25 characters.",
+              },
+              maxLength: {
+                value: 5000,
+                message: "Message cannot exceed 5000 characters.",
               },
             })}
           />

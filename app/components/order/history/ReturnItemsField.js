@@ -59,7 +59,7 @@ export default function ReturnItemsField({
                     );
                 }}
               >
-                <div className="relative min-h-full w-1/4 overflow-hidden rounded-[4px] bg-[var(--product-default)] max-sm:w-20">
+                <div className="relative min-h-full w-1/4 overflow-hidden rounded-[4px] shrink-0 bg-[var(--product-default)] max-sm:w-20">
                   {!!item?.thumbnail_image_url && (
                     <Image
                       className="h-full w-full object-cover"

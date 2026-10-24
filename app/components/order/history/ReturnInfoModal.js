@@ -69,10 +69,11 @@ export default function ReturnInfoModal({
     items: orderItems, } = activeReturnOrder || {};
 
   // Checking if any item in this return has been reviewed (accepted or rejected)
-  const hasReviewedReturnItems = returnInfo?.items?.some((item) => {
-    const status = item?.status?.toLowerCase();
-    return status === "accepted" || status === "rejected";
-  });
+  const hasRejectedReturnItems =
+    order_status === "declined" ||
+    returnInfo?.items?.some(
+      (item) => item?.status?.toLowerCase() === "rejected"
+    );
 
   return (
     <Modal
@@ -102,7 +103,7 @@ export default function ReturnInfoModal({
               />
             </ModalBody>
             <ModalFooter>
-              {hasReviewedReturnItems && (
+              {hasRejectedReturnItems && (
                 <a
                   href={`/contact-us?orderNumber=${order_number}`}
                   target="_blank"
