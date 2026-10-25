@@ -53,12 +53,6 @@ export default async function Home() {
         tags: ['special-offers']
       }
     }),
-    rawFetch("/api/notifications/all", {
-      next: {
-        revalidate: 3600, // 1 hour
-        tags: ['notifications']
-      }
-    }),
   ];
 
   const [
@@ -66,15 +60,13 @@ export default async function Home() {
     trendingRes,
     newArrivalRes,
     offersRes,
-    notifyVariantsRes,
   ] = await Promise.allSettled(promises);
 
-  const [userData, trendingProducts, newlyArrivedProducts, specialOffers, notifyVariants] = [
+  const [userData, trendingProducts, newlyArrivedProducts, specialOffers] = [
     extractData(userDataRes, null, "home/userData"),
     extractData(trendingRes, { items: [] }, "home/trending")?.items ?? [],
     extractData(newArrivalRes, { items: [] }, "home/newArrivals")?.items ?? [],
     extractData(offersRes, [], "home/specialOffers"),
-    extractData(notifyVariantsRes, [], "home/notifyVariants"),
   ];
 
   const orgJsonLd = {
@@ -104,14 +96,12 @@ export default async function Home() {
           userData={userData}
           trendingProducts={trendingProducts}
           specialOffers={specialOffers}
-          notifyVariants={notifyVariants}
         />
         <HomeNewArrival
           userData={userData}
           isAnyTrendingProductAvailable={trendingProducts?.length}
           newlyArrivedProducts={newlyArrivedProducts}
           specialOffers={specialOffers}
-          notifyVariants={notifyVariants}
         />
         <HomeFeatures
           isAnyTrendingProductAvailable={trendingProducts?.length}

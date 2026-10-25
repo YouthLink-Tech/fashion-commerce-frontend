@@ -116,12 +116,6 @@ export default async function CategoryShop({ params, searchParams }) {
         tags: ['special-offers']
       }
     }),
-    rawFetch("/api/notifications/all", {
-      next: {
-        revalidate: 3600, // 1 hour
-        tags: ['notifications']
-      },
-    }),
   ];
 
   const [
@@ -129,19 +123,17 @@ export default async function CategoryShop({ params, searchParams }) {
     productsRes,
     filtersRes,
     offersRes,
-    notifyVariantsRes,
   ] = await Promise.allSettled(promises);
 
   const productsFetchFailed = productsRes.status === "rejected";
   const filtersFetchFailed = filtersRes.status === "rejected";
   const ssrFailed = productsFetchFailed || filtersFetchFailed;
 
-  const [userData, productsData, filtersData, specialOffers, notifyVariants,] = [
+  const [userData, productsData, filtersData, specialOffers,] = [
     extractData(userDataRes, null, "checkout/userData"),
     extractData(productsRes, { items: [], total: 0 }, "shop/products"),
     extractData(filtersRes, null, "shop/filters"),
     extractData(offersRes, [], "shop/specialOffers"),
-    extractData(notifyVariantsRes, [], "shop/notifyVariants"),
   ];
 
   const savedCols = cookies().get("shopCols")?.value;
@@ -161,7 +153,6 @@ export default async function CategoryShop({ params, searchParams }) {
             userData={userData}
             categories={categories}
             specialOffers={specialOffers}
-            notifyVariants={notifyVariants}
             initialCategory={category}
             initialProducts={productsData.items}
             initialTotal={productsData.total}

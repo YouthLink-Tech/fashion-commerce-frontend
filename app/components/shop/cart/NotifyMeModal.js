@@ -15,9 +15,10 @@ import { rawFetch } from "@/app/lib/fetcher/rawFetch";
 
 export default function NotifyMeModal({
   userEmail,
+  variantId,
   isNotifyMeModalOpen,
   setIsNotifyMeModalOpen,
-  notifyMeProduct,
+  onSubscribed,
 }) {
   const router = useRouter();
   const { setIsPageLoading } = useLoading();
@@ -35,20 +36,29 @@ export default function NotifyMeModal({
   });
 
   const onSubmit = async (data) => {
+    if (!variantId) {
+      toast.error("Please select a valid variant first.");
+      return;
+    }
+
     setIsPageLoading(true);
 
     try {
       const result = await rawFetch("/api/notifications/add-notify-me", {
         method: "POST",
         body: JSON.stringify({
-          ...data,
-          ...notifyMeProduct,
+          email: data.email.trim().toLowerCase(),
+          variant_id: variantId,
         }),
       });
 
       if (result.ok) {
         toast.success("Request submitted successfully.");
-        router.refresh();
+        onSubscribed?.();
+        setIsNotifyMeModalOpen(false);
+      } else if (result.status === 409) {
+        toast.error(result.message || "You're already subscribed.");
+        onSubscribed?.();
         setIsNotifyMeModalOpen(false);
       } else {
         console.error(

@@ -15,7 +15,6 @@ export default function ProductInfo({
   setNumOfTimesThumbnailsMoved,
   hasSpecialOffer,
   specialOffer,
-  notifyVariants,
   randomViewers,
 }) {
   const [parsedSizeFit, setParsedSizeFit] = useState(null);
@@ -67,7 +66,6 @@ export default function ProductInfo({
         setNumOfTimesThumbnailsMoved={setNumOfTimesThumbnailsMoved}
         hasSpecialOffer={hasSpecialOffer}
         specialOffer={specialOffer}
-        notifyVariants={notifyVariants}
         randomViewers={randomViewers}
       />
       {/* Divider */}

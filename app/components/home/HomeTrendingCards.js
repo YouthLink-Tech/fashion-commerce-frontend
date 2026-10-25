@@ -8,7 +8,6 @@ export default function HomeTrendingCards({
   userData,
   trendingProducts,
   specialOffers,
-  notifyVariants,
 }) {
   const [isAddToCartModalOpen, setIsAddToCartModalOpen] = useState(false);
   const [selectedAddToCartProduct, setSelectedAddToCartProduct] =
@@ -33,7 +32,6 @@ export default function HomeTrendingCards({
         setIsAddToCartModalOpen={setIsAddToCartModalOpen}
         product={selectedAddToCartProduct}
         specialOffers={specialOffers}
-        notifyVariants={notifyVariants}
       />
     </div>
   );

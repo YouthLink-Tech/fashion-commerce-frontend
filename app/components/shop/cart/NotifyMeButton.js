@@ -1,33 +1,94 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { FaRegBell } from "react-icons/fa6";
 import { LuCheckCircle2 } from "react-icons/lu";
+import { routeFetch } from "@/app/lib/fetcher/routeFetch";
 import NotifyMeModal from "./NotifyMeModal";
+
+let subsCache = { email: null, promise: null, at: 0 };
+const SUBS_TTL_MS = 30 * 1000;
+
+function loadMySubscriptions(email) {
+  const fresh =
+    subsCache.promise &&
+    subsCache.email === email &&
+    Date.now() - subsCache.at < SUBS_TTL_MS;
+  if (fresh) return subsCache.promise;
+  const promise = routeFetch("/api/notifications/my-subscriptions")
+    .then((res) => res?.data?.variantIds || res?.variantIds || [])
+    .catch(() => {
+      subsCache = { email: null, promise: null, at: 0 };
+      return [];
+    });
+  subsCache = { email, promise, at: Date.now() };
+  return promise;
+}
+
+export function invalidateSubsCache() {
+  subsCache = { email: null, promise: null, at: 0 };
+}
 
 export default function NotifyMeButton({
   userEmail,
-  notifyVariants,
-  productId,
   productVariantSku,
   selectedOptions,
+  variants = [],
   isNotifyMeModalOpen,
   setIsNotifyMeModalOpen,
 }) {
-  let isUserSubscribed;
 
-  if (!selectedOptions?.size || productVariantSku !== 0) return;
-  if (!userEmail) {
-    isUserSubscribed = false;
-  } else {
-    const correspondingVariant = notifyVariants?.find(
-      (variant) =>
-        variant.productId === productId &&
-        variant.size === selectedOptions?.size?.name &&
-        variant.colorCode === selectedOptions?.color.hex,
-    );
+  const [subscribedVariantIds, setSubscribedVariantIds] = useState([]);
+  const [justSubscribedVariantId, setJustSubscribedVariantId] = useState(null);
 
-    isUserSubscribed = correspondingVariant?.emails?.some(
-      (user) => user.email === userEmail && !user.notified,
+  // Resolve the active variant based on selected color & size
+  const activeVariant = useMemo(() => {
+    if (!selectedOptions?.size || !selectedOptions?.color) return null;
+    return (variants ?? []).find(
+      (v) =>
+        (v.color?.id === selectedOptions.color?.id ||
+          v.color?.hex === selectedOptions.color?.hex) &&
+        (v.size?.id === selectedOptions.size?.id ||
+          v.size?.name === selectedOptions.size?.name),
     );
+  }, [variants, selectedOptions]);
+
+  // Fetch subscriptions for logged-in user
+  useEffect(() => {
+    let isMounted = true;
+    if (!userEmail) {
+      setSubscribedVariantIds([]);
+      return;
+    }
+    loadMySubscriptions(userEmail).then((ids) => {
+      if (isMounted && Array.isArray(ids)) {
+        setSubscribedVariantIds(ids);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [userEmail]);
+
+  // Handle successful modal submission
+  const handleSubscribedSuccess = useCallback((variantId) => {
+    setJustSubscribedVariantId(variantId);
+    setSubscribedVariantIds((prev) =>
+      prev.includes(variantId) ? prev : [...prev, variantId],
+    );
+    invalidateSubsCache();
+  }, []);
+
+  // 2. EARLY RETURN PLACED AFTER ALL HOOKS
+  if (!selectedOptions?.size || productVariantSku !== 0) {
+    return null;
   }
+
+  // 3. RENDER LOGIC
+  const isUserSubscribed =
+    Boolean(activeVariant?.id) &&
+    (subscribedVariantIds.includes(activeVariant.id) ||
+      justSubscribedVariantId === activeVariant.id);
 
   return (
     <>
@@ -43,19 +104,18 @@ export default function NotifyMeButton({
       ) : (
         <div className="flex w-fit items-center gap-1 font-semibold text-[#45963a]">
           <LuCheckCircle2 size={20} />
-          <p className="text-xs">You&apos;ll be notifed upon availability</p>
+          <p className="text-xs">You&apos;ll be notified upon availability</p>
         </div>
       )}
-      <NotifyMeModal
-        userEmail={userEmail}
-        isNotifyMeModalOpen={isNotifyMeModalOpen}
-        setIsNotifyMeModalOpen={setIsNotifyMeModalOpen}
-        notifyMeProduct={{
-          productId: productId,
-          size: selectedOptions?.size?.name,
-          colorCode: selectedOptions?.color.hex,
-        }}
-      />
+      {activeVariant?.id && (
+        <NotifyMeModal
+          userEmail={userEmail}
+          variantId={activeVariant.id}
+          isNotifyMeModalOpen={isNotifyMeModalOpen}
+          setIsNotifyMeModalOpen={setIsNotifyMeModalOpen}
+          onSubscribed={() => handleSubscribedSuccess(activeVariant.id)}
+        />
+      )}
     </>
   );
 }

@@ -109,21 +109,14 @@ export default async function Product({ params: { slug } }) {
         tags: ['special-offers']
       }
     }),
-    rawFetch("/api/notifications/all", {
-      next: {
-        revalidate: 3600, // 1 hour
-        tags: ['notifications']
-      }
-    }),
   ];
 
-  const [userDataRes, offersRes, notifyVariantsRes] =
+  const [userDataRes, offersRes] =
     await Promise.allSettled(promises);
 
-  const [userData, specialOffers, notifyVariants] = [
+  const [userData, specialOffers] = [
     extractData(userDataRes, null, "productDetails/userData"),
     extractData(offersRes, [], "productDetails/specialOffers"),
-    extractData(notifyVariantsRes, [], "productDetails/notifyVariants"),
   ];
 
   const randomViewers = Math.floor(Math.random() * (99 - 10 + 1)) + 10;
@@ -203,14 +196,12 @@ export default async function Product({ params: { slug } }) {
             userData={userData}
             product={product}
             specialOffers={specialOffers}
-            notifyVariants={notifyVariants}
             randomViewers={randomViewers}
           />
           <ProductRelatedContents
             userData={userData}
             product={product}
             specialOffers={specialOffers}
-            notifyVariants={notifyVariants}
           />
         </div>
       </main>

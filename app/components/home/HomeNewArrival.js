@@ -9,7 +9,6 @@ export default function HomeNewArrival({
   isAnyTrendingProductAvailable,
   newlyArrivedProducts,
   specialOffers,
-  notifyVariants,
 }) {
   if (!!newlyArrivedProducts?.length)
     return (
@@ -50,7 +49,6 @@ export default function HomeNewArrival({
             userData={userData}
             newlyArrivedProducts={newlyArrivedProducts}
             specialOffers={specialOffers}
-            notifyVariants={notifyVariants}
           />
         </div>
       </section>

@@ -29,7 +29,6 @@ export default function ProductInfoOverview({
   setNumOfTimesThumbnailsMoved,
   hasSpecialOffer,
   specialOffer,
-  notifyVariants,
   randomViewers,
 }) {
   const [isNotifyMeModalOpen, setIsNotifyMeModalOpen] = useState(false);
@@ -192,10 +191,9 @@ export default function ProductInfoOverview({
           <p className="font-semibold text-red-600">Out of Stock*</p>
           <NotifyMeButton
             userEmail={userData?.email}
-            notifyVariants={notifyVariants}
-            productId={product?.id}
             productVariantSku={productVariantSku}
             selectedOptions={selectedOptions}
+            variants={product?.variants}
             isNotifyMeModalOpen={isNotifyMeModalOpen}
             setIsNotifyMeModalOpen={setIsNotifyMeModalOpen}
           />

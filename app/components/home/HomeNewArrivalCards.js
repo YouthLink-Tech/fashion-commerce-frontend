@@ -8,7 +8,6 @@ export default function HomeNewArrivalCards({
   userData,
   newlyArrivedProducts,
   specialOffers,
-  notifyVariants,
 }) {
   const [isAddToCartModalOpen, setIsAddToCartModalOpen] = useState(false);
   const [selectedAddToCartProduct, setSelectedAddToCartProduct] =
@@ -33,7 +32,6 @@ export default function HomeNewArrivalCards({
         setIsAddToCartModalOpen={setIsAddToCartModalOpen}
         product={selectedAddToCartProduct}
         specialOffers={specialOffers}
-        notifyVariants={notifyVariants}
       />
     </div>
   );

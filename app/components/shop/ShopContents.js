@@ -15,7 +15,6 @@ export default function ShopContents({
   userData,
   categories,
   specialOffers,
-  notifyVariants,
   initialCategory,
   initialProducts,
   initialTotal,
@@ -255,7 +254,6 @@ export default function ShopContents({
             isLoadingMore={isLoadingMore}
             onLoadMore={loadMore}
             specialOffers={specialOffers}
-            notifyVariants={notifyVariants}
             initialCols={initialCols}
           />
         )}

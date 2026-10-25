@@ -9,7 +9,6 @@ export default function HomeTrending({
   userData,
   trendingProducts,
   specialOffers,
-  notifyVariants,
 }) {
   if (!!trendingProducts?.length)
     return (
@@ -66,7 +65,6 @@ export default function HomeTrending({
               userData={userData}
               trendingProducts={trendingProducts}
               specialOffers={specialOffers}
-              notifyVariants={notifyVariants}
             />
           </div>
         </div>

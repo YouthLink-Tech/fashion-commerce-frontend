@@ -40,7 +40,6 @@ export default function ShopCards({
   isLoadingMore,
   onLoadMore,
   specialOffers,
-  notifyVariants,
   initialCols,
 }) {
   const [isAddToCartModalOpen, setIsAddToCartModalOpen] = useState(false);
@@ -174,7 +173,6 @@ export default function ShopCards({
           setIsAddToCartModalOpen={setIsAddToCartModalOpen}
           product={selectedAddToCartProduct}
           specialOffers={specialOffers}
-          notifyVariants={notifyVariants}
         />
       </section>
     </>

@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { useState } from "react";
 import { Button, Input } from "@nextui-org/react";
 import { CgClose } from "react-icons/cg";
 import { HiChevronLeft, HiChevronRight } from "react-icons/hi2";
@@ -23,9 +22,8 @@ export default function CartModalContents({
   setSelectedOptions,
   isNotifyMeModalOpen,
   setIsNotifyMeModalOpen,
-  notifyVariants,
 }) {
-  const [isUserSubscribed, setIsUserSubscribed] = useState(false);
+
   const isOnlyRegularDiscountAvailable = checkIfOnlyRegularDiscountIsAvailable(
     product,
     specialOffers,
@@ -174,14 +172,11 @@ export default function CartModalContents({
             <p className="text-sm font-semibold text-red-600">Out of Stock*</p>
             <NotifyMeButton
               userEmail={userEmail}
-              notifyVariants={notifyVariants}
-              productId={product?.id}
               productVariantSku={productVariantSku}
               selectedOptions={selectedOptions}
+              variants={product?.variants}
               isNotifyMeModalOpen={isNotifyMeModalOpen}
               setIsNotifyMeModalOpen={setIsNotifyMeModalOpen}
-              isUserSubscribed={isUserSubscribed}
-              setIsUserSubscribed={setIsUserSubscribed}
             />
           </div>
         )}

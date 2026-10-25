@@ -14,7 +14,6 @@ export default function ProductRelatedContents({
   userData,
   product,
   specialOffers,
-  notifyVariants,
 }) {
   const [isAddToCartModalOpen, setIsAddToCartModalOpen] = useState(false);
   const [selectedAddToCartProduct, setSelectedAddToCartProduct] =
@@ -111,7 +110,6 @@ export default function ProductRelatedContents({
         setIsAddToCartModalOpen={setIsAddToCartModalOpen}
         product={selectedAddToCartProduct}
         specialOffers={specialOffers}
-        notifyVariants={notifyVariants}
       />
     </>
   );

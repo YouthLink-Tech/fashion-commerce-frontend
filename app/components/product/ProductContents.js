@@ -18,7 +18,6 @@ export default function ProductContents({
   userData,
   product,
   specialOffers,
-  notifyVariants,
   randomViewers,
 }) {
   const [selectedOptions, setSelectedOptions] = useState(() => {
@@ -117,7 +116,6 @@ export default function ProductContents({
           setNumOfTimesThumbnailsMoved={setNumOfTimesThumbnailsMoved}
           hasSpecialOffer={isSpecialOfferIsAvailable}
           specialOffer={specialOffer}
-          notifyVariants={notifyVariants}
           randomViewers={randomViewers}
         />
       </div>
